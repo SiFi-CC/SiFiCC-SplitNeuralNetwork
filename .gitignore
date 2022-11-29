@@ -1,0 +1,12 @@
+# pycharm specific gitignore
+.idea
+
+# large datafiles
+*.npz
+*.csv
+
+# plots to not bloat the repository with plots
+plots/
+
+# data folder to not upload large files
+data/
