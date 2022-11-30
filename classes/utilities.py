@@ -216,7 +216,3 @@ def update_npz_CBcorrect(npz_file):
                             NN_RECO=ary_nn)
 
     print("file saved: ", npz_file)
-
-
-"""self.energy_factor_limit = .06 * 2
-self.position_absolute_limit = np.array([1.3, 10, 1.3]) * 2"""
