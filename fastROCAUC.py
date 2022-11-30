@@ -79,7 +79,7 @@ def fastROCAUC(y_pred, y_true, weighted=False, results=False):
     # if initial result is 0, event changes from fp to tn
 
     # get the most optimal threshold
-    pur = tp / (tp + fp)
+    acc = (tp + tn) / (tp + tn + fp + fn)
     theta = p[0]
     dot = (0, 0)
 
@@ -102,9 +102,9 @@ def fastROCAUC(y_pred, y_true, weighted=False, results=False):
         except ZeroDivisionError:
             tpr = 0
 
-        if (tp + fp) != 0 and tp / (tp + fp) >= pur:
+        if (tp + tn) / (tp + tn + fp + fn) >= acc:
             # update accuracy and threshold
-            pur = tp / (tp + fp)
+            acc = (tp + tn) / (tp + tn + fp + fn)
             theta = p[i]
             dot = (fpr, tpr)
 
@@ -123,7 +123,7 @@ def fastROCAUC(y_pred, y_true, weighted=False, results=False):
     print("### AUC Results: ###")
     print("AUC Score: ", auc_score)
     print("Best threshold: {:.3f}".format(theta))
-    print("Purity: {:.1f}".format(pur * 100))
+    print("Accuracy: {:.1f}".format(acc * 100))
 
     if results:
         return auc_score, theta
