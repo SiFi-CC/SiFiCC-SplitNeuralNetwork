@@ -39,6 +39,7 @@ def CLstat_MAXCLs4a4(n=None):
     num_features = 42
     ary_features = np.zeros(shape=(n, num_features))
     ary_targets = np.zeros(shape=(n,))
+    ary_weighting = np.zeros(shape=(n,))
 
     for i, event in enumerate(root.iterate_events(n=n)):
         # get indices of clusters sorted by highest energy and module
@@ -71,12 +72,15 @@ def CLstat_MAXCLs4a4(n=None):
         ary_features[i, 22:42] = cl_absorber
         # target: ideal compton events tag
         ary_targets[i] = event.is_ideal_compton * 1
+        # weighting: primary energy for now
+        ary_weighting[i] = event.MCEnergy_Primary
 
     # save file as .npz
     with open(dir_data + "NNinput_OptimizedGeometry_BP0mm_2e10protons_MAXCLs4a4.npz", 'wb') as f_train:
         np.savez_compressed(f_train,
                             features=ary_features,
-                            targets=ary_targets)
+                            targets=ary_targets,
+                            weighting=ary_weighting)
 
 
 ########################################################################################################################
