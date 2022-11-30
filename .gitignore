@@ -1,5 +1,6 @@
 # pycharm specific gitignore
 .idea
+*.pyc
 
 # large datafiles
 *.npz
@@ -10,3 +11,6 @@ plots/
 
 # data folder to not upload large files
 data/
+
+# root_files directory since the datafiles are too large
+root_files/
