@@ -1,6 +1,5 @@
 import os
 import numpy as np
-
 import tensorflow as tf
 from tensorflow import keras
 
@@ -16,39 +15,25 @@ dir_data = dir_main + "/data/"
 ########################################################################################################################
 
 # load training data
-data = np.load(dir_data + "NNinput_OptimizedGeometry_BP0mm_2e10protons_MAXCLs4a4.npz")
-ary_features = data["features"]
-ary_targets = data["targets"]
+data_train = np.load(dir_data + "test_train.npz")
+data_valid = np.load(dir_data + "test_valid.npz")
+data_test = np.load(dir_data + "test_test.npz")
 
-# rescale input
-for i in range(ary_features.shape[1]):
-    ary_features[:, i] = (ary_features[:, i] - np.mean(ary_features[:, i])) / np.std(ary_features[:, i])
+x_train = data_train["features"]
+y_train = data_train["targets"]
+w_train = data_train["weights"]
 
-# generate index sequence, shuffle sequence and sample by ratio
-idx = np.arange(0, ary_features.shape[0], 1.0, dtype=int)
-np.random.shuffle(idx)
-idx_stop = int(len(idx) * 0.8)
-idx_train = idx[0:idx_stop]
-idx_test = idx[idx_stop + 1:]
+x_valid = data_valid["features"]
+y_valid = data_valid["targets"]
+w_valid = data_valid["weights"]
 
-# generate training and test sample
-x_training = ary_features[idx_train]
-y_training = ary_targets[idx_train]
+x_test = data_test["features"]
+y_test = data_test["targets"]
+w_test = data_test["weights"]
 
-x_test = ary_features[idx_test]
-y_test = ary_targets[idx_test]
-
-# define class weights
-_, counts = np.unique(y_training, return_counts=True)
-class_weights = {0: (len(y_training) / (2 * counts[0])),
-                 1: (len(y_training) / (2 * counts[1]))}
-print("class weights: ", class_weights)
-print("Base accuracy: {:.1f}%".format(np.sum(y_training) / (len(y_training)) * 100))
-print("Number of total events: ", len(y_training))
-print("positive events; ", np.sum(y_training))
-
-# split samples into training and validation pool
-x_train, x_valid, y_train, y_valid = train_test_split(x_training, y_training, test_size=0.2, random_state=42)
+_, counts = np.unique(y_train, return_counts=True)
+class_weights = {0: len(y_train) / (2 * counts[0]),
+                 1: len(y_train) / (2 * counts[1])}
 
 # create model
 epochs = 10
