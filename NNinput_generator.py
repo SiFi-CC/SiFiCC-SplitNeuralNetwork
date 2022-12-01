@@ -104,15 +104,16 @@ for i, event in enumerate(input_file.iterate_events(n=n)):
 # determination of final weighting
 # define class weights
 _, counts = np.unique(ary_targets, return_counts=True)
-class_weights = [len(ary_targets) / (2 * counts[0]), len(ary_targets) / (2 * counts[1])]
+class_weights = [1 / counts[0], 1 / counts[1]]
+
 # energy weights
-energy_bins = np.arange(0.0, 20.0, 1.0)
+energy_bins = np.arange(0.0, 20.0, 0.1)
 hist, _ = np.histogram(ary_w_primary_energy, bins=energy_bins)
 for i in range(len(ary_w_primary_energy)):
     for j in range(len(energy_bins) - 1):
         if energy_bins[j] < ary_w_primary_energy[i] < energy_bins[j + 1]:
             # primary energy weight
-            ary_w_primary_energy[i] = len(ary_w_primary_energy) / (20 * hist[j])
+            ary_w_primary_energy[i] = 1 / hist[j]
             # class weight
             ary_w_primary_energy[i] *= class_weights[int(ary_targets[i])]
             break
