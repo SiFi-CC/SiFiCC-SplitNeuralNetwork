@@ -9,7 +9,7 @@ from classes import Detector
 
 ########################################################################################################################
 
-class Rootdata:
+class RootParser:
     """loading and preprocessing of root data for events and setup tree.
 
     Attributes:
@@ -141,35 +141,38 @@ class Rootdata:
 
     ####################################################################################################################
 
-    def export_npz(self, npz_filename):
-        """generates compressed npz file containing MC-Truth data.
+    def export_npz(self, npz_filename, n=None):
+        """generates compressed npz file containing MC-Truth data, cluster data and Cut-based reco data.
 
         Args:
             npz_filename (str): filename of the generated .npz file
+            n (int or none): number of events parsed from root tree, None if all events are iterated
 
         """
 
         # create empty arrays for full export to compressed .npz format
         # root data will be split into:
-        # MonteCarlo-data
-        # CutBased-data
-        # Cluster-data
-        # NeuralNetwork-data (later added with utilities)
-        # all dataframes will share the same header for event identification and independent of uproot
+        # - Meta data: (EventNumber, MCSimulatedEventType, IdealCompton event tag, CB-identified)
+        # - MonteCarlo-data: Monte-Carlo Event data
+        # - CutBased-data: Cut-based reconstruction data
+        # - Cluster-data: Cluster data
 
-        # length of each sub dataset is currently hardcoded
-        ary_mc = np.zeros(shape=(self.events_entries, 26))
-        ary_cb = np.zeros(shape=(self.events_entries, 26))
-        ary_cluster = np.zeros(shape=(self.events_entries, 0))
-        ary_nn = np.zeros(shape=(self.events_entries, 13))
+        ary_meta = np.zeros(shape=(self.events_entries, 4))
+        ary_mc = np.zeros(shape=(self.events_entries, 21))
+        ary_cb = np.zeros(shape=(self.events_entries, 23))
 
-        for i, event in enumerate(self.iterate_events(n=None)):
-            ary_mc[i, :] = [event.EventNumber,
-                            event.MCSimulatedEventType,
-                            event.is_ideal_compton,
-                            event.Identified,
-                            -1,  # NN classification tag
-                            event.MCEnergy_Primary,
+        # temporary a list, converted to array later
+        ary_cluster = np.empty(shape=(self.events_entries,), dtype=object)
+
+        # Fill Meta-data, Monte-Carlo data and Cluster data into empty arrays
+        # Cut-based reco data is not iterable since uproot can't handle the reco data stored in branches
+        for i, event in enumerate(self.iterate_events(n=n)):
+            ary_meta[i, :] = [event.EventNumber,
+                              event.MCSimulatedEventType,
+                              event.is_ideal_compton * 1,
+                              event.Identified]
+
+            ary_mc[i, :] = [event.MCEnergy_Primary,
                             event.MCEnergy_e,
                             event.MCEnergy_p,
                             event.MCPosition_source.x,
@@ -191,51 +194,53 @@ class Rootdata:
                             event.MCPosition_p_first.y,
                             event.MCPosition_p_first.z]
 
-            ary_cb[i, :4] = [event.EventNumber,
-                             event.MCSimulatedEventType,
-                             event.is_ideal_compton,
-                             event.Identified]
-
-            ary_nn[i, :4] = [event.EventNumber,
-                             event.MCSimulatedEventType,
-                             event.is_ideal_compton,
-                             -1]  # base value for non-NN identified events
+            ary_temp = np.zeros(shape=(len(event.RecoClusterEntries), 9))
+            for j in range(len(event.RecoClusterEntries)):
+                ary_temp[j, :] = [event.RecoClusterEnergies_values[j],
+                                  event.RecoClusterPosition[j].x,
+                                  event.RecoClusterPosition[j].y,
+                                  event.RecoClusterPosition[j].z,
+                                  event.RecoClusterEntries[j],
+                                  event.RecoClusterEnergies_uncertainty[j],
+                                  event.RecoClusterPosition_uncertainty[j].x,
+                                  event.RecoClusterPosition_uncertainty[j].y,
+                                  event.RecoClusterPosition_uncertainty[j].z]
+            ary_cluster[i] = ary_temp
 
         # fill up Cut-Based reconstruction values manually due to them being stored in branches
         # TODO: find a better way to do this, why uproot????
-        print("Filling CBReco branches")
-        ary_cb[:, 4] = self.events["RecoEnergy_e"]["value"].array()
-        ary_cb[:, 5] = self.events["RecoEnergy_p"]["value"].array()
-        ary_cb[:, 6] = self.events["RecoPosition_e"]["position"].array().x
-        ary_cb[:, 7] = self.events["RecoPosition_e"]["position"].array().y
-        ary_cb[:, 8] = self.events["RecoPosition_e"]["position"].array().z
-        ary_cb[:, 9] = self.events["RecoPosition_p"]["position"].array().x
-        ary_cb[:, 10] = self.events["RecoPosition_p"]["position"].array().y
-        ary_cb[:, 11] = self.events["RecoPosition_p"]["position"].array().z
-        ary_cb[:, 12] = self.events["RecoDirection_scatter"]["position"].array().x
-        ary_cb[:, 13] = self.events["RecoDirection_scatter"]["position"].array().y
-        ary_cb[:, 14] = self.events["RecoDirection_scatter"]["position"].array().z
+        ary_cb[:, 1] = self.events["RecoEnergy_e"]["value"].array()
+        ary_cb[:, 2] = self.events["RecoEnergy_p"]["value"].array()
+        ary_cb[:, 3] = self.events["RecoPosition_e"]["position"].array().x
+        ary_cb[:, 4] = self.events["RecoPosition_e"]["position"].array().y
+        ary_cb[:, 5] = self.events["RecoPosition_e"]["position"].array().z
+        ary_cb[:, 6] = self.events["RecoPosition_p"]["position"].array().x
+        ary_cb[:, 7] = self.events["RecoPosition_p"]["position"].array().y
+        ary_cb[:, 8] = self.events["RecoPosition_p"]["position"].array().z
+        ary_cb[:, 9] = self.events["RecoDirection_scatter"]["position"].array().x
+        ary_cb[:, 10] = self.events["RecoDirection_scatter"]["position"].array().y
+        ary_cb[:, 11] = self.events["RecoDirection_scatter"]["position"].array().z
 
-        ary_cb[:, 15] = self.events["RecoEnergy_e"]["uncertainty"].array()
-        ary_cb[:, 16] = self.events["RecoEnergy_p"]["uncertainty"].array()
-        ary_cb[:, 17] = self.events["RecoPosition_e"]["uncertainty"].array().x
-        ary_cb[:, 18] = self.events["RecoPosition_e"]["uncertainty"].array().y
-        ary_cb[:, 19] = self.events["RecoPosition_e"]["uncertainty"].array().z
-        ary_cb[:, 20] = self.events["RecoPosition_p"]["uncertainty"].array().x
-        ary_cb[:, 21] = self.events["RecoPosition_p"]["uncertainty"].array().y
-        ary_cb[:, 22] = self.events["RecoPosition_p"]["uncertainty"].array().z
-        ary_cb[:, 23] = self.events["RecoDirection_scatter"]["uncertainty"].array().x
-        ary_cb[:, 24] = self.events["RecoDirection_scatter"]["uncertainty"].array().y
-        ary_cb[:, 25] = self.events["RecoDirection_scatter"]["uncertainty"].array().z
+        ary_cb[:, 12] = self.events["RecoEnergy_e"]["uncertainty"].array()
+        ary_cb[:, 13] = self.events["RecoEnergy_p"]["uncertainty"].array()
+        ary_cb[:, 14] = self.events["RecoPosition_e"]["uncertainty"].array().x
+        ary_cb[:, 15] = self.events["RecoPosition_e"]["uncertainty"].array().y
+        ary_cb[:, 16] = self.events["RecoPosition_e"]["uncertainty"].array().z
+        ary_cb[:, 17] = self.events["RecoPosition_p"]["uncertainty"].array().x
+        ary_cb[:, 18] = self.events["RecoPosition_p"]["uncertainty"].array().y
+        ary_cb[:, 19] = self.events["RecoPosition_p"]["uncertainty"].array().z
+        ary_cb[:, 20] = self.events["RecoDirection_scatter"]["uncertainty"].array().x
+        ary_cb[:, 21] = self.events["RecoDirection_scatter"]["uncertainty"].array().y
+        ary_cb[:, 22] = self.events["RecoDirection_scatter"]["uncertainty"].array().z
 
         # TODO: fill reco cluster information
 
         # export dataframe to compressed .npz
         with open(npz_filename, 'wb') as file:
             np.savez_compressed(file,
+                                META=ary_meta,
                                 MC_TRUTH=ary_mc,
                                 CB_RECO=ary_cb,
-                                CLUSTER_RECO=ary_cluster,
-                                NN_RECO=ary_nn)
+                                CLUSTER_RECO=ary_cluster)
 
         print("file saved: ", npz_filename)
