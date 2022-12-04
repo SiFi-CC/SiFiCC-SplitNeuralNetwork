@@ -12,5 +12,8 @@ plots/
 # data folder to not upload large files
 data/
 
+# ignore folder to temporarely store files not needing to be pushed
+ignore/
+
 # root_files directory since the datafiles are too large
 root_files/
