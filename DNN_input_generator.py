@@ -9,7 +9,7 @@ import numpy as np
 import os
 import copy
 
-from classes import Rootdata
+from classes import RootParser
 from classes import root_files
 
 
@@ -52,11 +52,11 @@ dir_data = dir_main + "/data/"
 # input file
 args = parser()
 # if the input file is undefined, the local file will be used
-input_file = Rootdata(dir_main + root_files.OptimisedGeometry_BP0mm_2e10protons_offline)
+input_file = RootParser(dir_main + root_files.OptimisedGeometry_BP0mm_2e10protons_offline)
 if args.local:
-    input_file = Rootdata(dir_main + root_files.OptimisedGeometry_BP0mm_2e10protons_offline)
+    input_file = RootParser(dir_main + root_files.OptimisedGeometry_BP0mm_2e10protons_offline)
 if args.cluster:
-    input_file = Rootdata(root_files.OptimisedGeometry_BP0mm_2e10protons)
+    input_file = RootParser(root_files.OptimisedGeometry_BP0mm_2e10protons)
 
 # set total number of events used
 if n_events is None:

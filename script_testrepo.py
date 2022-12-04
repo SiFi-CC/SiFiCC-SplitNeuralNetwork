@@ -13,7 +13,7 @@ import uproot_methods
 from classes import Detector
 from classes import Event
 from classes import root_files
-from classes import Rootdata
+from classes import RootParser
 from classes import utilities
 
 # check their versions
