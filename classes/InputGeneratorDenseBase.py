@@ -17,7 +17,7 @@ def gen_input(RootParser):
 
     ####################################################################################################################
     # global settings for easier on the fly changes
-    file_name = "NNInputDenseBase"
+    gen_name = "NNInputDenseBase"
 
     n_cluster_scatterer = 3
     n_cluster_absorber = 5
@@ -27,8 +27,6 @@ def gen_input(RootParser):
     # grab correct filepath
     dir_main = os.getcwd()
     dir_npz = dir_main + "/npz_files/"
-    print(dir_main)
-    print(dir_npz)
 
     # calculate final amount of features
     num_features = 2  # starting at 2 for cluster counts in each module
@@ -43,7 +41,7 @@ def gen_input(RootParser):
     ary_meta = np.zeros(shape=(n_events,))
 
     # main iteration over root file
-    for i, event in enumerate(RootParser.iterate_events(n=10000)):
+    for i, event in enumerate(RootParser.iterate_events(n=None)):
 
         # get indices of clusters sorted by highest energy and module
         idx_scatterer, idx_absorber = event.sort_clusters_by_module(use_energy=True)
@@ -118,7 +116,7 @@ def gen_input(RootParser):
                 break
 
     # save final output file
-    with open(dir_npz + file_name + ".npz", 'wb') as f_output:
+    with open(dir_npz + gen_name + "_" + RootParser.file_name + ".npz", 'wb') as f_output:
         np.savez_compressed(f_output,
                             features=ary_features,
                             targets=ary_targets,
