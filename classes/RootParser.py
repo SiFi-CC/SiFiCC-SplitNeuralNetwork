@@ -2,6 +2,7 @@ import numpy as np
 import uproot
 import tqdm
 import sys
+import os
 
 from classes import Event
 from classes import Detector
@@ -24,6 +25,8 @@ class RootParser:
     """
 
     def __init__(self, rootfile_path):
+        self.file_base = os.path.basename(rootfile_path)
+        self.file_name = os.path.splitext(self.file_base)[0]
         # open root file with uproot
         rootfile = uproot.open(rootfile_path)
         self.rootfile_path = rootfile_path
