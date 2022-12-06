@@ -15,6 +15,7 @@ def parse(argcf):
     # read config file
     config_file = argcf.read()
 
-    for i, row in enumerate(config_file):
-        print(i, row)
+    for i, row in enumerate(config_file.split("\n")):
+        if row[0] == "#":
+            print(i, row, "| input: ", config_file.split("\n")[i+1])
 
