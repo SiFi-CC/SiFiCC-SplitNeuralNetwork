@@ -19,7 +19,7 @@ ary_mc = npz_data["MC_TRUTH"]
 
 max_e = 17.0
 _, counts = np.unique(ary_meta[:, 2], return_counts=True)
-class_weights = [len(ary_meta[:, 2]) / (2 * counts[0]), len(ary_meta[:, 2]) / (2 * counts[1])]<
+class_weights = [len(ary_meta[:, 2]) / (2 * counts[0]), len(ary_meta[:, 2]) / (2 * counts[1])]
 # class_weights = [1 / counts[0], 1 / counts[1]]
 
 # calculate energy weights
