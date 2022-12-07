@@ -93,6 +93,7 @@ def train_model():
 ########################################################################################################################
 
 def eval_model():
+    import copy
     import matplotlib.pyplot as plt
     from fastROCAUC import fastROCAUC
 
@@ -118,6 +119,10 @@ def eval_model():
     ary_idx_train = ary_idx[0: int(len(ary_idx) * p_train)]
     ary_idx_valid = ary_idx[int(len(ary_idx) * p_train): int(len(ary_idx) * (p_train + p_valid))]
     ary_idx_test = ary_idx[int(len(ary_idx) * (1 - p_test)):]
+
+    # copy out features for later analysis
+    ary_n_cl_scatterer = copy.copy(ary_features[:, 0])
+    ary_n_cl_absorber = copy.copy(ary_features[:, 1])
 
     # normalization
     for i in range(ary_features.shape[1]):
@@ -205,3 +210,25 @@ def eval_model():
     print("Efficiency: {:.1f}%".format(efficiency * 100))
     print("Purity: {:.1f}%".format(purity * 100))
     print("TP: {} | TN: {} | FP: {} | FN: {}".format(TP, TN, FP, FN))
+
+    # Analysis of feature distribution of correctly identified events
+    bins = np.arange(0.5, 8.5, 1.0)
+    hist_cl_scatterer = [ary_n_cl_scatterer[i] for i in range(len(y_pred)) if y_pred[i] == 1]
+    hist_cl_absorber = [ary_n_cl_absorber[i] for i in range(len(y_pred)) if y_pred[i] == 1]
+    hist_scatterer, _ = np.histogram(hist_cl_scatterer, bins=bins)
+    hist_absorber, _ = np.histogram(hist_cl_absorber, bins=bins)
+
+    plt.figure()
+    plt.title("Distribution cluster per module")
+    plt.xlabel("# of clusters")
+    plt.ylabel("counts (normalized per module)")
+    plt.xlim(-0.5, 12)
+    plt.xticks(bins + 0.5)
+    plt.bar(bins[:-1] + 0.30, hist_scatterer / np.sum(hist_scatterer), width=0.4, align="center",
+            color="blue", alpha=0.8, label="scatterer")
+    plt.bar(bins[:-1] + 0.70, hist_absorber / np.sum(hist_absorber), width=0.4, align="center",
+            color="orange", alpha=0.8, label="absorber")
+    plt.legend()
+    plt.savefig("DNN_base_clusterdist.png")
+
+eval_model()
