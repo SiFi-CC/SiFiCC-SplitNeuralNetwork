@@ -51,6 +51,17 @@ class DataCluster:
     def y_test(self):
         return self.targets[self.idx_test()]
 
+    def num_features(self):
+        return self.features.shape[1]
+
     def standardize(self):
         for i in range(self.features.shape[1]):
             self.features[:, i] = (self.features[:, i] - np.mean(self.features[:, i])) / np.std(self.features[:, i])
+
+    def set_classweights(self):
+        # set sample weights to class weights
+        _, counts = np.unique(self.targets, return_counts=True)
+        class_weights = [len(self.targets) / (2 * counts[0]), len(self.targets) / (2 * counts[1])]
+
+        for i in range(len(self.targets)):
+            self.weights[i] = class_weights[int(self.targets[i])]
