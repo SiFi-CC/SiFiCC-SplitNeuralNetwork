@@ -1,4 +1,4 @@
 # SiFiCC-SplitNeuralNetwork
-Fully split Neural Network for event classification and energy/position reconstruction for the SiFi-CC project.
+The SiFiCC-Neural Network is a event classifier for compton events and regression of the compton event characteristics.
 
-This work is based on the work done by Awal during his Master Thesis. 
+The repository is being developed in the context of a master thesis.
