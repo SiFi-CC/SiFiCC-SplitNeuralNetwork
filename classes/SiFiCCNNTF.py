@@ -57,8 +57,8 @@ class SiFiCCNNTF:
 
     def append_history(self, history):
         if self.history is None or self.history == {}:
-            self.history = history.history
+            self.history = history
         else:
             for key in self.history.keys():
-                if key in history.history:
-                    self.history[key].extend(history.history[key])
+                if key in history:
+                    self.history[key].extend(history[key])
