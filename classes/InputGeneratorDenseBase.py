@@ -110,7 +110,7 @@ def gen_input(RootParser):
 
     for i in range(len(ary_w)):
         for j in range(len(bins) - 1):
-            if bins[j] < ary_w[j] < bins[j + 1]:
+            if bins[j] < ary_w[i] < bins[j + 1]:
                 energy_weight = RootParser.events_entries / (len(bins) - 1) / hist[j]
                 ary_w[i] = energy_weight * class_weights[int(ary_targets[i])]
                 break

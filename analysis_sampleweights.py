@@ -1,4 +1,5 @@
 import numpy as np
+import copy
 import os
 import matplotlib.pyplot as plt
 
@@ -24,19 +25,7 @@ class_weights = [len(ary_meta[:, 2]) / (2 * counts[0]), len(ary_meta[:, 2]) / (2
 
 # calculate energy weights
 bins = np.concatenate([np.arange(0.0, max_e + 0.1, 0.1), [int(max(ary_mc[:, 0]))]])
-print(bins)
 hist, _ = np.histogram(ary_mc[:, 0], bins=bins)
-
-"""
-for i in range(len(ary_w)):
-    for j in range(len(bins) - 1):
-        if bins[j] < ary_w[j] < bins[j + 1]:
-            # energy_weight = RootParser.events_entries / (len(bins) - 1) / hist[j]
-            ary_w[i] = 1 * class_weights[int(ary_targets[i])]
-            break
-"""
-
-print(class_weights)
 
 fig, axs = plt.subplots(2, 1)
 axs[0].set_xlim(0.0, max_e + 1.0)
@@ -47,3 +36,20 @@ axs[1].set_xlim(0.0, max_e + 1.0)
 axs[1].plot(bins[:-1] + 0.05, len(ary_mc[:, 0]) / (len(bins) - 1) / hist, color="blue", label="weights")
 axs[1].legend()
 plt.show()
+
+print("\nClass weights")
+print(class_weights)
+print("\nEnergy weights")
+print(ary_meta.shape[0] / (len(bins) - 1) / hist)
+
+ary_w = np.zeros(shape=(ary_meta.shape[0],))
+ary_targets = ary_meta[:, 2]
+for i in range(len(ary_w)):
+    for j in range(len(bins) - 1):
+        if bins[j] < ary_mc[i, 0] < bins[j + 1]:
+            energy_weight = len(ary_targets) / (len(bins) - 1) / hist[j]
+            ary_w[i] = energy_weight * class_weights[int(ary_targets[i])]
+            break
+
+for i in range(20):
+    print(ary_mc[i, 0], ary_w[i])
