@@ -1,23 +1,17 @@
-# Test1
-1
-
 # Name of the origin root file
 OptimisedGeometry_BP0mm_2e10protons.root
 
-# Name of the neural network input file
-NNInputDenseBase_OptimisedGeometry_BP0mm_2e10protons.npz
+# Method containing input generator
+InputGeneratorDenseBase
 
-# InputGenerator
-InputGeneratorDenseBase.py
+# Method containing Neural-Network model
+ModelDenseBase
 
-# TensorflowModel
-ModelDenseBase.py
+# Method containing TrainingStrategy
+TrainingStrategyDenseBase
 
-# TrainingStrategy
-0
-
-# AnalysisModels
-0
+# Method containing Analysis models (can be more, separated by comma)
+AnalysisMetrics
 
 # No. of Epochs
 10
