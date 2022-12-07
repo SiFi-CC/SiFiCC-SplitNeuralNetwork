@@ -1,6 +1,29 @@
 # Test1
 1
-# Test2
-Filename
-# Test3
-Filename1, Filename2
+
+# Name of the origin root file
+OptimisedGeometry_BP0mm_2e10protons.root
+
+# Name of the neural network input file
+NNInputDenseBase_OptimisedGeometry_BP0mm_2e10protons.npz
+
+# InputGenerator
+InputGeneratorDenseBase.py
+
+# TensorflowModel
+ModelDenseBase.py
+
+# TrainingStrategy
+0
+
+# AnalysisModels
+0
+
+# No. of Epochs
+10
+
+# Batch size
+128
+
+# Verbose
+1
