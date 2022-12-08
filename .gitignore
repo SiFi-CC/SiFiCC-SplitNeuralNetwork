@@ -6,6 +6,7 @@
 ignore/
 
 # root_files directory since the datafiles are too large
+root_files/
 root_files/*.root
 
 # npz_files in the directory are ignored due to their size
