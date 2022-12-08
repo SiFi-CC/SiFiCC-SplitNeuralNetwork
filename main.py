@@ -32,6 +32,8 @@ func2 = getattr(trainingstrategy_method, "train_strategy")
 func2(neuralnetwork, DataCluster)
 
 # evaluate analysis expression
-analysis_method = __import__("analysis." + config_data.analysis, fromlist=[None])
-analysis = getattr(analysis_method, "analysis")
-analysis(neuralnetwork, DataCluster)
+# analysis expressions can be a list of analysis methods
+for i in range(len(config_data.analysis)):
+    analysis_method = __import__("analysis." + config_data.analysis[i], fromlist=[None])
+    analysis = getattr(analysis_method, "analysis")
+    analysis(neuralnetwork, DataCluster)

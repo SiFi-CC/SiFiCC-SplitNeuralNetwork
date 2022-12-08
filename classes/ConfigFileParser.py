@@ -102,6 +102,11 @@ def parse(argcf):
                 param_verbose = list_config[i + 1]
                 # TODO: logic
 
+    # evaluate analysis parameter
+    param_analysis = param_analysis.split(",")
+    for i in range(len(param_analysis)):
+        param_analysis[i] = param_analysis[i].replace(" ", "")
+
     # build configfile domain object
     config_data = ConfigData.ConfigData(root_file=param_rootfile,
                                         input_generator=param_inputgenerator,
