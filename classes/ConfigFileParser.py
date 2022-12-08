@@ -6,11 +6,13 @@ def parse(argcf):
     #######################################################
     # ConfigFileParser will look for the following settings
     #
-    # # RootFile
-    # # inputgenerator
-    # # NeuralNetwork model
-    # # trainingstrategy
-    # # Analysis scripts
+    # # Name of the origin root file
+    # # Method containing input generator
+    # # Method containing Neural-Network model
+    # # Method containing trainingstrategy
+    # # Method containing Analysis models
+    #
+    # # Model nametag
     #
     # # Epochs
     # # Batch size
@@ -30,11 +32,13 @@ def parse(argcf):
     param_trainingstrategy = "TrainingStrategyDenseBase"
     param_analysis = "AnalysisMetrics"
 
+    param_modeltag = ""
+
     param_epochs = 10
     param_batchsize = 128
     param_verbose = 1
 
-    # read config file
+    # read config file and split config file string into list
     config_file = argcf.read()
     list_config = config_file.split("\n")
 
@@ -42,6 +46,7 @@ def parse(argcf):
         # skip rows with no entries
         if len(row) == 0:
             continue
+
         if row[0] == "#":
             # Test each config file input and determine their parameter
             if "Name of the origin root file" in row:
@@ -78,6 +83,10 @@ def parse(argcf):
                 param_analysis = list_config[i + 1]
                 # TODO: add support for multiple inputs in form of list
 
+            # model name tag
+            if "Model nametag" in row:
+                param_modeltag = list_config[i + 1]
+
             # loose parameter
             if "No. of Epochs" in row:
                 param_epochs = list_config[i + 1]
@@ -101,6 +110,7 @@ def parse(argcf):
                                         analysis=param_analysis,
                                         metadata=param_metafile,
                                         nninput=param_nninput,
+                                        modeltag=param_modeltag,
                                         epochs=param_epochs,
                                         batch_size=param_batchsize,
                                         verbose=param_verbose)

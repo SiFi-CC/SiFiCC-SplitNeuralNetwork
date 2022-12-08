@@ -8,6 +8,7 @@ class ConfigData:
                  metadata,
                  nninput,
                  model,
+                 modeltag,
                  epochs,
                  verbose,
                  batch_size):
@@ -19,6 +20,8 @@ class ConfigData:
         self.analysis = analysis
         self.metadata = metadata
         self.nninput = nninput
+
+        self.modeltag = modeltag
 
         self.epochs = epochs
         self.batch_size = batch_size
