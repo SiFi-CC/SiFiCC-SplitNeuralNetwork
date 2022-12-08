@@ -21,4 +21,11 @@ root2 = RootParser(dir_main + root_files.OptimisedGeometry_BP5mm_4e9protons_offl
 
 from scripts import event_display
 
-event_display.event_display(root1, n=10)
+for i in range(200, 500):
+    event = root1.get_event(i)
+    if not event.is_ideal_compton:
+        continue
+    if event.MCEnergy_Primary > 4.6 or event.MCEnergy_Primary < 4.2:
+        continue
+
+    event_display.event_display(root1, n=i)
