@@ -4,10 +4,10 @@ import pickle as pkl
 
 class SiFiCCNNTF:
 
-    def __init__(self, model, model_name, epochs=10, batch_size=128, verbose=1):
+    def __init__(self, model, model_name, model_tag="", epochs=10, batch_size=128, verbose=1):
         # Tensorflow model
         self.model_name = model_name
-        self.model_tag = ""
+        self.model_tag = model_tag
         self.model = model
         self.history = {}
 
@@ -35,6 +35,7 @@ class SiFiCCNNTF:
         if self.model_tag != "":
             str_save += "_" + self.model_tag
 
+        print("Saving model at: ", str_save + ".h5")
         self.model.save(str_save + ".h5")
 
         # save history

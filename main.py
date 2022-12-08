@@ -15,9 +15,6 @@ else:
 
 ########################################################################################################################
 
-
-########################################################################################################################
-
 DataCluster = NPZParser.parse(config_data.nninput)
 
 # evaluate model expression
@@ -25,8 +22,9 @@ model_method = __import__("models." + config_data.model, fromlist=[None])
 func1 = getattr(model_method, "return_model")
 model = func1(DataCluster.num_features())
 
-neuralnetwork = SiFiCCNNTF.SiFiCCNNTF(model,
-                                      "DenseBase")
+neuralnetwork = SiFiCCNNTF.SiFiCCNNTF(model=model,
+                                      model_name=config_data.model,
+                                      model_tag=config_data.modeltag)
 
 # evaluate training strategy expression
 trainingstrategy_method = __import__("trainingstrategy." + config_data.training_strategy, fromlist=[None])
