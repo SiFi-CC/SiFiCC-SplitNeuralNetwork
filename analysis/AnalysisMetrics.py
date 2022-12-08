@@ -59,9 +59,9 @@ def analysis(SiFiCCNN, DataCluster, MetaData=None):
 
     with open(dir_results + "/metrics.txt", 'w') as f:
         f.write("### AnalysisMetric results:\n")
-        f.write("AUC score: {:.3f}".format(auc))
-        f.write("Threshold: {:.3f}".format(theta))
-        f.write("Accuracy: {:.1f}".format((TP + TN) / (TP + TN + FP + FN) * 100))
-        f.write("Efficiency: {:.1f}%".format(efficiency * 100))
-        f.write("Purity: {:.1f}%".format(purity * 100))
-        f.write("TP: {} | TN: {} | FP: {} | FN: {}".format(TP, TN, FP, FN))
+        f.write("AUC score: {:.3f}\n".format(auc))
+        f.write("Threshold: {:.3f}\n".format(theta))
+        f.write("Accuracy: {:.1f}\n".format((TP + TN) / (TP + TN + FP + FN) * 100))
+        f.write("Efficiency: {:.1f}%\n".format(efficiency * 100))
+        f.write("Purity: {:.1f}%\n".format(purity * 100))
+        f.write("TP: {} | TN: {} | FP: {} | FN: {}\n".format(TP, TN, FP, FN))
