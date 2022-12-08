@@ -7,13 +7,14 @@ import matplotlib.pyplot as plt
 ################################################################################################################
 
 
-def fastROCAUC(y_pred, y_true, weighted=False, results=False):
+def fastROCAUC(y_pred, y_true, weighted=False, return_score=False, save_fig=None):
     """
 
     :param y_pred: Predicted probabilities of shape [n,1]
     :param y_true: True probabilities of shape [n,1]
     :param weighted: True: use y_pred as weights for AUC Score
-    :param results: True: returns results: AUC Score
+    :param return_score: True: returns results: AUC Score
+    :param save_fig: str: saves ROC courve plot
     :return:
     """
 
@@ -125,9 +126,9 @@ def fastROCAUC(y_pred, y_true, weighted=False, results=False):
     print("Best threshold: {:.3f}".format(theta))
     print("Accuracy: {:.1f}".format(acc * 100))
 
-    if results:
+    if return_score:
         return auc_score, theta
-    else:
+    if save_fig is not None:
         print("Plotting ROC curve and {}...".format(auc_label))
         plt.figure()
         plt.title("ROC Curve | " + auc_label)
@@ -139,5 +140,4 @@ def fastROCAUC(y_pred, y_true, weighted=False, results=False):
         plt.xlabel("False Positive Rate")
         plt.ylabel("True Positive Rate")
         plt.legend()
-        # plt.savefig(output_directory + version + "_" + method_label + "_" + tag + "_ROCCurve" + ".png")
-        plt.show()
+        plt.savefig(save_fig)

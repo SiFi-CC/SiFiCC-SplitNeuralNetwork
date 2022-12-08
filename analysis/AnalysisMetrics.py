@@ -7,7 +7,7 @@ def analysis(SiFiCCNN, DataCluster, MetaData=None):
     y_true = DataCluster.y_test()
 
     # run ROC curve and AUC score analysis
-    auc, theta = fastROCAUC(y_pred, y_true, results=True)
+    auc, theta = fastROCAUC(y_pred, y_true, return_score=True)
 
     # best optimal threshold
     threshold = theta
