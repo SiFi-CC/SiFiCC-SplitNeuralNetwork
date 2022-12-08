@@ -8,10 +8,17 @@ InputGeneratorDenseBase
 ModelDenseBase
 
 # Method containing TrainingStrategy
-TrainingStrategyDenseBase
+TrainingStrategyEnergyWeights
 
 # Method containing Analysis models (can be more, separated by comma)
 AnalysisMetrics
+
+#############################################################################
+### Neural Network settings
+#############################################################################
+
+# Model nametag (model base name will be given by the model method)
+energyweights
 
 # No. of Epochs
 10
