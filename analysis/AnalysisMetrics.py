@@ -1,4 +1,5 @@
 def analysis(SiFiCCNN, DataCluster, MetaData=None):
+    import os
     from fastROCAUC import fastROCAUC
 
     # predict test set
@@ -49,3 +50,18 @@ def analysis(SiFiCCNN, DataCluster, MetaData=None):
     print("Efficiency: {:.1f}%".format(efficiency * 100))
     print("Purity: {:.1f}%".format(purity * 100))
     print("TP: {} | TN: {} | FP: {} | FN: {}".format(TP, TN, FP, FN))
+
+    # save results in txt file
+    dir_main = os.getcwd()
+    dir_results = dir_main + "/results/" + SiFiCCNN.model_name + SiFiCCNN.model_tag
+    if not os.path.isdir(dir_results):
+        os.mkdir(dir_results)
+
+    with open(dir_results + "/metrics.txt", 'w') as f:
+        f.write("### AnalysisMetric results:\n")
+        f.write("AUC score: {:.3f}".format(auc))
+        f.write("Threshold: {:.3f}".format(theta))
+        f.write("Accuracy: {:.1f}".format((TP + TN) / (TP + TN + FP + FN) * 100))
+        f.write("Efficiency: {:.1f}%".format(efficiency * 100))
+        f.write("Purity: {:.1f}%".format(purity * 100))
+        f.write("TP: {} | TN: {} | FP: {} | FN: {}".format(TP, TN, FP, FN))
