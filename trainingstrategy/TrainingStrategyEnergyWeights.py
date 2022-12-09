@@ -1,4 +1,8 @@
 def train_strategy(SiFiCCNN, DataCluster):
+    # update training-valid ration to increase validation set
+    DataCluster.p_train = 0.6
+    DataCluster.p_valid = 0.2
+    
     # standardize input
     DataCluster.standardize()
 
