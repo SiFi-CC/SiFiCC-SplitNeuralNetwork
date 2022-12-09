@@ -94,6 +94,6 @@ def event_display(RootParser, n=1):
 
     # plot source axis
     ax.plot3D([0, 270 + 46.8 / 2], [0, 0], [0, 0], color="black", linestyle="--")
-    ax.set_title("Display: Event {} ({}, Type {})".format(n, ic_tag, event.MCSimulatedEventType))
+    ax.set_title("Display: Event {} ({},\nType {},\nEnergy {:.2f})".format(n, ic_tag, event.MCSimulatedEventType, event.MCEnergy_Primary))
     # plt.legend()
     plt.show()

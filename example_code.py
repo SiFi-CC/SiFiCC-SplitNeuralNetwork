@@ -1,6 +1,7 @@
 import numpy as np
 import os
 
+import classes.utilities
 from classes import RootParser
 from classes import root_files
 
@@ -19,11 +20,15 @@ root1 = RootParser(dir_main + root_files.OptimisedGeometry_BP0mm_2e10protons_off
 root2 = RootParser(dir_main + root_files.OptimisedGeometry_BP5mm_4e9protons_offline)
 # root2.export_npz(dir_npz + "OptimisedGeometry_BP5mm_4e9protons.npz")
 
-from inputgenerator.InputGeneratorEnergyWeights import gen_input
-gen_input(root1)
 
 """
+from inputgenerator.InputGeneratorEnergyWeights import gen_input
+gen_input(root1)
+"""
+
 from scripts import event_display
+
+# event_display.event_display(root1, 1534607)
 
 counter = 0
 while counter < 10:
@@ -33,9 +38,9 @@ while counter < 10:
     # conditions
     if not event.is_ideal_compton:
         continue
+    """
     if event.MCEnergy_Primary > 4.6 or event.MCEnergy_Primary < 4.2:
         continue
-
+    """
     event_display.event_display(root1, n=i)
     counter += 1
-"""
