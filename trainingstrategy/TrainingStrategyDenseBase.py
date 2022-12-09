@@ -1,9 +1,16 @@
 def train_strategy(SiFiCCNN, DataCluster):
+    # update training-valid ration to increase validation set
+    DataCluster.p_train = 0.6
+    DataCluster.p_valid = 0.2
+
     # set class weights as sample weights
     DataCluster.set_classweights()
 
     # standardize input
     DataCluster.standardize()
+
+    SiFiCCNN.epochs = 20
+    SiFiCCNN.batch_size = 256
 
     # train model
     SiFiCCNN.train(DataCluster.x_train(),
