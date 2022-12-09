@@ -44,6 +44,7 @@ def gen_input(RootParser):
     ary_meta = np.zeros(shape=(n_events,))
 
     # main iteration over root file
+    k = 0
     for i, event in enumerate(RootParser.iterate_events(n=None)):
         if not event.MCEnergy_Primary >= 3.0:
             continue
@@ -74,20 +75,21 @@ def gen_input(RootParser):
                                                      event.RecoClusterPosition[idx].z]
 
         # fill scatterer absorber features first
-        ary_features[i, :5 * n_cluster_scatterer] = ary_feat_scatterer
-        ary_features[i, 5 * n_cluster_scatterer:5 * n_cluster_scatterer + 5 * n_cluster_absorber] = ary_feat_absorber
+        ary_features[k, :5 * n_cluster_scatterer] = ary_feat_scatterer
+        ary_features[k, 5 * n_cluster_scatterer:5 * n_cluster_scatterer + 5 * n_cluster_absorber] = ary_feat_absorber
         # fill cluster counts, if not used, filled with 0 and removed later
-        ary_features[i, 5 * n_cluster:5 * n_cluster + 2] = np.array([len(idx_scatterer), len(idx_absorber)])
+        ary_features[k, 5 * n_cluster:5 * n_cluster + 2] = np.array([len(idx_scatterer), len(idx_absorber)])
 
         # target: ideal compton events tag
-        ary_targets[i] = event.is_ideal_compton * 1
+        ary_targets[k] = event.is_ideal_compton * 1
 
         # energy weighting: first only primary energy is stored
-        ary_w[i] = 1
+        ary_w[k] = 1
 
         # write global event number
-        ary_meta[i] = event.EventNumber
-
+        ary_meta[k] = event.EventNumber
+        k += 1
+        
     """
     p_train = 0.7
     p_test = 0.2
