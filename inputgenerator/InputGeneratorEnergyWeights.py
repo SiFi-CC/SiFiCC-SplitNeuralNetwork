@@ -45,7 +45,7 @@ def gen_input(RootParser):
 
     # main iteration over root file
     for i, event in enumerate(RootParser.iterate_events(n=None)):
-        if event.MCEnergy_Primary < 3.0:
+        if not event.MCEnergy_Primary >= 3.0:
             continue
 
         # get indices of clusters sorted by highest energy and module
