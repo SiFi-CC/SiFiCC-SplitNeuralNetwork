@@ -32,7 +32,10 @@ def gen_input(RootParser):
     num_features = 2  # starting at 2 for cluster counts in each module
     num_features += 5 * n_cluster_scatterer + 5 * n_cluster_absorber
     n_cluster = n_cluster_scatterer + n_cluster_absorber
-    n_events = RootParser.events_entries
+
+    # determine number of valid entries
+    ary_mcenergy_primary = RootParser.events["MCEnergy_Primary"].array()
+    n_events = np.sum((ary_mcenergy_primary >= 3.0)*1)
 
     # create empty arrays for storage
     ary_features = np.zeros(shape=(n_events, num_features))
@@ -42,6 +45,8 @@ def gen_input(RootParser):
 
     # main iteration over root file
     for i, event in enumerate(RootParser.iterate_events(n=None)):
+        if event.MCEnergy_Primary < 3.0:
+            continue
 
         # get indices of clusters sorted by highest energy and module
         idx_scatterer, idx_absorber = event.sort_clusters_by_module(use_energy=True)
@@ -78,7 +83,7 @@ def gen_input(RootParser):
         ary_targets[i] = event.is_ideal_compton * 1
 
         # energy weighting: first only primary energy is stored
-        ary_w[i] = event.MCEnergy_Primary
+        ary_w[i] = 1
 
         # write global event number
         ary_meta[i] = event.EventNumber
@@ -105,10 +110,7 @@ def gen_input(RootParser):
     class_weights = [len(ary_targets) / (2 * counts[0]), len(ary_targets) / (2 * counts[1])]
 
     for i in range(len(ary_w)):
-        if ary_w[i] > 3.0:
-            ary_w[i] = class_weights[int(ary_targets[i])]
-        else:
-            ary_w[i] = 0
+        ary_w[i] = class_weights[int(ary_targets[i])]
 
     # save final output file
     with open(dir_npz + gen_name + "_" + RootParser.file_name + ".npz", 'wb') as f_output:
