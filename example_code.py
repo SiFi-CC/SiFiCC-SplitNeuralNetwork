@@ -21,11 +21,14 @@ root2 = RootParser(dir_main + root_files.OptimisedGeometry_BP5mm_4e9protons_offl
 # root2.export_npz(dir_npz + "OptimisedGeometry_BP5mm_4e9protons.npz")
 
 
-"""
-from inputgenerator.InputGeneratorEnergyWeights import gen_input
+from inputgenerator.InputGeneratorEnergyCut import gen_input
 gen_input(root1)
-"""
 
+npz_data = np.load(dir_npz + "NNInputDenseBaseEnergyCut_OptimisedGeometry_BP0mm_2e10protons.npz")
+ary_features = npz_data["features"]
+print(ary_features)
+
+"""
 from scripts import event_display
 
 # event_display.event_display(root1, 1534607)
@@ -36,11 +39,14 @@ while counter < 10:
     event = root1.get_event(i)
 
     # conditions
-    if not event.is_ideal_compton:
+    if event.is_ideal_compton:
         continue
-    """
+    if event.MCSimulatedEventType != 2:
+        continue
+
     if event.MCEnergy_Primary > 4.6 or event.MCEnergy_Primary < 4.2:
         continue
-    """
+            
     event_display.event_display(root1, n=i)
     counter += 1
+"""

@@ -17,7 +17,9 @@ def gen_input(RootParser):
 
     ####################################################################################################################
     # global settings for easier on the fly changes
-    gen_name = "NNInputDenseBaseEnergyWeights"
+    gen_name = "NNInputDenseBaseEnergyCut"
+
+    E_CUT = 1.5
 
     n_cluster_scatterer = 3
     n_cluster_absorber = 5
@@ -34,8 +36,12 @@ def gen_input(RootParser):
     n_cluster = n_cluster_scatterer + n_cluster_absorber
 
     # determine number of valid entries
-    ary_mcenergy_primary = RootParser.events["MCEnergy_Primary"].array()
-    n_events = np.sum((ary_mcenergy_primary >= 3.0)*1)
+    ary_recoenergy = RootParser.events["RecoClusterEnergies.value"].array()
+    ary_recoenergy_sum = np.zeros(shape=(ary_recoenergy.shape[0],))
+    for i in range(ary_recoenergy.shape[0]):
+        ary_recoenergy_sum[i] = np.sum(ary_recoenergy[i])
+
+    n_events = np.sum((ary_recoenergy_sum >= E_CUT) * 1)
 
     # create empty arrays for storage
     ary_features = np.zeros(shape=(n_events, num_features))
@@ -46,7 +52,7 @@ def gen_input(RootParser):
     # main iteration over root file
     k = 0
     for i, event in enumerate(RootParser.iterate_events(n=None)):
-        if not event.MCEnergy_Primary >= 3.0:
+        if not np.sum(event.RecoClusterEnergies_values) >= E_CUT:
             continue
 
         # get indices of clusters sorted by highest energy and module
@@ -83,7 +89,7 @@ def gen_input(RootParser):
         # target: ideal compton events tag
         ary_targets[k] = event.is_ideal_compton * 1
 
-        # energy weighting: first only primary energy is stored
+        # energy weighting: kept emtpy for now
         ary_w[k] = 1
 
         # write global event number
@@ -105,14 +111,6 @@ def gen_input(RootParser):
     ary_idx_valid = idx[stop1:stop2]
     ary_idx_test = idx[stop2:]
     """
-
-    # define class weights
-    max_e = 17.0
-    _, counts = np.unique(ary_targets, return_counts=True)
-    class_weights = [len(ary_targets) / (2 * counts[0]), len(ary_targets) / (2 * counts[1])]
-
-    for i in range(len(ary_w)):
-        ary_w[i] = class_weights[int(ary_targets[i])]
 
     # save final output file
     with open(dir_npz + gen_name + "_" + RootParser.file_name + ".npz", 'wb') as f_output:
