@@ -11,7 +11,7 @@ ModelDenseBase
 TrainingStrategyDenseBase
 
 # Method containing Analysis models (can be more, separated by comma)
-AnalysisMetrics, AnalysisHistory, AnalysisAUCROC
+AnalysisMetrics, AnalysisHistory, AnalysisAUCROC, AnalysisFeatureDist
 
 #############################################################################
 ### Neural Network settings
