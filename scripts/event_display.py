@@ -29,12 +29,6 @@ def event_display(RootParser, n=1):
     # print event summary
     print_event_summary(RootParser, n)
 
-    # ideal compton event tag
-    if event.is_ideal_compton:
-        ic_tag = "Ideal Compton"
-    else:
-        ic_tag = "Background"
-
     # get detector edges
     list_edge_scatterer = edge_list(RootParser.scatterer.pos.x,
                                     RootParser.scatterer.pos.y,
@@ -65,9 +59,9 @@ def event_display(RootParser, n=1):
     ax.set_xlim(-100, 400)
     ax.set_ylim(-100, 100)
     ax.set_zlim(-100, 100)
-    ax.set_xlabel("x-axis (Detector-direction)")
-    ax.set_ylabel("y-axis (Fibre-direction)")
-    ax.set_zlabel("z-axis (Shift-direction)")
+    ax.set_xlabel("x-axis [mm]")
+    ax.set_ylabel("y-axis [mm]")
+    ax.set_zlabel("z-axis [mm]")
     # plot detector edges
     for i in range(len(list_edge_scatterer)):
         ax.plot3D(list_edge_scatterer[i][0], list_edge_scatterer[i][1], list_edge_scatterer[i][2], color="blue")
@@ -94,6 +88,15 @@ def event_display(RootParser, n=1):
 
     # plot source axis
     ax.plot3D([0, 270 + 46.8 / 2], [0, 0], [0, 0], color="black", linestyle="--")
-    ax.set_title("Display: Event {} ({},\nType {},\nEnergy {:.2f})".format(n, ic_tag, event.MCSimulatedEventType, event.MCEnergy_Primary))
+    # title string
+    dict_type = {2: "Real Coincidence",
+                 3: "Random Coincidence",
+                 5: "Real Coincidence + Pile-Up",
+                 6: "Random Coincidence + Pile-Up"}
+    dict_tag = {0: "Background",
+                1: "Ideal Compton"}
+    ax.set_title("Display: Event {} (Id: {})\nType: {}, {}\nEnergy e/p: {:.2f} MeV / {:.2f} MeV\nPrimary Energy: {:.2f} MeV".format(n,
+                 event.EventNumber, dict_type[event.MCSimulatedEventType], dict_tag[event.is_ideal_compton * 1],
+                 event.MCEnergy_e, event.MCEnergy_p, event.MCEnergy_Primary))
     # plt.legend()
     plt.show()
