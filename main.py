@@ -2,6 +2,7 @@ from classes import ArgParser
 from classes import ConfigFileParser
 from classes import NPZParser
 from classes import SiFiCCNNTF
+from classes import MetaData
 
 import models
 
@@ -16,6 +17,7 @@ else:
 ########################################################################################################################
 
 DataCluster = NPZParser.parse(config_data.nninput)
+meta_data = MetaData.MetaData(config_data.metadata)
 
 # evaluate model expression
 model_method = __import__("models." + config_data.model, fromlist=[None])
@@ -36,4 +38,4 @@ func2(neuralnetwork, DataCluster)
 for i in range(len(config_data.analysis)):
     analysis_method = __import__("analysis." + config_data.analysis[i], fromlist=[None])
     analysis = getattr(analysis_method, "analysis")
-    analysis(neuralnetwork, DataCluster)
+    analysis(neuralnetwork, DataCluster, meta_data)
