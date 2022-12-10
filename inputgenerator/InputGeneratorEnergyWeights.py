@@ -89,7 +89,7 @@ def gen_input(RootParser):
         # write global event number
         ary_meta[k] = event.EventNumber
         k += 1
-        
+
     """
     p_train = 0.7
     p_test = 0.2

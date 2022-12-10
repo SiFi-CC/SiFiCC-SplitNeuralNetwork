@@ -29,7 +29,7 @@ hist, _ = np.histogram(ary_mc[:, 0], bins=bins)
 
 fig, axs = plt.subplots(2, 1)
 axs[0].set_xlim(0.0, max_e + 1.0)
-axs[0].hist(ary_mc[:, 0], bins=bins, histtype=u"step", color="black", label="MCEnergyPrimary")
+axs[0].hist(ary_mc[:, 1] + ary_mc[:, 2], bins=bins, histtype=u"step", color="black", label="MCEnergyPrimary")
 axs[0].legend()
 # axs[1].hlines(xmin=0.0, xmax=21.0, y=len(ary_mc[:, 0]) / (len(bins) - 1), color="blue", linestyles="--")
 axs[1].set_xlim(0.0, max_e + 1.0)
