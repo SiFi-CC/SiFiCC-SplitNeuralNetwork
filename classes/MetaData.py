@@ -12,6 +12,7 @@ class MetaData:
         # cluster reco data is disabled as it is rather large and rarely used
         # self.cluster_reco = npz_data["CLUSTER_RECO"]
         self.cb_reco = npz_data["CB_RECO"]
+        self.event_entries = self.meta.shape[0]
 
     def event_number(self):
         return self.meta[:, 0]
@@ -24,6 +25,12 @@ class MetaData:
 
     def mc_primary_energy(self):
         return self.mc_true[:, 0]
+
+    def mc_energy_e(self):
+        return self.mc_true[:, 1]
+
+    def mc_energy_p(self):
+        return self.mc_true[:, 2]
 
     def mc_source_position_z(self):
         return self.mc_true[:, 5]
