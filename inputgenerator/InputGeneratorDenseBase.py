@@ -38,7 +38,7 @@ def gen_input(RootParser):
     ary_features = np.zeros(shape=(n_events, num_features))
     ary_targets = np.zeros(shape=(n_events,))
     ary_w = np.zeros(shape=(n_events,))
-    ary_meta = np.zeros(shape=(n_events,))
+    ary_meta = np.zeros(shape=(n_events, 2))
 
     # main iteration over root file
     for i, event in enumerate(RootParser.iterate_events(n=None)):
@@ -78,10 +78,10 @@ def gen_input(RootParser):
         ary_targets[i] = event.is_ideal_compton * 1
 
         # energy weighting: first only primary energy is stored
-        ary_w[i] = event.MCEnergy_Primary
+        ary_w[i] = 1.0
 
         # write global event number
-        ary_meta[i] = event.EventNumber
+        ary_meta[i, :] = [event.EventNumber, event.MCEnergy_Primary]
 
     """
     p_train = 0.7
@@ -98,22 +98,6 @@ def gen_input(RootParser):
     ary_idx_valid = idx[stop1:stop2]
     ary_idx_test = idx[stop2:]
     """
-
-    # define class weights
-    max_e = 17.0
-    _, counts = np.unique(ary_targets, return_counts=True)
-    class_weights = [len(ary_targets) / (2 * counts[0]), len(ary_targets) / (2 * counts[1])]
-
-    # calculate energy weights
-    bins = np.concatenate([np.arange(0.0, max_e + 0.1, 0.1), [int(max(ary_w))]])
-    hist, _ = np.histogram(ary_w, bins=bins)
-
-    for i in range(len(ary_w)):
-        for j in range(len(bins) - 1):
-            if bins[j] < ary_w[i] < bins[j + 1]:
-                energy_weight = RootParser.events_entries / (len(bins) - 1) / hist[j]
-                ary_w[i] = energy_weight * class_weights[int(ary_targets[i])]
-                break
 
     # save final output file
     with open(dir_npz + gen_name + "_" + RootParser.file_name + ".npz", 'wb') as f_output:

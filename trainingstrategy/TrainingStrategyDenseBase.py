@@ -4,7 +4,7 @@ def train_strategy(SiFiCCNN, DataCluster):
     DataCluster.p_valid = 0.2
 
     # set class weights as sample weights
-    DataCluster.set_classweights()
+    DataCluster.weights *= DataCluster.get_classweights()
 
     # standardize input
     DataCluster.standardize()

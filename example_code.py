@@ -21,12 +21,13 @@ root2 = RootParser(dir_main + root_files.OptimisedGeometry_BP5mm_4e9protons_offl
 # root2.export_npz(dir_npz + "OptimisedGeometry_BP5mm_4e9protons.npz")
 
 
-from inputgenerator.InputGeneratorEnergyCut import gen_input
+from inputgenerator.InputGeneratorDenseBase import gen_input
 gen_input(root1)
+gen_input(root2)
 
-npz_data = np.load(dir_npz + "NNInputDenseBaseEnergyCut_OptimisedGeometry_BP0mm_2e10protons.npz")
-ary_features = npz_data["features"]
-print(ary_features)
+npz_data = np.load(dir_npz + "NNInputDenseBase_OptimisedGeometry_BP0mm_2e10protons.npz")
+ary_meta = npz_data["META"]
+print(ary_meta)
 
 """
 from scripts import event_display

@@ -58,10 +58,30 @@ class DataCluster:
         for i in range(self.features.shape[1]):
             self.features[:, i] = (self.features[:, i] - np.mean(self.features[:, i])) / np.std(self.features[:, i])
 
-    def set_classweights(self):
+    def get_classweights(self):
         # set sample weights to class weights
         _, counts = np.unique(self.targets, return_counts=True)
         class_weights = [len(self.targets) / (2 * counts[0]), len(self.targets) / (2 * counts[1])]
 
+        ary_weights = np.ones(shape=(self.targets.shape[0],))
         for i in range(len(self.targets)):
-            self.weights[i] = class_weights[int(self.targets[i])]
+            ary_weights[i] = class_weights[int(self.targets[i])]
+
+        return class_weights
+
+    def get_energyweights(self):
+        # grab energies from meta data
+        ary_mc_energy_primary = self.meta[:, 1]
+
+        # set manual energy bins and weights
+        bins = np.array([0.0, 2.5, 4.3, 4.5, 8.0, int(max(ary_mc_energy_primary))])
+        ary_energy_weights = np.array([0.1, 1.0, 5.0, 3.0, 5.0])
+
+        ary_w = np.ones(shape=(self.targets.shape[0],))
+        for i in range(len(ary_w)):
+            for j in range(len(bins) - 1):
+                if bins[j] < ary_mc_energy_primary[i] < bins[j + 1]:
+                    ary_w[i] = ary_energy_weights[j]
+                    break
+
+        return ary_w
