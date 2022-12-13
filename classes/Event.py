@@ -243,4 +243,19 @@ class Event:
             else:
                 return -1
 
+    def get_prime_vector(self):
+        idx_scatterer, _ = self.sort_clusters_by_module(use_energy=True)
+        return self.RecoClusterPosition[idx_scatterer[0]]
+
+    def get_relative_vector(self, tvec3, subtract_prime=True):
+        tvec3_prime = self.get_prime_vector()
+        # subtract prime vector
+        if subtract_prime:
+            tvec3 = tvec3 - tvec3_prime
+        # rotate tvec3 so that the prime vector aligns with the x-axis
+        tvec3 = tvec3.rotatez(-tvec3_prime.phi).rotatey(-tvec3_prime.theta + np.pi / 2)
+
+        return tvec3
+
+
     ####################################################################################################################
