@@ -43,6 +43,14 @@ def analysis(SiFiCCNN, DataCluster, MetaData=None):
     else:
         purity = TP / (TP + FP)
 
+    ### TEMPRORARY
+    # grab non identified ideal compton event event-numbers
+    list_FN = []
+    ary_eventnumber = MetaData.event_number()[DataCluster.idx_test()]
+    for i in range(len(ary_eventnumber)):
+        if y_pred[i] == 0 and y_true[i] == 1:
+            list_FN.append(ary_eventnumber[i])
+
     print("\nClassification results: ")
     print("AUC score: {:.3f}".format(auc))
     print("Threshold: {:.3f}".format(theta))
@@ -65,3 +73,6 @@ def analysis(SiFiCCNN, DataCluster, MetaData=None):
         f.write("Efficiency: {:.1f}%\n".format(efficiency * 100))
         f.write("Purity: {:.1f}%\n".format(purity * 100))
         f.write("TP: {} | TN: {} | FP: {} | FN: {}\n".format(TP, TN, FP, FN))
+        f.write("\n")
+        for i in range(20):
+            f.write(str(list_FN[i]) + "\n")
