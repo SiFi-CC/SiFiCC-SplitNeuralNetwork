@@ -52,11 +52,11 @@ def gen_input(RootParser):
 
         # fill prime vector
         idx = idx_scatterer[0]
-        ary_feat_scatterer[0, :] = [event.RecoClusterEntries[idx],
-                                    event.RecoClusterEnergies_values[idx],
-                                    event.RecoClusterPosition[idx].mag,
-                                    event.RecoClusterPosition[idx].phi,
-                                    event.RecoClusterPosition[idx].theta]
+        ary_feat_scatterer[0:4] = [event.RecoClusterEntries[idx],
+                                   event.RecoClusterEnergies_values[idx],
+                                   event.RecoClusterPosition[idx].mag,
+                                   event.RecoClusterPosition[idx].phi,
+                                   event.RecoClusterPosition[idx].theta]
 
         for j, idx in enumerate(idx_scatterer[1:]):
             if j >= n_cluster_scatterer - 1:
