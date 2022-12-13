@@ -67,7 +67,7 @@ class DataCluster:
         for i in range(len(self.targets)):
             ary_weights[i] = class_weights[int(self.targets[i])]
 
-        return class_weights
+        return ary_weights
 
     def get_energyweights(self):
         # grab energies from meta data
