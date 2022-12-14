@@ -17,7 +17,7 @@ def gen_input(RootParser):
 
     ####################################################################################################################
     # global settings for easier on the fly changes
-    gen_name = "NNInputDenseBase"
+    gen_name = "NNInputDenseDistributed"
 
     n_cluster_scatterer = 3
     n_cluster_absorber = 5
