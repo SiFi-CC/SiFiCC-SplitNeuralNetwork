@@ -95,8 +95,10 @@ def event_display(RootParser, n=1):
                  6: "Random Coincidence + Pile-Up"}
     dict_tag = {0: "Background",
                 1: "Ideal Compton"}
-    ax.set_title("Display: Event {} (Id: {})\nType: {}, {}\nEnergy e/p: {:.2f} MeV / {:.2f} MeV\nPrimary Energy: {:.2f} MeV".format(n,
-                 event.EventNumber, dict_type[event.MCSimulatedEventType], dict_tag[event.is_ideal_compton * 1],
-                 event.MCEnergy_e, event.MCEnergy_p, event.MCEnergy_Primary))
+    ax.set_title(
+        "Display: Event {} (Id: {})\nType: {}, {}\nEnergy e/p: {:.2f} MeV / {:.2f} MeV\nPrimary Energy: {:.2f} MeV\nTotal cluster energy: {:.2f} MeV".format(
+            n,
+            event.EventNumber, dict_type[event.MCSimulatedEventType], dict_tag[event.is_ideal_compton * 1],
+            event.MCEnergy_e, event.MCEnergy_p, event.MCEnergy_Primary, np.sum(event.RecoClusterEnergies_values)))
     # plt.legend()
     plt.show()
