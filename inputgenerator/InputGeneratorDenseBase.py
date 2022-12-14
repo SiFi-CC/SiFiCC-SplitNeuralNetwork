@@ -81,7 +81,7 @@ def gen_input(RootParser):
         ary_w[i] = 1.0
 
         # write global event number
-        ary_meta[i, :] = [event.EventNumber, event.MCEnergy_Primary]
+        ary_meta[i, :] = [event.EventNumber, np.sum(event.RecoClusterEnergies_values)]
 
     """
     p_train = 0.7
