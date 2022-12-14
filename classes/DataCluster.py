@@ -85,3 +85,30 @@ class DataCluster:
                     break
 
         return ary_w
+
+    def update_energy_range(self, e_min, e_max):
+        """
+        updates feature and target data based on energy range. Needs total cluster energy as meta[:,2] entry
+
+        Args:
+            e_min:
+            e_max:
+
+        return:
+            None
+        """
+
+        # determine which rows need to be deleted
+        list_idx = []
+        for i in range(len(self.targets)):
+            if not e_min < self.meta[i, 2] < e_max:
+                list_idx.append(i)
+        # update features, targets and weights
+        self.features = np.delete(self.features, obj=np.array(list_idx), axis=0)
+        self.targets = np.delete(self.targets, obj=np.array(list_idx), axis=0)
+        self.weights = np.delete(self.weights, obj=np.array(list_idx), axis=0)
+
+        # reshuffle the train-test indexing
+        self.ary_idx = np.arange(0, len(self.targets), 1.0, dtype=int)
+        rng = np.random.default_rng(42)
+        rng.shuffle(self.ary_idx)
