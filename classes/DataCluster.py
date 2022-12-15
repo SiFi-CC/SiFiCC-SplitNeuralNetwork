@@ -123,8 +123,8 @@ class DataCluster:
 
         # update features, targets and weights
         self.features = self.features[n_cluster_scatterer == 1, :]
-        self.targets = self.targets[n_cluster_scatterer == 1, :]
-        self.weights = self.weights[n_cluster_scatterer == 1, :]
+        self.targets = self.targets[n_cluster_scatterer == 1]
+        self.weights = self.weights[n_cluster_scatterer == 1]
 
         # reshuffle the train-test indexing
         self.ary_idx = np.arange(0, len(self.targets), 1.0, dtype=int)
