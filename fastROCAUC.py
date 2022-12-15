@@ -120,11 +120,13 @@ def fastROCAUC(y_pred, y_true, weighted=False, return_score=False, save_fig=None
         # multiply result by -1, since x values are ordered from highest to lowest
         auc_score += area * (-1)
 
+    """ 
     # results
     print("### AUC Results: ###")
     print("AUC Score: ", auc_score)
     print("Best threshold: {:.3f}".format(theta))
-    print("Accuracy: {:.1f}".format(acc * 100))
+    print("Accuracy: {:.1f}".format(acc * 100)
+    """
 
     if return_score:
         return auc_score, theta
