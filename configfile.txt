@@ -13,6 +13,12 @@ TrainingStrategyDenseBase
 # Method containing Analysis models (can be more, separated by comma)
 AnalysisMetrics, AnalysisHistory, AnalysisAUCROC, AnalysisFeatureDist
 
+# Load model
+0
+
+# generate neural network input only
+0
+
 #############################################################################
 ### Neural Network settings
 #############################################################################

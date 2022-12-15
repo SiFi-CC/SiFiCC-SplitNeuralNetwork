@@ -13,6 +13,8 @@ def parse(argcf):
     # # Method containing Analysis models
     #
     # # Model nametag
+    # # Generate input only
+    # # load model
     #
     # # Epochs
     # # Batch size
@@ -33,10 +35,15 @@ def parse(argcf):
     param_analysis = "AnalysisMetrics"
 
     param_modeltag = ""
+    param_loadmodel = 0
+    param_geninput = 0
 
     param_epochs = 10
     param_batchsize = 128
     param_verbose = 1
+
+    ####################################################################################################################
+    # config file readout
 
     # read config file and split config file string into list
     config_file = argcf.read()
@@ -50,62 +57,87 @@ def parse(argcf):
         if row[0] == "#":
             # Test each config file input and determine their parameter
             if "Name of the origin root file" in row:
-                # locate the origin root file
-                # if the file is not found, the configfile parser will be stopped
-                # if the corresponding npz file for meta-data found it will be generated
                 param_rootfile = list_config[i + 1]
+                # break condition if file is not found
                 if not os.path.exists(dir_main + "/root_files/" + param_rootfile):
                     print("ERROR: Root file not found at ", dir_main + "/root_files/" + param_rootfile)
-                    break
-                else:
-                    print("RootFile: ", param_rootfile)
-
-                    # check if corresponding .npz file exists
-                    if not os.path.exists(dir_main + "/npz_files/" + param_rootfile[:-5] + ".npz"):
-                        print("ERROR: npz file not found at ", dir_main + "/root_files/" + param_rootfile[:-5] + ".npz")
-                        print("Corresponding .npz file will be generated from ", param_rootfile)
-                    else:
-                        print("npz file: ", param_rootfile[:-5] + ".npz")
+                    return None
 
             if "Method containing input generator" in row:
                 param_inputgenerator = list_config[i + 1]
-                # TODO: logic
+                # break condition if file is not found
+                if not os.path.exists(dir_main + "/inputgenerator/" + param_inputgenerator + ".py"):
+                    print("ERROR: File not found at ",
+                          dir_main + "/inputgenerator/" + param_inputgenerator + ".py")
+                    return None
 
             if "Method containing Neural-Network model" in row:
                 param_model = list_config[i + 1]
-                # TODO: logic
+                # break condition if file is not found
+                if not os.path.exists(dir_main + "/models/" + param_model + ".py"):
+                    print("ERROR: File not found at ",
+                          dir_main + "/models/" + param_model + ".py")
+                    return None
 
             if "Method containing trainingstrategy" in row:
                 param_trainingstrategy = list_config[i + 1]
-                # TODO: logic
+                # break condition if file is not found
+                if not os.path.exists(dir_main + "/trainingstrategy/" + param_trainingstrategy + ".py"):
+                    print("ERROR: File not found at ",
+                          dir_main + "/trainingstrategy/" + param_trainingstrategy + ".py")
+                    return None
 
             if "Method containing Analysis models" in row:
                 param_analysis = list_config[i + 1]
-                # TODO: add support for multiple inputs in form of list
+                # evaluate analysis parameter
+                param_analysis = param_analysis.split(",")
+                for j in range(len(param_analysis)):
+                    param_analysis[j] = param_analysis[j].replace(" ", "")
+                    if not os.path.exists(dir_main + "/analysis/" + param_analysis[j] + ".py"):
+                        print("ERROR: File not found at ",
+                              dir_main + "/analysis/" + param_analysis[j] + ".py")
+                        continue
+
 
             # model name tag
             if "Model nametag" in row:
                 param_modeltag = list_config[i + 1]
 
+            # load model param (0: do not load model, 1: load model and test only)
+            if "Load model" in row:
+                param_loadmodel = int(list_config[i + 1])
+                # TODO: check if value is valid, else use base value
+
+            # param_geninput: (0: missing files will be generated and trained, 1: files will only be generated)
+            if "generate neural network input only" in row:
+                param_geninput = int(list_config[i + 1])
+                # TODO: check if value is valid, else use base value
+
             # loose parameter
             if "No. of Epochs" in row:
                 param_epochs = list_config[i + 1]
-                # TODO: logic
+                # TODO: check if value is valid, else use base value
 
             # loose parameter
             if "batch size" in row:
                 param_batchsize = list_config[i + 1]
-                # TODO: logic
+                # TODO: check if value is valid, else use base value
 
             # loose parameter
             if "Verbose" in row:
                 param_verbose = list_config[i + 1]
-                # TODO: logic
+                # TODO: check if value is valid, else use base value
 
-    # evaluate analysis parameter
-    param_analysis = param_analysis.split(",")
-    for i in range(len(param_analysis)):
-        param_analysis[i] = param_analysis[i].replace(" ", "")
+    ####################################################################################################################
+    # parameter evaluation logic
+
+    # check if meta data npz file corresponding to the given root file
+    if not os.path.exists(dir_main + "/npz_files/" + param_rootfile[:-5] + ".npz"):
+        print("Generating meta data file at: ", dir_main + "/root_files/" + param_rootfile)
+
+        from classes.RootParser import RootParser
+        root_data = RootParser(param_rootfile)
+        root_data.export_npz(dir_main + "/npz_files/" + param_rootfile[:-5] + ".npz")
 
     # build configfile domain object
     config_data = ConfigData.ConfigData(root_file=param_rootfile,

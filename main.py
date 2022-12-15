@@ -4,18 +4,10 @@ from classes import NPZParser
 from classes import SiFiCCNNTF
 from classes import MetaData
 
-import models
-
-args = ArgParser.parser()
-
-if args.cf is not None:
-    print("Config file found!")
-    config_data = ConfigFileParser.parse(args.cf)
-else:
-    print("No configfile found!")
+import sys
 
 ########################################################################################################################
-
+"""
 DataCluster = NPZParser.parse(config_data.nninput)
 meta_data = MetaData.MetaData(config_data.metadata)
 
@@ -39,3 +31,29 @@ for i in range(len(config_data.analysis)):
     analysis_method = __import__("analysis." + config_data.analysis[i], fromlist=[None])
     analysis = getattr(analysis_method, "analysis")
     analysis(neuralnetwork, DataCluster, meta_data)
+"""
+
+########################################################################################################################
+
+def main():
+    # generate argument parser
+    args = ArgParser.parser()
+
+    if args.cf is not None:
+        print("Reading configfile ...")
+        config_data = ConfigFileParser.parse(args.cf)
+
+        if args.geninput:
+            print("Generating input")
+
+        print("nothing else!")
+        sys.exit()
+
+    else:
+        print("Error found in configfile!")
+        print("CODE WILL BE ABORTED!")
+        sys.exit()
+
+
+if __name__ == "__main__":
+    main()
