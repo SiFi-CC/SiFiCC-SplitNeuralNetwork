@@ -49,6 +49,7 @@ def metrics(y_scores, y_true, threshold, weighted=False):
 
 def analysis(SiFiCCNN, DataCluster, MetaData=None):
     import os
+    import numpy as np
     from fastROCAUC import fastROCAUC
 
     ####################################################################################################################
@@ -65,6 +66,8 @@ def analysis(SiFiCCNN, DataCluster, MetaData=None):
     # predict test set
     y_scores = SiFiCCNN.predict(DataCluster.x_test())
     y_true = DataCluster.y_test()
+
+    print("Baseline accuracy: {:.3f}".format(1 - (np.sum(y_true) / len(y_true))))
 
     acc_base, eff_base, pur_base, conf_base = metrics(y_scores, y_true, threshold=0.5)
     print("\nMetrics base threshold: ")
@@ -101,25 +104,26 @@ def analysis(SiFiCCNN, DataCluster, MetaData=None):
 
     with open(dir_results + "/metrics.txt", 'w') as f:
         f.write("### AnalysisMetric results:\n")
-        f.write("\nMetrics base threshold: ")
-        f.write("Threshold: {:.3f}".format(0.5))
-        f.write("Accuracy: {:.1f}".format(acc_base * 100))
-        f.write("Efficiency: {:.1f}%".format(eff_base * 100))
-        f.write("Purity: {:.1f}%".format(pur_base * 100))
-        f.write("TP: {} | FP: {} | TN: {} | FN: {}".format(*conf_base))
+        f.write("\nBaseline accuracy: {:.3f}\n".format(1 - (np.sum(y_true) / len(y_true))))
 
-        f.write("\nMetrics weighted threshold: ")
-        f.write("Threshold: {:.3f}".format(0.5))
-        f.write("Accuracy: {:.1f}".format(acc_weight * 100))
-        f.write("Efficiency: {:.1f}%".format(eff_weight * 100))
-        f.write("Purity: {:.1f}%".format(pur_weight * 100))
-        f.write("TP: {} | FP: {} | TN: {} | FN: {}".format(*conf_weight))
+        f.write("Metrics base threshold:\n")
+        f.write("Threshold: {:.3f}\n".format(0.5))
+        f.write("Accuracy: {:.1f}\n".format(acc_base * 100))
+        f.write("Efficiency: {:.1f}%\n".format(eff_base * 100))
+        f.write("Purity: {:.1f}%\n".format(pur_base * 100))
+        f.write("TP: {} | FP: {} | TN: {} | FN: {}\n".format(*conf_base))
 
-        f.write("\nMetrics base threshold: ")
-        f.write("AUC Score: {:.3f}".format(auc))
-        f.write("Threshold: {:.3f}".format(theta))
-        f.write("Accuracy: {:.1f}".format(acc_opt * 100))
-        f.write("Efficiency: {:.1f}%".format(eff_opt * 100))
-        f.write("Purity: {:.1f}%".format(pur_opt * 100))
-        f.write("TP: {} | FP: {} | TN: {} | FN: {}".format(*conf_opt))
-        
+        f.write("Metrics weighted threshold:\n")
+        f.write("Threshold: {:.3f}\n".format(0.5))
+        f.write("Accuracy: {:.1f}\n".format(acc_weight * 100))
+        f.write("Efficiency: {:.1f}%\n".format(eff_weight * 100))
+        f.write("Purity: {:.1f}%\n".format(pur_weight * 100))
+        f.write("TP: {} | FP: {} | TN: {} | FN: {}\n".format(*conf_weight))
+
+        f.write("Metrics base threshold\n")
+        f.write("AUC Score: {:.3f}\n".format(auc))
+        f.write("Threshold: {:.3f}\n".format(theta))
+        f.write("Accuracy: {:.1f}\n".format(acc_opt * 100))
+        f.write("Efficiency: {:.1f}%\n".format(eff_opt * 100))
+        f.write("Purity: {:.1f}%\n".format(pur_opt * 100))
+        f.write("TP: {} | FP: {} | TN: {} | FN: {}\n".format(*conf_opt))
