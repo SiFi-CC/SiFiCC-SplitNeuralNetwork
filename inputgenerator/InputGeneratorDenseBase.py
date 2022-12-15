@@ -13,11 +13,10 @@ def gen_input(RootParser):
 
     import numpy as np
     import os
-    import copy
 
     ####################################################################################################################
     # global settings for easier on the fly changes
-    gen_name = "NNInputDenseBase"
+    gen_name = "InputDenseBase"
 
     n_cluster_scatterer = 3
     n_cluster_absorber = 5
@@ -38,7 +37,7 @@ def gen_input(RootParser):
     ary_features = np.zeros(shape=(n_events, num_features))
     ary_targets = np.zeros(shape=(n_events,))
     ary_w = np.zeros(shape=(n_events,))
-    ary_meta = np.zeros(shape=(n_events, 2))
+    ary_meta = np.zeros(shape=(n_events, 3))
 
     # main iteration over root file
     for i, event in enumerate(RootParser.iterate_events(n=None)):
@@ -77,27 +76,11 @@ def gen_input(RootParser):
         # target: ideal compton events tag
         ary_targets[i] = event.is_ideal_compton * 1
 
-        # energy weighting: first only primary energy is stored
+        # sample weighting
         ary_w[i] = 1.0
 
         # write global event number
-        ary_meta[i, :] = [event.EventNumber, np.sum(event.RecoClusterEnergies_values)]
-
-    """
-    p_train = 0.7
-    p_test = 0.2
-    p_valid = 0.1
-
-    # train valid test split
-    idx = np.arange(0, ary_features.shape[0], 1.0, dtype=int)
-    np.random.shuffle(idx)
-    stop1 = int(len(idx) * p_train)
-    stop2 = int(len(idx) * (p_train + p_valid))
-
-    ary_idx_train = idx[0:stop1]
-    ary_idx_valid = idx[stop1:stop2]
-    ary_idx_test = idx[stop2:]
-    """
+        ary_meta[i, :] = [event.EventNumber, event.MCEnergy_Primary, np.sum(event.RecoClusterEnergies_values)]
 
     # save final output file
     with open(dir_npz + gen_name + "_" + RootParser.file_name + ".npz", 'wb') as f_output:
