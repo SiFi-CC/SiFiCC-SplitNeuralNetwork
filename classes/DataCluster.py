@@ -112,3 +112,21 @@ class DataCluster:
         self.ary_idx = np.arange(0, len(self.targets), 1.0, dtype=int)
         rng = np.random.default_rng(42)
         rng.shuffle(self.ary_idx)
+
+    def apply_cluster_limit_scatterer(self, n_cluster_scatterer):
+        """
+        update feature, targets and weights based on the one cluster scatterer limit.
+
+        Args:
+            n_cluster_scatterer (List type): list of cluster counts in scatterer, same dimension as feature, targets
+        """
+
+        # update features, targets and weights
+        self.features = self.features[n_cluster_scatterer == 1, :]
+        self.targets = self.targets[n_cluster_scatterer == 1, :]
+        self.weights = self.weights[n_cluster_scatterer == 1, :]
+
+        # reshuffle the train-test indexing
+        self.ary_idx = np.arange(0, len(self.targets), 1.0, dtype=int)
+        rng = np.random.default_rng(42)
+        rng.shuffle(self.ary_idx)
