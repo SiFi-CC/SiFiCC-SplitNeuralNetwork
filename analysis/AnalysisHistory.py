@@ -31,4 +31,4 @@ def analysis(SiFiCCNN, DataCluster, MetaData=None):
     ax2.legend()
     ax2.grid()
     plt.tight_layout()
-    plt.savefig(dir_results + "/history.pdf")
+    plt.savefig(dir_results + "/history.png")

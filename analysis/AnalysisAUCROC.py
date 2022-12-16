@@ -12,4 +12,4 @@ def analysis(SiFiCCNN, DataCluster, MetaData=None):
     y_pred = SiFiCCNN.predict(DataCluster.x_test())
     y_true = DataCluster.y_test()
 
-    fastROCAUC(y_pred, y_true, save_fig=dir_results + "/ROCAUC.pdf")
+    fastROCAUC(y_pred, y_true, save_fig=dir_results + "/ROCAUC.png")
