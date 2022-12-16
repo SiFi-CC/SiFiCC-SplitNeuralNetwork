@@ -9,6 +9,7 @@ class ConfigData:
                  nninput,
                  model,
                  modeltag,
+                 load_model,
                  epochs,
                  verbose,
                  batch_size):
@@ -22,6 +23,7 @@ class ConfigData:
         self.nninput = nninput
 
         self.modeltag = modeltag
+        self.load_model = load_model
 
         self.epochs = epochs
         self.batch_size = batch_size

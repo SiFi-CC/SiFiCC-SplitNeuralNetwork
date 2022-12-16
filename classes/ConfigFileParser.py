@@ -108,11 +108,6 @@ def parse(argcf):
                 param_loadmodel = int(list_config[i + 1])
                 # TODO: check if value is valid, else use base value
 
-            # param_geninput: (0: missing files will be generated and trained, 1: files will only be generated)
-            if "generate neural network input only" in row:
-                param_geninput = int(list_config[i + 1])
-                # TODO: check if value is valid, else use base value
-
             # loose parameter
             if "No. of Epochs" in row:
                 param_epochs = list_config[i + 1]
@@ -148,6 +143,7 @@ def parse(argcf):
                                         metadata=param_metafile,
                                         nninput=param_nninput,
                                         modeltag=param_modeltag,
+                                        load_model=param_loadmodel,
                                         epochs=param_epochs,
                                         batch_size=param_batchsize,
                                         verbose=param_verbose)

@@ -47,10 +47,13 @@ def main():
                                               model_name=config_data.model,
                                               model_tag=config_data.modeltag)
 
-        # evaluate training strategy expression
-        trainingstrategy_method = __import__("trainingstrategy." + config_data.training_strategy, fromlist=[None])
-        func2 = getattr(trainingstrategy_method, "train_strategy")
-        func2(neuralnetwork, DataCluster)
+        if config_data.load_model == 1:
+            neuralnetwork.load(load_history=True)
+        elif config_data.load_model == 0:
+            # evaluate training strategy expression
+            trainingstrategy_method = __import__("trainingstrategy." + config_data.training_strategy, fromlist=[None])
+            func2 = getattr(trainingstrategy_method, "train_strategy")
+            func2(neuralnetwork, DataCluster)
 
         # evaluate analysis expression
         # analysis expressions can be a list of analysis methods
