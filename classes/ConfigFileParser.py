@@ -28,7 +28,7 @@ def parse(argcf):
     # define base settings for configfile input
     param_rootfile = dir_main + "/root_files/" + "OptimisedGeometry_BP0mm_2e10protons.root"
     param_metafile = dir_main + "/npz_files/" + "OptimisedGeometry_BP0mm_2e10protons.npz"
-    param_nninput = dir_main + "/npz_files/" + "NNInputDenseBase_OptimisedGeometry_BP0mm_2e10protons.npz"
+    param_nninput = dir_main + "/npz_files/" + "InputDenseBase_OptimisedGeometry_BP0mm_2e10protons.npz"
     param_inputgenerator = "InputGeneratorDenseBase"
     param_model = "ModelDenseBase"
     param_trainingstrategy = "TrainingStrategyDenseBase"
