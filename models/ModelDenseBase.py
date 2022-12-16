@@ -19,8 +19,8 @@ def return_model(input_dim):
 
     activation = "relu"
     loss_function = "binary_crossentropy"
-    optimizer = "adam"
     dropout_rate = 0.2
+    lr = 1e-3
 
     ####################################################################################################################
 
@@ -37,6 +37,6 @@ def return_model(input_dim):
     # output node with sigmoid as activation function
     model.add(tf.keras.layers.Dense(1, activation="sigmoid"))
     # compile model with loss function, optimizer and accuracy
-    model.compile(loss=loss_function, optimizer=optimizer, metrics=["accuracy"])
+    model.compile(loss=loss_function, optimizer=tf.keras.optimizers.Adam(lr=lr), metrics=["accuracy"])
     # return model
     return model
