@@ -50,13 +50,14 @@ def metrics(y_scores, y_true, threshold, weighted=False):
 def analysis(SiFiCCNN, DataCluster, MetaData=None):
     import os
     import numpy as np
+    import matplotlib.pyplot as plt
     from fastROCAUC import fastROCAUC
 
     ####################################################################################################################
     # content of AnalysisMetric:
     #
     # Baseline accuracy evaluation
-    # weighted accuracy evaluation (historical since keras uses weighted accuracy)
+    # weighted accuracy evaluation (historical, to test influence of weights on keras accuracy)
     # optimal threshold accuracy evaluation
     # score distribution
     #
@@ -127,3 +128,18 @@ def analysis(SiFiCCNN, DataCluster, MetaData=None):
         f.write("Efficiency: {:.1f}%\n".format(eff_opt * 100))
         f.write("Purity: {:.1f}%\n".format(pur_opt * 100))
         f.write("TP: {} | FP: {} | TN: {} | FN: {}\n".format(*conf_opt))
+        f.close()
+
+    # score distribution plot
+    bins = np.arange(0.0, 1.0 + 0.05, 0.05)
+    ary_scores_pos = [y_scores[i] for i in range(len(y_scores)) if y_true[i] == 1]
+    ary_scores_neg = [y_scores[i] for i in range(len(y_scores)) if y_true[i] == 0]
+
+    plt.figure()
+    plt.xlabel("score")
+    plt.ylabel("counts (normalized)")
+    plt.hist(ary_scores_pos, bins=bins, histtype=u"step", density=True, color="orange", label="true positives")
+    plt.hist(ary_scores_neg, bins=bins, histtype=u"step", density=True, color="blue", label="true negatives")
+    plt.vlines(x=theta, ymin=0.0, ymax=1.0, color="red", linestyles="--", label="optimal threshold")
+    plt.legend()
+    plt.savefig(dir_results + "/score_dist.png")
