@@ -35,7 +35,7 @@ def analysis(SiFiCCNN, DataCluster, MetaData=None):
     plt.figure()
     plt.xlabel("score")
     plt.ylabel("MC Primary Energy [MeV]")
-    h0 = plt.hist2d(y_scores, ary_test_mcenergyprimary, bins=[bins, bins_energy], norm=LogNorm())
+    h0 = plt.hist2d(np.array(y_scores), ary_test_mcenergyprimary, bins=[bins, bins_energy], norm=LogNorm())
     plt.colorbar(h0[3])
     plt.savefig(dir_results + "/score_energyprimary.png")
 
@@ -45,6 +45,6 @@ def analysis(SiFiCCNN, DataCluster, MetaData=None):
     plt.figure()
     plt.xlabel("score")
     plt.ylabel("MC Source position z-axis [mm]")
-    h0 = plt.hist2d(y_scores, ary_test_mcsourceposz, bins=[bins, bins_sourcepos], norm=LogNorm())
+    h0 = plt.hist2d(np.array(y_scores), ary_test_mcsourceposz, bins=[bins, bins_sourcepos], norm=LogNorm())
     plt.colorbar(h0[3])
     plt.savefig(dir_results + "/score_sourceposz.png")
