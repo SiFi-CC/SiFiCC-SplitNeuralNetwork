@@ -4,10 +4,11 @@ def train_strategy(SiFiCCNN, DataCluster):
     DataCluster.p_valid = 0.2
 
     # set class weights as sample weights
-    DataCluster.weights *= DataCluster.get_classweights()
+    # DataCluster.weights *= DataCluster.get_classweights()
 
     # standardize input
-    DataCluster.normalize_by_eprimary()
+    # DataCluster.normalize_by_eprimary()
+    DataCluster.standardize()
 
     SiFiCCNN.epochs = 20
     SiFiCCNN.batch_size = 256
