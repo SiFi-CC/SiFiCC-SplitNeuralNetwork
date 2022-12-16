@@ -58,6 +58,17 @@ class DataCluster:
         for i in range(self.features.shape[1]):
             self.features[:, i] = (self.features[:, i] - np.mean(self.features[:, i])) / np.std(self.features[:, i])
 
+    def normalize_by_eprimary(self):
+        # TODO: UPDATE INDEXING
+        ary_idx_e = [3, 8, 13, 18, 23, 28, 33, 38]
+
+        for i in range(self.features.shape[1]):
+            if i not in ary_idx_e:
+                self.features[:, i] = (self.features[:, i] - np.mean(self.features[:, i])) / np.std(self.features[:, i])
+
+        for i in range(len(self.targets)):
+            self.features[i, ary_idx_e] = self.features[i, ary_idx_e] / self.meta[i, 1]
+
     def get_classweights(self):
         # set sample weights to class weights
         _, counts = np.unique(self.targets, return_counts=True)

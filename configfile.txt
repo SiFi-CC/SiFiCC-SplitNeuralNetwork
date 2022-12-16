@@ -8,7 +8,7 @@ InputGeneratorDenseBase
 ModelDenseBase
 
 # Method containing TrainingStrategy
-TrainingStrategyDenseBase
+TrainingStrategyTest
 
 # Method containing Analysis models (can be more, separated by comma)
 AnalysisMetrics, AnalysisHistory, AnalysisAUCROC, AnalysisFeatureDist
@@ -24,6 +24,7 @@ AnalysisMetrics, AnalysisHistory, AnalysisAUCROC, AnalysisFeatureDist
 #############################################################################
 
 # Model nametag (model base name will be given by the model method)
+test
 
 # No. of Epochs
 10
