@@ -48,4 +48,3 @@ def analysis(SiFiCCNN, DataCluster, MetaData=None):
     h0 = plt.hist2d(y_scores, ary_test_mcsourceposz, bins=[bins, bins_sourcepos], norm=LogNorm())
     plt.colorbar(h0[3])
     plt.savefig(dir_results + "/score_sourceposz.png")
-    
