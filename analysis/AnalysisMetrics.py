@@ -132,14 +132,14 @@ def analysis(SiFiCCNN, DataCluster, MetaData=None):
 
     # score distribution plot
     bins = np.arange(0.0, 1.0 + 0.05, 0.05)
-    ary_scores_pos = [y_scores[i] for i in range(len(y_scores)) if y_true[i] == 1]
-    ary_scores_neg = [y_scores[i] for i in range(len(y_scores)) if y_true[i] == 0]
+    ary_scores_pos = [float(y_scores[i]) for i in range(len(y_scores)) if y_true[i] == 1]
+    ary_scores_neg = [float(y_scores[i]) for i in range(len(y_scores)) if y_true[i] == 0]
 
     plt.figure()
     plt.xlabel("score")
-    plt.ylabel("counts (normalized)")
-    plt.hist(np.array(ary_scores_pos), bins=bins, histtype=u"step", density=True, color="orange", label="true positives")
-    plt.hist(np.array(ary_scores_neg), bins=bins, histtype=u"step", density=True, color="blue", label="true negatives")
-    plt.vlines(x=theta, ymin=0.0, ymax=1.0, color="red", linestyles="--", label="optimal threshold")
+    plt.ylabel("counts")
+    plt.hist(np.array(ary_scores_pos), bins=bins, histtype=u"step", color="orange", label="true positives")
+    plt.hist(np.array(ary_scores_neg), bins=bins, histtype=u"step", color="blue", label="true negatives")
+    plt.vlines(x=theta, ymin=0.0, ymax=len(ary_scores_neg)/2, color="red", linestyles="--", label="optimal threshold")
     plt.legend()
     plt.savefig(dir_results + "/score_dist.png")
