@@ -49,7 +49,7 @@ class SiFiCCNNTF:
         if self.model_tag != "":
             str_load += "_" + self.model_tag
 
-        self.model.load(str_load + ".h5")
+        self.model.load_weights(str_load + ".h5")
 
         # save history
         if load_history:
