@@ -55,7 +55,14 @@ class DataCluster:
         return self.features.shape[1]
 
     def standardize(self):
+        # save mean and std of every feature
+        self.list_mean = []
+        self.list_std = []
+
         for i in range(self.features.shape[1]):
+            self.list_mean.append(np.mean(self.features[:, i]))
+            self.list_std.append(np.std(self.features[:, i]))
+
             self.features[:, i] = (self.features[:, i] - np.mean(self.features[:, i])) / np.std(self.features[:, i])
 
     def normalize_by_eprimary(self):
