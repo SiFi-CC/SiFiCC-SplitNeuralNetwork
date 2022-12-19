@@ -1,5 +1,5 @@
 # Name of the origin root file
-OptimisedGeometry_BP0mm_2e10protons.root
+OptimisedGeometry_BP5mm_4e9protons.root
 
 # Method containing input generator
 InputGeneratorDenseBase
@@ -11,10 +11,12 @@ ModelDenseBase
 TrainingStrategyTest
 
 # Method containing Analysis models (can be more, separated by comma)
-AnalysisMetrics, AnalysisHistory, AnalysisAUCROC, AnalysisFeatureDist
+AnalysisMLEMexport
+
+# AnalysisMetrics, AnalysisHistory, AnalysisAUCROC, AnalysisFeatureDist, AnalysisScore
 
 # Load model
-0
+1
 
 # generate neural network input only
 0
@@ -24,7 +26,7 @@ AnalysisMetrics, AnalysisHistory, AnalysisAUCROC, AnalysisFeatureDist
 #############################################################################
 
 # Model nametag (model base name will be given by the model method)
-test
+energyweights
 
 # No. of Epochs
 10
