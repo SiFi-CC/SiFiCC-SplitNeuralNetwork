@@ -1,30 +1,26 @@
 class ConfigData:
 
     def __init__(self,
-                 root_file,
-                 input_generator,
-                 training_strategy,
-                 analysis,
-                 metadata,
-                 nninput,
-                 model,
-                 modeltag,
-                 load_model,
-                 epochs,
-                 verbose,
-                 batch_size):
+                 ROOT_FILE_NAME,
+                 INPUT_GENERATOR_NAME,
+                 TRAINING_STRATEGY_NAME,
+                 ANALYSIS_LIST,
+                 MODEL_NAME,
+                 RUN_TAG,
+                 LOAD_MODEL,
+                 NUMBER_EPOCHS
+                 ):
 
-        self.root_file = root_file
-        self.input_generator = input_generator
-        self.training_strategy = training_strategy
-        self.model = model
-        self.analysis = analysis
-        self.metadata = metadata
-        self.nninput = nninput
+        self.ROOT_FILE_NAME = ROOT_FILE_NAME
+        self.INPUT_GENERATOR_NAME = INPUT_GENERATOR_NAME
+        self.TRAINING_STRATEGY_NAME = TRAINING_STRATEGY_NAME
+        self.ANALYSIS_LIST = ANALYSIS_LIST
+        self.MODEL_NAME = MODEL_NAME
+        self.RUN_TAG = RUN_TAG
+        self.LOAD_MODEL = LOAD_MODEL
+        self.NUMBER_EPOCHS = NUMBER_EPOCHS
 
-        self.modeltag = modeltag
-        self.load_model = load_model
+        # generate additional needed settings from parameter given above
+        self.META_DATA = self.ROOT_FILE_NAME[:-5] + ".npz"
+        self.NN_INPUT = self.ROOT_FILE_NAME[:-5] + "_" + self.INPUT_GENERATOR_NAME + ".npz"
 
-        self.epochs = epochs
-        self.batch_size = batch_size
-        self.verbose = verbose

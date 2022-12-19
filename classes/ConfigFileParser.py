@@ -6,43 +6,28 @@ def parse(argcf):
     #######################################################
     # ConfigFileParser will look for the following settings
     #
-    # # Name of the origin root file
-    # # Method containing input generator
-    # # Method containing Neural-Network model
-    # # Method containing trainingstrategy
-    # # Method containing Analysis models
+    # ROOT_FILE_NAME
+    # INPUT_GENERATOR_NAME
+    # TRAINING_STRATEGY_NAME
+    # ANALYSIS_LIST
+    # MODEL_NAME
+    # RUN_TAG
     #
-    # # Model nametag
-    # # Generate input only
-    # # load model
-    #
-    # # Epochs
-    # # Batch size
-    # # Verbose
-    #
+    # LOAD_MODEL
     #######################################################
 
-    # define parent directory
-    dir_main = os.getcwd()
-
     # define base settings for configfile input
-    param_rootfile = dir_main + "/root_files/" + "OptimisedGeometry_BP0mm_2e10protons.root"
-    param_metafile = dir_main + "/npz_files/" + "OptimisedGeometry_BP0mm_2e10protons.npz"
-    param_nninput = dir_main + "/npz_files/" + "InputDenseBase_OptimisedGeometry_BP0mm_2e10protons.npz"
-    param_inputgenerator = "InputGeneratorDenseBase"
-    param_model = "ModelDenseBase"
-    param_trainingstrategy = "TrainingStrategyDenseBase"
-    param_analysis = "AnalysisMetrics"
+    param_ROOT_FILE_NAME = ""
+    param_INPUT_GENERATOR_NAME = ""
+    param_TRAINING_STRATEGY_NAME = ""
+    param_ANALYSIS_LIST = []
+    param_MODEL_NAME = ""
+    param_RUN_TAG = ""
 
-    param_modeltag = ""
-    param_loadmodel = 0
-    param_geninput = 0
+    param_LOAD_MODEL = 0
+    param_NUMBER_EPOCHS = 5
 
-    param_epochs = 10
-    param_batchsize = 128
-    param_verbose = 1
-
-    ####################################################################################################################
+    #####################
     # config file readout
 
     # read config file and split config file string into list
@@ -53,99 +38,77 @@ def parse(argcf):
         # skip rows with no entries
         if len(row) == 0:
             continue
-
+        # skip rows starting with "#"
         if row[0] == "#":
-            # Test each config file input and determine their parameter
-            if "Name of the origin root file" in row:
-                param_rootfile = list_config[i + 1]
-                # break condition if file is not found
-                if not os.path.exists(dir_main + "/root_files/" + param_rootfile):
-                    print("ERROR: Root file not found at ", dir_main + "/root_files/" + param_rootfile)
-                    return None
+            continue
 
-            if "Method containing input generator" in row:
-                param_inputgenerator = list_config[i + 1]
-                # break condition if file is not found
-                if not os.path.exists(dir_main + "/inputgenerator/" + param_inputgenerator + ".py"):
-                    print("ERROR: File not found at ",
-                          dir_main + "/inputgenerator/" + param_inputgenerator + ".py")
-                    return None
+        # check row content for all config file settings
+        if "ROOT_FILE_NAME:" in row:
+            str_row = row.replace(" ", "")
+            str_row = str_row.replace("ROOT_FILE_NAME:", "")
+            param_ROOT_FILE_NAME = str_row
 
-            if "Method containing Neural-Network model" in row:
-                param_model = list_config[i + 1]
-                # break condition if file is not found
-                if not os.path.exists(dir_main + "/models/" + param_model + ".py"):
-                    print("ERROR: File not found at ",
-                          dir_main + "/models/" + param_model + ".py")
-                    return None
+        if "INPUT_GENERATOR_NAME:" in row:
+            str_row = row.replace(" ", "")
+            str_row = str_row.replace("INPUT_GENERATOR_NAME:", "")
+            param_INPUT_GENERATOR_NAME = str_row
 
-            if "Method containing trainingstrategy" in row:
-                param_trainingstrategy = list_config[i + 1]
-                # break condition if file is not found
-                if not os.path.exists(dir_main + "/trainingstrategy/" + param_trainingstrategy + ".py"):
-                    print("ERROR: File not found at ",
-                          dir_main + "/trainingstrategy/" + param_trainingstrategy + ".py")
-                    return None
+        if "TRAINING_STRATEGY_NAME:" in row:
+            str_row = row.replace(" ", "")
+            str_row = str_row.replace("TRAINING_STRATEGY_NAME:", "")
+            param_TRAINING_STRATEGY_NAME = str_row
 
-            if "Method containing Analysis models" in row:
-                param_analysis = list_config[i + 1]
-                # evaluate analysis parameter
-                param_analysis = param_analysis.split(",")
-                for j in range(len(param_analysis)):
-                    param_analysis[j] = param_analysis[j].replace(" ", "")
-                    if not os.path.exists(dir_main + "/analysis/" + param_analysis[j] + ".py"):
-                        print("ERROR: File not found at ",
-                              dir_main + "/analysis/" + param_analysis[j] + ".py")
-                        continue
+        if "ANALYSIS_LIST:" in row:
+            str_row = row.replace(" ", "")
+            str_row = str_row.replace("ANALYSIS_LIST:", "")
+            param_ANALYSIS_LIST = str_row.split(",")
 
+        if "MODEL_NAME:" in row:
+            str_row = row.replace(" ", "")
+            str_row = str_row.replace("MODEL_NAME:", "")
+            param_MODEL_NAME = str_row
 
-            # model name tag
-            if "Model nametag" in row:
-                param_modeltag = list_config[i + 1]
+        if "RUN_TAG:" in row:
+            str_row = row.replace(" ", "")
+            str_row = str_row.replace("RUN_TAG:", "")
+            param_RUN_TAG = str_row
 
-            # load model param (0: do not load model, 1: load model and test only)
-            if "Load model" in row:
-                param_loadmodel = int(list_config[i + 1])
-                # TODO: check if value is valid, else use base value
+        # additional settings
+        if "LOAD_MODEL:" in row:
+            str_row = row.replace(" ", "")
+            str_row = str_row.replace("LOAD_MODEL:", "")
+            param_LOAD_MODEL = bool(int(str_row))  # this feels wrong
 
-            # loose parameter
-            if "No. of Epochs" in row:
-                param_epochs = list_config[i + 1]
-                # TODO: check if value is valid, else use base value
+        # additional settings
+        if "NUMBER_EPOCHS:" in row:
+            str_row = row.replace(" ", "")
+            str_row = str_row.replace("NUMBER_EPOCHS:", "")
+            param_NUMBER_EPOCHS = int(str_row)
 
-            # loose parameter
-            if "batch size" in row:
-                param_batchsize = list_config[i + 1]
-                # TODO: check if value is valid, else use base value
-
-            # loose parameter
-            if "Verbose" in row:
-                param_verbose = list_config[i + 1]
-                # TODO: check if value is valid, else use base value
-
-    ####################################################################################################################
+    #############################
     # parameter evaluation logic
 
-    # check if meta data npz file corresponding to the given root file
-    if not os.path.exists(dir_main + "/npz_files/" + param_rootfile[:-5] + ".npz"):
-        print("Generating meta data file at: ", dir_main + "/root_files/" + param_rootfile)
-
-        from classes.RootParser import RootParser
-        root_data = RootParser(param_rootfile)
-        root_data.export_npz(dir_main + "/npz_files/" + param_rootfile[:-5] + ".npz")
+    # print out all confirmed settings
+    print("\n### config file settings found:")
+    print("ROOT_FILE_NAME: {}".format(param_ROOT_FILE_NAME))
+    print("INPUT_GENERATOR_NAME: {}".format(param_INPUT_GENERATOR_NAME))
+    print("TRAINING_STRATEGY_NAME: {}".format(param_TRAINING_STRATEGY_NAME))
+    print("ANALYSIS_LIST: {}".format(param_ANALYSIS_LIST))
+    print("MODEL_NAME: {}".format(param_MODEL_NAME))
+    print("RUN_TAG: {}".format(param_RUN_TAG))
+    print("### Additional Settings")
+    print("LOAD_MODEL: {}".format(param_LOAD_MODEL))
+    print("NUMBER_EPOCHS: {}".format(param_NUMBER_EPOCHS))
 
     # build configfile domain object
-    config_data = ConfigData.ConfigData(root_file=param_rootfile,
-                                        input_generator=param_inputgenerator,
-                                        model=param_model,
-                                        training_strategy=param_trainingstrategy,
-                                        analysis=param_analysis,
-                                        metadata=param_metafile,
-                                        nninput=param_nninput,
-                                        modeltag=param_modeltag,
-                                        load_model=param_loadmodel,
-                                        epochs=param_epochs,
-                                        batch_size=param_batchsize,
-                                        verbose=param_verbose)
+    config_data = ConfigData.ConfigData(ROOT_FILE_NAME=param_ROOT_FILE_NAME,
+                                        INPUT_GENERATOR_NAME=param_INPUT_GENERATOR_NAME,
+                                        TRAINING_STRATEGY_NAME=param_TRAINING_STRATEGY_NAME,
+                                        ANALYSIS_LIST=param_ANALYSIS_LIST,
+                                        MODEL_NAME=param_MODEL_NAME,
+                                        RUN_TAG=param_RUN_TAG,
+                                        LOAD_MODEL=param_LOAD_MODEL,
+                                        NUMBER_EPOCHS=param_NUMBER_EPOCHS
+                                        )
 
     return config_data
