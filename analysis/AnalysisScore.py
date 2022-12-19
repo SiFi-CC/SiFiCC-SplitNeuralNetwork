@@ -7,6 +7,7 @@ def analysis(SiFiCCNN, DataCluster, MetaData=None):
 
     # predict test set
     y_scores = SiFiCCNN.predict(DataCluster.x_test())
+    y_scores = np.reshape(y_scores, newshape=(len(y_scores),))
     y_true = DataCluster.y_test()
 
     # check directory for results
@@ -27,6 +28,7 @@ def analysis(SiFiCCNN, DataCluster, MetaData=None):
     plt.hist(np.array(ary_scores_neg), bins=bins, histtype=u"step", color="blue", label="true negatives")
     # plt.vlines(x=theta, ymin=0.0, ymax=len(ary_scores_neg)/2, color="red", linestyles="--", label="optimal threshold")
     plt.legend()
+    plt.tight_layout()
     plt.savefig(dir_results + "/score_dist.png")
 
     # score, primary energy 2d histogram
@@ -37,6 +39,7 @@ def analysis(SiFiCCNN, DataCluster, MetaData=None):
     plt.ylabel("MC Primary Energy [MeV]")
     h0 = plt.hist2d(np.array(y_scores), ary_test_mcenergyprimary, bins=[bins, bins_energy], norm=LogNorm())
     plt.colorbar(h0[3])
+    plt.tight_layout()
     plt.savefig(dir_results + "/score_energyprimary.png")
 
     # score, primary energy 2d histogram
@@ -47,4 +50,5 @@ def analysis(SiFiCCNN, DataCluster, MetaData=None):
     plt.ylabel("MC Source position z-axis [mm]")
     h0 = plt.hist2d(np.array(y_scores), ary_test_mcsourceposz, bins=[bins, bins_sourcepos], norm=LogNorm())
     plt.colorbar(h0[3])
+    plt.tight_layout()
     plt.savefig(dir_results + "/score_sourceposz.png")
