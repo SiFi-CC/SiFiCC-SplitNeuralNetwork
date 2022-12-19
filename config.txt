@@ -1,0 +1,53 @@
+###############################################
+# SiFi-CC Neural Network Framework config file
+###############################################
+
+# This config file is set as an example
+
+# Set the name of the root file containing training data
+# If the root file is used for training neural networks, the root file will be used to create a
+# corresponding meta-data object containing Monte-Carlo Truth data
+# root file location is the  "/root_files/" subdirectory
+ROOT_FILE_NAME: OptimisedGeometry_BP0mm_2e10protons.root
+
+# Set the input generator
+# each inputgenerator has a corresponding name tag (InputGenerator + "name tag" .py)
+# setting needs to match the name tag
+# input-generator location is the "/inputgenerator/" subdirectory
+INPUT_GENERATOR_NAME: DNNBase
+
+# Set the training strategy
+# each training strategy has a corresponding name tag (TrainingStrategy + "name tag" .py)
+# setting needs to match the name tag
+# training strategy location is the "/trainingstrategy/" subdirectory
+TRAINING_STRATEGY_NAME: DNNBase
+
+# Set the analysis methods
+# each analysis method has a corresponding name tag (analysis + "name tag" .py)
+# setting needs to match the name tag
+# analysis method location is the "/analyis/" subdirectory
+# multiple analysis can be used by listing them with comma
+ANALYSIS_LIST: Metrics, AUCROC
+
+# Set the Neural Network model
+# each neural network model has a corresponding name tag (Model + "name tag" .py)
+# setting needs to match the name tag
+# neural network model location is the "/models/" subdirectory
+MODEL_NAME: DNNBase_classifier
+
+# Set the run tag
+# Each run of the framework will sample the results in a subdirectory created for each run
+# the subdirectory will be named according to the settings above
+# The tag will be added to the name to differentiate different runs
+RUN_TAG: test
+
+#################################################
+# Sub-Settings
+#################################################
+
+# load model tag
+# if set to 1, corresponding model will NOT be trained and loaded + evaluated
+LOAD_MODEL: 0
+
+# number of training epochs
+NUMBER_EPOCHS: 20
