@@ -16,8 +16,9 @@ def main():
     # generate argument parser
     args = ArgParser.parser()
 
-    # set main directory
+    # set main directory + subdirectories
     dir_main = os.getcwd()
+    dir_root = dir_main + "/root_files/"
 
     if args.cf is not None:
         print("Reading config file ...")
@@ -27,47 +28,48 @@ def main():
             print("\nStarting SiFi-CC Neural Network Framework")
 
             # TODO: rework this stuff as well
-            """
             if args.geninput:
                 print("Generating input")
                 # call RootParser with root file defined in config file
-                root_data = RootParser(dir_main + "/root_files/" + config_data.root_file)
+                root_data = RootParser(dir_root + config_data.ROOT_FILE_NAME)
 
                 # call InputGenerator method
-                method_inputgenerator = __import__("inputgenerator." + config_data.input_generator, fromlist=[None])
+                method_inputgenerator = __import__("inputgenerator." + config_data.INPUT_GENERATOR_NAME,
+                                                   fromlist=[None])
                 func_inputgenerator = getattr(method_inputgenerator, "gen_input")
                 func_inputgenerator(root_data)
 
                 # exit program
                 sys.exit()
-            """
 
             # Standard framework procedure
             # TODO: rework this
 
-            DataCluster = NPZParser.parse(config_data.nninput)
-            meta_data = MetaData.MetaData(config_data.metadata)
+            # grab cluster data object and meta data object
+            data_cluster = NPZParser.parse(config_data.NN_INPUT)
+            meta_data = MetaData.MetaData(config_data.META_DATA)
 
             # evaluate model expression
             model_method = __import__("models." + config_data.model, fromlist=[None])
             func1 = getattr(model_method, "return_model")
-            model = func1(DataCluster.num_features())
+            model = func1(data_cluster.num_features())
 
             neuralnetwork = SiFiCCNNTF.SiFiCCNNTF(model=model,
-                                                  model_name=config_data.model,
-                                                  model_tag=config_data.modeltag)
+                                                  model_name=config_data.MODEL_NAME,
+                                                  model_tag=config_data.RUN_TAG)
 
             # evaluate training strategy expression
-            trainingstrategy_method = __import__("trainingstrategy." + config_data.training_strategy, fromlist=[None])
+            trainingstrategy_method = __import__("trainingstrategy." + config_data.TRAINING_STRATEGY_NAME,
+                                                 fromlist=[None])
             func2 = getattr(trainingstrategy_method, "train_strategy")
-            func2(neuralnetwork, DataCluster, config_data.load_model)
+            func2(neuralnetwork, data_cluster, config_data.LOAD_MODEL)
 
             # evaluate analysis expression
             # analysis expressions can be a list of analysis methods
-            for i in range(len(config_data.analysis)):
-                analysis_method = __import__("analysis." + config_data.analysis[i], fromlist=[None])
+            for i in range(len(config_data.ANALYSIS_LIST)):
+                analysis_method = __import__("analysis." + config_data.ANALYSIS_LIST[i], fromlist=[None])
                 analysis = getattr(analysis_method, "analysis")
-                analysis(neuralnetwork, DataCluster, meta_data)
+                analysis(neuralnetwork, data_cluster, meta_data)
 
 
         else:
