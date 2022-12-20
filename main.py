@@ -34,8 +34,9 @@ def main():
                 root_data = RootParser(dir_root + config_data.ROOT_FILE_NAME)
 
                 # call InputGenerator method
-                method_inputgenerator = __import__("inputgenerator." + config_data.INPUT_GENERATOR_NAME,
-                                                   fromlist=[None])
+                method_inputgenerator = __import__(
+                    "inputgenerator." + "InputGenerator" + config_data.INPUT_GENERATOR_NAME,
+                    fromlist=[None])
                 func_inputgenerator = getattr(method_inputgenerator, "gen_input")
                 func_inputgenerator(root_data)
 
@@ -50,7 +51,7 @@ def main():
             meta_data = MetaData.MetaData(config_data.META_DATA)
 
             # evaluate model expression
-            model_method = __import__("models." + config_data.model, fromlist=[None])
+            model_method = __import__("models." + "Model" + config_data.model, fromlist=[None])
             func1 = getattr(model_method, "return_model")
             model = func1(data_cluster.num_features())
 
@@ -59,15 +60,16 @@ def main():
                                                   model_tag=config_data.RUN_TAG)
 
             # evaluate training strategy expression
-            trainingstrategy_method = __import__("trainingstrategy." + config_data.TRAINING_STRATEGY_NAME,
-                                                 fromlist=[None])
+            trainingstrategy_method = __import__(
+                "trainingstrategy." + "TrainingStrategy" + config_data.TRAINING_STRATEGY_NAME,
+                fromlist=[None])
             func2 = getattr(trainingstrategy_method, "train_strategy")
             func2(neuralnetwork, data_cluster, config_data.LOAD_MODEL)
 
             # evaluate analysis expression
             # analysis expressions can be a list of analysis methods
             for i in range(len(config_data.ANALYSIS_LIST)):
-                analysis_method = __import__("analysis." + config_data.ANALYSIS_LIST[i], fromlist=[None])
+                analysis_method = __import__("analysis." + "Analysis" + config_data.ANALYSIS_LIST[i], fromlist=[None])
                 analysis = getattr(analysis_method, "analysis")
                 analysis(neuralnetwork, data_cluster, meta_data)
 
