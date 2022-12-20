@@ -4,12 +4,6 @@ def analysis(SiFiCCNN, DataCluster, MetaData=None):
     import matplotlib.pyplot as plt
     from fastROCAUC import fastROCAUC
 
-    # save results in txt file
-    dir_main = os.getcwd()
-    dir_results = dir_main + "/results/" + SiFiCCNN.model_name + SiFiCCNN.model_tag
-    if not os.path.isdir(dir_results):
-        os.mkdir(dir_results)
-
     # predict test set
     y_pred = SiFiCCNN.predict(DataCluster.x_test())
     y_true = DataCluster.y_test()
@@ -59,7 +53,7 @@ def analysis(SiFiCCNN, DataCluster, MetaData=None):
     plt.legend()
     plt.grid()
     plt.tight_layout()
-    plt.savefig(dir_results + "/mc_sourceposz.png")
+    plt.savefig("mc_sourceposz.png")
 
     ####################################################################################################################
 
@@ -89,7 +83,7 @@ def analysis(SiFiCCNN, DataCluster, MetaData=None):
     plt.legend()
     plt.grid()
     plt.tight_layout()
-    plt.savefig(dir_results + "/mc_energye.png")
+    plt.savefig("mc_energye.png")
 
     ####################################################################################################################
 
@@ -119,7 +113,7 @@ def analysis(SiFiCCNN, DataCluster, MetaData=None):
     plt.legend()
     plt.grid()
     plt.tight_layout()
-    plt.savefig(dir_results + "/mc_energyp.png")
+    plt.savefig("mc_energyp.png")
 
     ####################################################################################################################
 
@@ -150,4 +144,4 @@ def analysis(SiFiCCNN, DataCluster, MetaData=None):
     plt.legend()
     plt.grid()
     plt.tight_layout()
-    plt.savefig(dir_results + "/mc_energyprimary.png")
+    plt.savefig("mc_energyprimary.png")

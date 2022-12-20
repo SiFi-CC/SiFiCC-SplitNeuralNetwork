@@ -3,12 +3,6 @@ def analysis(SiFiCCNN, DataCluster, MetaData=None):
     import os
     import matplotlib.pyplot as plt
 
-    # save results in txt file
-    dir_main = os.getcwd()
-    dir_results = dir_main + "/results/" + SiFiCCNN.model_name + SiFiCCNN.model_tag
-    if not os.path.isdir(dir_results):
-        os.mkdir(dir_results)
-
     # predict test set
     y_scores = SiFiCCNN.predict(DataCluster.x_test())
     y_scores = np.reshape(y_scores, newshape=(len(y_scores),))
@@ -48,4 +42,4 @@ def analysis(SiFiCCNN, DataCluster, MetaData=None):
     plt.ylabel("counts")
     plt.hist(ary_fp_eventtype, bins=bins, histtype=u"step", color="black")
     plt.tight_layout()
-    plt.savefig(dir_results + "/eventtype_dist.png")
+    plt.savefig("eventtype_dist.png")

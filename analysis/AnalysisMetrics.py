@@ -97,13 +97,7 @@ def analysis(SiFiCCNN, DataCluster, MetaData=None):
     print("Purity: {:.1f}%".format(pur_opt * 100))
     print("TP: {} | FP: {} | TN: {} | FN: {}".format(*conf_opt))
 
-    # save results in txt file
-    dir_main = os.getcwd()
-    dir_results = dir_main + "/results/" + SiFiCCNN.model_name + SiFiCCNN.model_tag
-    if not os.path.isdir(dir_results):
-        os.mkdir(dir_results)
-
-    with open(dir_results + "/metrics.txt", 'w') as f:
+    with open("metrics.txt", 'w') as f:
         f.write("### AnalysisMetric results:\n")
         f.write("\nBaseline accuracy: {:.3f}\n".format(1 - (np.sum(y_true) / len(y_true))))
 

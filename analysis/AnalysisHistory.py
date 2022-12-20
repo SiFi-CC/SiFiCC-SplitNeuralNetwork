@@ -2,12 +2,6 @@ def analysis(SiFiCCNN, DataCluster, MetaData=None):
     import os
     import matplotlib.pyplot as plt
 
-    # save results in txt file
-    dir_main = os.getcwd()
-    dir_results = dir_main + "/results/" + SiFiCCNN.model_name + SiFiCCNN.model_tag
-    if not os.path.isdir(dir_results):
-        os.mkdir(dir_results)
-
     # plot model performance
     loss = SiFiCCNN.history['loss']
     val_loss = SiFiCCNN.history['val_loss']
@@ -31,4 +25,4 @@ def analysis(SiFiCCNN, DataCluster, MetaData=None):
     ax2.legend()
     ax2.grid()
     plt.tight_layout()
-    plt.savefig(dir_results + "/history.png")
+    plt.savefig("history.png")
