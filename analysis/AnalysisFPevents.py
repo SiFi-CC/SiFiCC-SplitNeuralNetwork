@@ -41,7 +41,7 @@ def analysis(SiFiCCNN, DataCluster, MetaData=None):
 
     # event type histogram
     ary_eventtype = MetaData.simulated_event_type()[DataCluster.idx_test()]
-    bins = np.arange(0.5, 6.5, 1.0)
+    bins = np.arange(0.5, 7.5, 1.0)
     plt.figure()
     plt.xlabel("MCSimulatedEventType")
     plt.ylabel("counts")
