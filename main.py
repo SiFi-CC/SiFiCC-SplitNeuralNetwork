@@ -52,7 +52,7 @@ def main():
             meta_data = MetaData.MetaData(dir_npz + config_data.META_DATA)
 
             # evaluate model expression
-            model_method = __import__("models." + "Model" + config_data.model, fromlist=[None])
+            model_method = __import__("models." + "Model" + config_data.MODEL_NAME, fromlist=[None])
             func1 = getattr(model_method, "return_model")
             model = func1(data_cluster.num_features())
 
