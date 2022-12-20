@@ -41,10 +41,11 @@ def analysis(SiFiCCNN, DataCluster, MetaData=None):
 
     # event type histogram
     ary_eventtype = MetaData.simulated_event_type()[DataCluster.idx_test()]
+    ary_fp_eventtype = [ary_eventtype[i] for i in range(len(ary_eventtype)) if (y_pred[i] == 1 and y_true[i] == 0)]
     bins = np.arange(0.5, 7.5, 1.0)
     plt.figure()
     plt.xlabel("MCSimulatedEventType")
     plt.ylabel("counts")
-    plt.hist(ary_eventtype, bins=bins, histtype=u"step", color="black")
+    plt.hist(ary_fp_eventtype, bins=bins, histtype=u"step", color="black")
     plt.tight_layout()
     plt.savefig(dir_results + "/eventtype_dist.png")
