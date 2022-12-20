@@ -19,6 +19,7 @@ def main():
     # set main directory + subdirectories
     dir_main = os.getcwd()
     dir_root = dir_main + "/root_files/"
+    dir_npz = dir_main + "/npz_files/"
 
     if args.cf is not None:
         print("Reading config file ...")
@@ -47,8 +48,8 @@ def main():
             # TODO: rework this
 
             # grab cluster data object and meta data object
-            data_cluster = NPZParser.parse(config_data.NN_INPUT)
-            meta_data = MetaData.MetaData(config_data.META_DATA)
+            data_cluster = NPZParser.parse(dir_npz + config_data.NN_INPUT)
+            meta_data = MetaData.MetaData(dir_npz + config_data.META_DATA)
 
             # evaluate model expression
             model_method = __import__("models." + "Model" + config_data.model, fromlist=[None])
