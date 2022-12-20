@@ -13,6 +13,8 @@ class MetaData:
         # self.cluster_reco = npz_data["CLUSTER_RECO"]
         self.cb_reco = npz_data["CB_RECO"]
         self.event_entries = self.meta.shape[0]
+        # filled later
+        self.root_file_name = ""
 
     def event_number(self):
         return self.meta[:, 0]
