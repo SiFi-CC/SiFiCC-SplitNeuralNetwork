@@ -172,6 +172,22 @@ class Event:
 
     ####################################################################################################################
 
+    def get_electron_energy(self):
+        idx_scatterer, _ = self.sort_clusters_by_module(use_energy=True)
+        return self.RecoClusterEnergies_values[idx_scatterer[0]], self.RecoClusterEnergies_uncertainty[idx_scatterer[0]]
+
+    def get_photon_energy(self):
+        _, idx_absorber = self.sort_clusters_by_module(use_energy=True)
+        return self.RecoClusterEnergies_values[idx_absorber[0]], self.RecoClusterEnergies_uncertainty[idx_absorber[0]]
+
+    def get_electron_position(self):
+        idx_scatterer, _ = self.sort_clusters_by_module(use_energy=True)
+        return self.RecoClusterPosition[idx_scatterer[0]], self.RecoClusterPosition_uncertainty[idx_scatterer[0]]
+
+    def get_photon_position(self):
+        _, idx_absorber = self.sort_clusters_by_module(use_energy=True)
+        return self.RecoClusterPosition[idx_absorber[0]], self.RecoClusterPosition_uncertainty[idx_absorber[0]]
+
     def sort_clusters_energy(self):
         """ sort events by highest energy in descending order
 
@@ -256,6 +272,5 @@ class Event:
         tvec3 = tvec3.rotatez(-tvec3_prime.phi).rotatey(-tvec3_prime.theta + np.pi / 2)
 
         return tvec3
-
 
     ####################################################################################################################
