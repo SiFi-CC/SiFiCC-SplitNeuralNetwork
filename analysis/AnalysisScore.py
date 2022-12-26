@@ -48,7 +48,7 @@ def analysis(SiFiCCNN, DataCluster, MetaData=None):
     plt.savefig("score_sourceposz.png")
 
     # score vs containment factor
-    ary_energy_primary = MetaData.mc_primary_energy[DataCluster.idx_test()]
+    ary_energy_primary = MetaData.mc_primary_energy()[DataCluster.idx_test()]
     ary_energy_event = DataCluster.meta[DataCluster.idx_test(), 2]
     bins_energy = np.arange(0.0, 16.0, 0.1)
     bins_score = np.arange(0.0, 1.0, 0.05)
@@ -59,4 +59,3 @@ def analysis(SiFiCCNN, DataCluster, MetaData=None):
     plt.colorbar(h0[3])
     plt.tight_layout()
     plt.savefig("score_containment")
-    
