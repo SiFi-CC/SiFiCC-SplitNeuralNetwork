@@ -1,5 +1,6 @@
 import numpy as np
 import os
+from uproot_methods import TVector3
 
 from classes import RootParser
 from classes import root_files
@@ -18,6 +19,20 @@ def check_compton_kinematics(event):
     if electron_energy_value - electron_energy_uncertainty > compton_edge[0] + compton_edge[1]:
         return False
     return True
+
+def beam_origin(event):
+    # grab tvectors and transform into new coordinate system
+    electron_position, _ = event.get_electron_position()
+    photon_position, _ = event.get_photon_position()
+    electron_position = TVector3(electron_position.z, electron_position.y, electron_position.x)
+    photon_position = TVector3(photon_position.z, photon_position.y, photon_position.x)
+
+    coneaxis = electron_position - photon_position
+    coneapex = electron_position
+    f1 = -coneapex.z / coneaxis.z
+    crosspoint = coneapex + (f1*coneaxis)
+
+
 
 
 def main():
