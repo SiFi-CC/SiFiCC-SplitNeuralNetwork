@@ -5,6 +5,8 @@
 # ignore folder to temporarely store files not needing to be pushed
 ignore/
 
+results/
+
 # root_files directory since the datafiles are too large
 root_files/
 root_files/*.root
