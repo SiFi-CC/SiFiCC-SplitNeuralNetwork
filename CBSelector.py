@@ -1,0 +1,204 @@
+import numpy as np
+import os
+from uproot_methods import TVector3
+
+from src import RootParser
+from src import root_files
+
+
+def tmath_acos(x):
+    if (x < -1):
+        return np.pi
+    if (x > 1):
+        return 0
+    return np.arccos(x)
+
+
+def check_compton_kinematics(event, is_compton, inverse=False):
+    if is_compton:
+        # TODO: check correctness
+        ELECTRON_MASS = 0.511
+        event_energy = np.sum(event.RecoClusterEnergies_values)
+        event_energy_uncertainty = np.sqrt(np.sum(event.RecoClusterEnergies_uncertainty ** 2))
+
+        compton_edge = ((event_energy / (1 + ELECTRON_MASS / (2 * event_energy))),
+                        event_energy * (ELECTRON_MASS + event_energy) / (ELECTRON_MASS / 2 + event_energy) / (
+                                ELECTRON_MASS / 2 + event_energy) * event_energy_uncertainty)
+        if not inverse:
+            electron_energy_value, electron_energy_uncertainty = event.get_electron_energy()
+        else:
+            electron_energy_value, electron_energy_uncertainty = event.get_photon_energy()
+        # print(electron_energy_value - electron_energy_uncertainty, compton_edge[0] + compton_edge[1])
+        if electron_energy_value - electron_energy_uncertainty > compton_edge[0] + compton_edge[1]:
+            return False
+    return True
+
+
+def beam_origin(event, beam_diff, inverse=False):
+    ELECTRON_MASS = 0.511
+
+    if inverse:
+        photon_energy, _ = event.get_electron_energy()
+        electron_energy, _ = event.get_photon_energy()
+    else:
+        photon_energy, _ = event.get_photon_energy()
+        electron_energy, _ = event.get_electron_energy()
+
+    # grab tvectors and transform into new coordinate system
+    electron_position, _ = event.get_electron_position()
+    photon_position, _ = event.get_photon_position()
+    electron_position = TVector3(electron_position.z, electron_position.y, electron_position.x)
+    photon_position = TVector3(photon_position.z, photon_position.y, photon_position.x)
+
+    coneaxis = electron_position - photon_position
+    coneapex = electron_position
+    f1 = -coneapex.z / coneaxis.z
+    crosspoint = coneapex + (f1 * coneaxis)
+
+    sign = 1
+    if crosspoint.y > 0:
+        sign = -1
+
+    n_x = sign / np.sqrt((coneaxis.x * coneaxis.x / coneaxis.z / coneaxis.z) + 1)
+    n_z = np.sqrt(1 - (n_x * n_x))
+    rotvec = TVector3(n_x, 0, n_z)
+    theta = tmath_acos(1 - ELECTRON_MASS * (1 / (photon_energy) - 1 / (photon_energy + electron_energy)))
+
+    if inverse:
+        theta = np.pi - theta
+
+    # generate rotation matrix
+    # uproot methods does not support matrices
+    # matrix multiplication will be done in numpy
+    a1 = [(rotvec.x * rotvec.x * (1 - np.cos(theta))) + np.cos(theta),
+          (rotvec.x * rotvec.y * (1 - np.cos(theta))) - (rotvec.z * np.sin(theta)),
+          (rotvec.x * rotvec.z * (1 - np.cos(theta))) + (rotvec.y * np.sin(theta))]
+
+    a2 = [(rotvec.y * rotvec.x * (1 - np.cos(theta))) + (rotvec.z * np.sin(theta)),
+          (rotvec.y * rotvec.y * (1 - np.cos(theta))) + np.cos(theta),
+          (rotvec.y * rotvec.z * (1 - np.cos(theta))) - (rotvec.x * np.sin(theta))]
+
+    a3 = [(rotvec.z * rotvec.x * (1 - np.cos(theta))) - (rotvec.y * np.sin(theta)),
+          (rotvec.z * rotvec.y * (1 - np.cos(theta))) + (rotvec.x * np.sin(theta)),
+          (rotvec.z * rotvec.z * (1 - np.cos(theta))) + np.cos(theta)]
+
+    rotmat = np.array([a1, a2, a3])
+    ary_coneaxis = np.array([coneaxis.x, coneaxis.y, coneaxis.z])
+    ary_endvec = rotmat.dot(ary_coneaxis)
+    endvec = TVector3(ary_endvec[0], ary_endvec[1], ary_endvec[2])
+
+    f2 = -coneapex.z / endvec.z
+    m0 = (coneapex + (f2 * endvec))
+
+    if crosspoint.y > 0 and m0.y < 0:
+        return True
+    elif crosspoint.y < 0 and m0.y > 0:
+        return True
+
+    distance = m0.y
+    if abs(distance) < beam_diff:
+        return True
+
+    return False
+
+
+########################################################################################################################
+
+def select_event(event):
+    # Settings
+    is_first = False
+    is_sum = True
+    beam_diff = 20
+    is_compton = True
+    is_inversion = True
+
+    # Event Class IDs
+    # 0 - S1A1-EP (electron scatterer, photon absorber)
+    # 1 - S1A1-PE (photon-scatterer, electron absorber)
+    #   2 clusters one in scatterer one in absorber
+    #
+    # 2 - S1AX
+    #   1 cluster in scatterer and x in absorber
+    # procedure for x:
+    #          biggest deposition is photon position and all energy is photon energy
+
+    identified = 0
+    tag_class = ""
+    tag_reason = ""
+
+    # sort cluster by index
+    idx_scatterer, idx_absorber = event.sort_clusters_by_module(use_energy=True)
+
+    # Possible classes are
+    # S1A1
+    # S1AX
+    # if cluster in scatter > 1 not identified
+
+    if not len(idx_scatterer) == 1:
+        identified = 0
+        tag_reason = "TOMUCHSCATCLUSTER"
+        tag_class = "BACKGROUND"
+
+    else:
+        # S1A1 class no handle on backscattering)
+        if len(idx_absorber) == 1:
+            identified = 1
+            tag_class = "S1A1"
+            tag_reason = "IDENTIFIED"
+        else:
+            # handle S1AX class
+            identified = 1
+            tag_class = "S1AX"
+            tag_reason = "IDENTIFIED"
+
+        # handle on event kinematics
+        if identified != 0:
+            if check_compton_kinematics(event, is_compton, inverse=False):
+                if not beam_origin(event, beam_diff):
+                    identified = 0
+                    tag_reason = "DAACWRONG"
+            elif is_inversion:
+                # check if inversion of IddClass==0 leads to good IDClass==1)
+
+                if not check_compton_kinematics(event, is_compton, inverse=True):
+                    identified = 0
+                    tag_reason = "COMPTONWRONG"
+                else:
+                    tag_class = "S1A1-PE"
+                    tag_reason = "IDENTIFIED"
+                    if not beam_origin(event, beam_diff, inverse=True):
+                        identified = 0
+                        tag_reason = "DAACWRONG"
+                    else:
+                        tag_reason = "COMTPONWRONG"
+            else:
+                tag_reason = "COMPTONWRONG"
+
+    return identified
+
+
+def main():
+    dir_main = os.getcwd()
+    dir_root = dir_main + "/root_files/"
+
+    root_data = RootParser(dir_main + root_files.OptimisedGeometry_BP0mm_2e10protons_offline)
+
+    n = 100000
+    positives = 0.0
+
+    for i, event in enumerate(root_data.iterate_events(n=n)):
+        cb_true_tag = event.Identified
+
+        cb_identified = select_event(event)
+
+        if cb_identified != 0.0 and cb_true_tag != 0.0:
+            positives += 1.0
+        if cb_identified == 0.0 and cb_true_tag == 0.0:
+            positives += 1.0
+
+    print("Positive Rate: {:.3f}%".format(positives / n * 100))
+    print(n, positives)
+
+
+if __name__ == "__main__":
+    main()
