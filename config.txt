@@ -11,43 +11,31 @@
 ROOT_FILE_NAME: OptimisedGeometry_BP0mm_2e10protons.root
 
 # Set the input generator
-# each inputgenerator has a corresponding name tag (InputGenerator + "name tag" .py)
-# setting needs to match the name tag
-# input-generator location is the "/inputgenerator/" subdirectory
-INPUT_GENERATOR_NAME: DNNBase
+# input-generator location is the "/src/" subdirectory
+INPUT_GENERATOR_NAME: DNN_S1AX
 
 # Set the training strategy
-# each training strategy has a corresponding name tag (TrainingStrategy + "name tag" .py)
-# setting needs to match the name tag
-# training strategy location is the "/trainingstrategy/" subdirectory
-TRAINING_STRATEGY_NAME: DNNBase
+# training strategy location is the "/src/" subdirectory
+TRAINING_SCHEDULE_NAME: TrainingScheduleDNNFull
 
-# Set the analysis methods
-# each analysis method has a corresponding name tag (analysis + "name tag" .py)
-# setting needs to match the name tag
-# analysis method location is the "/analyis/" subdirectory
-# multiple analysis can be used by listing them with comma
-ANALYSIS_LIST: Metrics, AUCROC
-
-# Set the Neural Network model
-# each neural network model has a corresponding name tag (Model + "name tag" .py)
-# setting needs to match the name tag
+# Set the Neural Network models
 # neural network model location is the "/models/" subdirectory
-MODEL_NAME: DNNBase_classifier
+MODEL_NAME_CLASSIFIER: DNN_base_classifier
+MODEL_NAME_REGRESSION1: DNN_base_regression_energy
+MODEL_NAME_REGRESSION2: DNN_base_regression_position
 
-# Set the run tag
+# Set the run name
 # Each run of the framework will sample the results in a subdirectory created for each run
 # the subdirectory will be named according to the settings above
 # The tag will be added to the name to differentiate different runs
-RUN_TAG: test
+RUN_NAME: test
 
 #################################################
 # Sub-Settings
 #################################################
 
-# load model tag
+# load models
 # if set to 1, corresponding model will NOT be trained and loaded + evaluated
-LOAD_MODEL: 0
-
-# number of training epochs
-NUMBER_EPOCHS: 20
+LOAD_CLASSIFIER: 0
+LOAD_REGRESSION1: 1
+LOAD_REGRESSION2: 1
