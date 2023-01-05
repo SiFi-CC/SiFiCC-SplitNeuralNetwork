@@ -78,15 +78,14 @@ class DataCluster:
             self.features[:, i] = (self.features[:, i] - np.mean(self.features[:, i])) / np.std(self.features[:, i])
 
     def update_indexing_positives(self):
+        ary_idx = np.arange(0, self.entries, 1.0, dtype=int)
+        print(ary_idx, len(ary_idx))
+        print(ary_idx[self.targets_clas == 1.0], len(ary_idx[self.targets_clas == 1.0]))
         # grab indices of all positives events
-        ary_idx_pos = self.ary_idx[self.targets_clas == 1]
+        self.ary_idx = ary_idx[self.targets_clas == 1.0]
 
-        # generate shuffled indices with a random generator
-        rng = np.random.default_rng(42)
-        rng.shuffle(self.ary_idx)
-
-        # update indexing
-        self.ary_idx = ary_idx_pos
+        # rng = np.random.default_rng(42)
+        # rng.shuffle(self.ary_idx)
 
     def update_targets_energy(self):
         # set legacy targets to be module energies
