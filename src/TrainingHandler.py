@@ -46,7 +46,7 @@ def train_base(NeuralNetwork, npz_file, verbose=0):
 
     # get evaluation of training performance
     Plotter.plot_history_classifier(NeuralNetwork,
-                                    NeuralNetwork.model_name + "_" + NeuralNetwork.model_tag + "_history_training")
+                                    NeuralNetwork.model_name + "_" + NeuralNetwork.model_tag + "_history_training_classifier")
 
     # save model
     NeuralNetwork.save()
@@ -90,7 +90,7 @@ def train_regEnergy(NeuralNetwork, npz_file, verbose=0):
 
     # get evaluation of training performance
     Plotter.plot_history_regression(NeuralNetwork,
-                                    NeuralNetwork.model_name + "_" + NeuralNetwork.model_tag + "_history_training")
+                                    NeuralNetwork.model_name + "_" + NeuralNetwork.model_tag + "_history_training_regression")
 
     # save model
     NeuralNetwork.save()

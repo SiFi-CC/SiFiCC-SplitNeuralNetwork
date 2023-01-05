@@ -158,7 +158,7 @@ def eval_regression_energy(NeuralNetwork, npz_file, predict_full=True):
 
     if predict_full:
         y_pred = NeuralNetwork.predict(data_cluster.features)
-        y_true = data_cluster.targets_clas
+        y_true = data_cluster.targets_reg1
     else:
         y_pred = NeuralNetwork.predict(data_cluster.x_test())
         y_true = data_cluster.y_test()
