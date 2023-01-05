@@ -145,18 +145,7 @@ def eval_classifier(NeuralNetwork, npz_file, theta=0.5, predict_full=True):
     """
 
 
-def regression_evaluation(data_cluster, regression1, regression2):
-    y_pred_energy = regression1.predict(data_cluster.x_test_reg())
-    y_true_energy = data_cluster.y_test_reg1()
-
-    y_pred_position = regression2.predict(data_cluster.x_test_reg())
-    y_true_position = data_cluster.y_test_reg2()
-
-    Plotter.plot_regression_energy_error(y_pred_energy, y_true_energy, "training_error_energy")
-    Plotter.plot_regression_position_error(y_pred_position, y_true_position, "training_error_position")
-
-
-def export_mlem_cutbased(nn_classifier, data_cluster):
+def export_mlem_simpleregression(nn_classifier, data_cluster):
     # set classification threshold
     theta = 0.5
 
@@ -202,108 +191,6 @@ def export_mlem_cutbased(nn_classifier, data_cluster):
     ary_pz = data_cluster.features[list_idx_positives, 13]
 
     from src import MLEMExport
-    MLEMExportCutBased.export_mlem(ary_e, ary_p, ary_ex, ary_ey, ary_ez, ary_px, ary_py, ary_pz,
-                                   "OptimizedGeometry_BP0mm_2e10protons_DNN_S1AX_Mixed")
-
-
-def export_mlem(nn_classifier, nn_regression1, nn_regression2, data_cluster):
-    # update test-sample ratio
-    data_cluster.p_train = 0.0
-    data_cluster.p_valid = 0.0
-    data_cluster.p_test = 1.0
-
-    # set classification threshold
-    theta = 0.5
-
-    # get classification results
-    y_scores_classifier = nn_classifier.predict(data_cluster.features)
-
-    # pre-define
-    y_pred_classifier = np.zeros(shape=(len(y_scores_classifier, )))
-
-    for i in range(len(y_pred_classifier)):
-        # apply prediction threshold
-        if y_scores_classifier[i] >= theta:
-            y_pred_classifier[i] = 1
-        else:
-            y_pred_classifier[i] = 0
-
-    list_idx_positives = y_pred_classifier == 1
-    print("accuracy: {:.1f}".format(np.sum(y_pred_classifier) / len(y_pred_classifier) * 100))
-    print("number of positive events: ", np.sum(y_pred_classifier))
-    print("input into regression: ", len(data_cluster.features[list_idx_positives, :]))
-
-    # get regression predictions
-    y_pred_energies = nn_regression1.predict(data_cluster.features[list_idx_positives, :])
-    y_pred_positions = nn_regression2.predict(data_cluster.features[list_idx_positives, :])
-    y_true_energy = data_cluster.targets_reg1[list_idx_positives, :]
-    y_true_positions = data_cluster.targets_reg2[list_idx_positives, :]
-
-    """
-    from src import MLEMExportRegression
-    MLEMExport.export_mlem(y_pred_energies[:, 0],
-                           y_pred_energies[:, 1],
-                           y_pred_positions[:, 0],
-                           y_pred_positions[:, 1],
-                           y_pred_positions[:, 2],
-                           y_pred_positions[:, 3],
-                           y_pred_positions[:, 4],
-                           y_pred_positions[:, 5],
-                           "OptimizedGeometry_BP0mm_2e10protons_DNN_Base")
-    """
-
-
-def export_mlem(NeuralNetwork, npz_file):
-    # settings
-    theta = 0.5
-
-    # load npz file
-    data_cluster = NPZParser.parse(npz_file)
-
-    # standardize input
-    data_cluster.standardize()
-
-    # evaluate test dataset
-    y_scores = NeuralNetwork.predict(data_cluster.features)
-    y_true = data_cluster.targets_clas
-
-    # pre-define
-    y_pred = np.zeros(shape=(len(y_scores, )))
-
-    for i in range(len(y_pred)):
-        # apply prediction threshold
-        if y_scores[i] >= theta:
-            y_pred[i] = 1
-        else:
-            y_pred[i] = 0
-
-    list_idx_positives = y_pred == 1
-
-    # denormalize features
-    for i in range(data_cluster.features.shape[1]):
-        data_cluster.features[:, i] *= data_cluster.list_std[i]
-        data_cluster.features[:, i] += data_cluster.list_mean[i]
-
-    # grab event kinematics from feature list
-    ary_e = data_cluster.features[list_idx_positives, 1]
-    ary_ex = data_cluster.features[list_idx_positives, 2]
-    ary_ey = data_cluster.features[list_idx_positives, 3]
-    ary_ez = data_cluster.features[list_idx_positives, 4]
-
-    # select only absorber energies
-    # select only positive events
-    # replace -1. (NaN) values with 0.
-    ary_p = data_cluster.features[:, [10, 19, 28, 37, 46]]
-    ary_p = ary_p[list_idx_positives, :]
-    for i in range(ary_p.shape[0]):
-        for j in range(ary_p.shape[1]):
-            if ary_p[i, j] == -1.:
-                ary_p[i, j] = 0.0
-    ary_p = np.sum(ary_p, axis=1)
-
-    ary_px = data_cluster.features[list_idx_positives, 11]
-    ary_py = data_cluster.features[list_idx_positives, 12]
-    ary_pz = data_cluster.features[list_idx_positives, 13]
-
-    MLEMExportCutBased.export_mlem(ary_e, ary_p, ary_ex, ary_ey, ary_ez, ary_px, ary_py, ary_pz,
-                                   "OptimizedGeometry_BP0mm_2e10protons_DNN_S1AX_filter")
+    MLEMExport.export_mlem(ary_e, ary_p, ary_ex, ary_ey, ary_ez, ary_px, ary_py, ary_pz,
+                           "OptimizedGeometry_BP0mm_2e10protons_DNN_S1AX_Mixed",
+                           verbose=1)

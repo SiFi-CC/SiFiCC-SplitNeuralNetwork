@@ -30,16 +30,17 @@ from src import EvaluationHandler
 ROOT_FILE_BP0mm = "OptimisedGeometry_BP0mm_2e10protons.root"
 ROOT_FILE_BP5mm = "OptimisedGeometry_BP5mm_4e9protons.root"
 # Training file
-# NPZ_FILE_TRAIN = "OptimizedGeometry_BP05_S1AX.npz"
-NPZ_FILE_TRAIN = "OptimisedGeometry_BP0mm_2e10protons_DNN_S1AX.npz"
+NPZ_FILE_TRAIN = "OptimizedGeometry_BP05_S1AX.npz"
+# NPZ_FILE_TRAIN = "OptimisedGeometry_BP0mm_2e10protons_DNN_S1AX.npz"
 # Evaluation file (can be list)
 NPZ_FILE_EVAL = ["OptimisedGeometry_BP0mm_2e10protons_DNN_S1AX.npz", "OptimisedGeometry_BP5mm_4e9protons_DNN_S1AX.npz"]
 
 # GLOBAL SETTINGS
 RUN_NAME = "DNN_S1AX"
-RUN_TAG = "nonmixed"
+RUN_TAG = "mixed"
 
 b_training = True
+b_mlemexport = True
 
 # define directory paths
 dir_main = os.getcwd()
@@ -83,3 +84,6 @@ else:
 for i in range(len(NPZ_FILE_EVAL)):
     os.chdir(dir_results + RUN_NAME + "_" + RUN_TAG + "/" + NPZ_FILE_EVAL[i][:-4] + "/")
     EvaluationHandler.eval_classifier(neuralnetwork_classifier, dir_npz + NPZ_FILE_EVAL[i])
+
+    if b_mlemexport:
+        EvaluationHandler.export_mlem_simpleregression(neuralnetwork_classifier, dir_npz + NPZ_FILE_EVAL[i])

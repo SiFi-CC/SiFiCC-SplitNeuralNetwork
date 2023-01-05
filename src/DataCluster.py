@@ -119,7 +119,7 @@ class DataCluster:
 
             if np.std(self.features[:, i]) == 0.0:
                 print("Zero Division in feature :", i)
-            
+
             self.features[:, i] = (self.features[:, i] - np.mean(self.features[:, i])) / np.std(self.features[:, i])
 
 
