@@ -114,7 +114,7 @@ def plot_regression_position_error(y_pred, y_true, figure_name):
     plt.hist(y_pred[:, 3] - y_true[:, 3], bins=bins_x, histtype=u"step", color="orange", label=r"p_x")
     plt.legend()
     plt.tight_layout()
-    plt.savefig(figure_name + "_position_x.png")
+    plt.savefig(figure_name + "_x.png")
 
     plt.figure()
     plt.title("Error Position x")
@@ -124,7 +124,7 @@ def plot_regression_position_error(y_pred, y_true, figure_name):
     plt.hist(y_pred[:, 4] - y_true[:, 4], bins=bins_y, histtype=u"step", color="orange", label=r"p_y")
     plt.legend()
     plt.tight_layout()
-    plt.savefig(figure_name + "_position_y.png")
+    plt.savefig(figure_name + "_y.png")
 
     plt.figure()
     plt.title("Error Position x")
@@ -134,7 +134,7 @@ def plot_regression_position_error(y_pred, y_true, figure_name):
     plt.hist(y_pred[:, 5] - y_true[:, 5], bins=bins_z, histtype=u"step", color="orange", label=r"p_z")
     plt.legend()
     plt.tight_layout()
-    plt.savefig(figure_name + "_position_z.png")
+    plt.savefig(figure_name + "_z.png")
 
 
 def plot_source_position(ary_source_pos, ary_source_pos_all, figure_name):

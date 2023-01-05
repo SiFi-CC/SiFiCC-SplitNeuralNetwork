@@ -157,16 +157,42 @@ def eval_regression_energy(NeuralNetwork, npz_file, predict_full=True):
     data_cluster.update_indexing_positives()
 
     if predict_full:
-        y_pred = NeuralNetwork.predict(data_cluster.features)
-        y_true = data_cluster.targets
-    else:
-        y_pred = NeuralNetwork.predict(data_cluster.x_test())
-        y_true = data_cluster.y_test()
+        data_cluster.p_train = 0.0
+        data_cluster.p_valid = 0.0
+        data_cluster.p_test = 1.0
+
+    y_pred = NeuralNetwork.predict(data_cluster.x_test())
+    y_true = data_cluster.y_test()
 
     for i in range(100):
         print(y_pred[i, :], " | ", y_true[i, :])
 
     Plotter.plot_regression_energy_error(y_pred, y_true, "error_regression_energy")
+
+
+def eval_regression_position(NeuralNetwork, npz_file, predict_full=True):
+    # load npz file into DataCluster object
+    data_cluster = NPZParser.parse(npz_file)
+
+    # standardize input
+    data_cluster.standardize()
+
+    # set regression
+    data_cluster.update_targets_position()
+    data_cluster.update_indexing_positives()
+
+    if predict_full:
+        data_cluster.p_train = 0.0
+        data_cluster.p_valid = 0.0
+        data_cluster.p_test = 1.0
+
+    y_pred = NeuralNetwork.predict(data_cluster.x_test())
+    y_true = data_cluster.y_test()
+
+    for i in range(100):
+        print(y_pred[i, :], " | ", y_true[i, :])
+
+    Plotter.plot_regression_position_error(y_pred, y_true, "error_regression_position")
 
 
 def export_mlem_simpleregression(nn_classifier, npz_file):

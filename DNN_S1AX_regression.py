@@ -63,7 +63,28 @@ if b_training:
 else:
     neuralnetwork_regression.load()
 
-
 for i in range(len(NPZ_FILE_EVAL)):
     os.chdir(dir_results + RUN_NAME + "_" + RUN_TAG + "/" + NPZ_FILE_EVAL[i][:-4] + "/")
     EvaluationHandler.eval_regression_energy(neuralnetwork_regression, dir_npz + NPZ_FILE_EVAL[i], predict_full=False)
+
+# load up the Tensorflow model position regression
+from models import DNN_base_regression_position
+
+tf_model = DNN_base_regression_position.return_model(54)
+neuralnetwork_regression_position = NeuralNetwork.NeuralNetwork(model=tf_model,
+                                                                model_name=RUN_NAME,
+                                                                model_tag=RUN_TAG + "_regPosition")
+
+# CHANGE DIRECTORY INTO THE NEWLY GENERATED RESULTS DIRECTORY
+# TODO: fix this pls
+os.chdir(dir_results + RUN_NAME + "_" + RUN_TAG + "/")
+
+if b_training:
+    TrainingHandler.train_regPosition(neuralnetwork_regression_position, dir_npz + NPZ_FILE_TRAIN, verbose=1)
+else:
+    neuralnetwork_regression_position.load()
+
+for i in range(len(NPZ_FILE_EVAL)):
+    os.chdir(dir_results + RUN_NAME + "_" + RUN_TAG + "/" + NPZ_FILE_EVAL[i][:-4] + "/")
+    EvaluationHandler.eval_regression_position(neuralnetwork_regression_position, dir_npz + NPZ_FILE_EVAL[i],
+                                               predict_full=False)

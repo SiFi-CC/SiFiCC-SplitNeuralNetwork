@@ -79,13 +79,11 @@ class DataCluster:
 
     def update_indexing_positives(self):
         ary_idx = np.arange(0, self.entries, 1.0, dtype=int)
-        print(ary_idx, len(ary_idx))
-        print(ary_idx[self.targets_clas == 1.0], len(ary_idx[self.targets_clas == 1.0]))
         # grab indices of all positives events
         self.ary_idx = ary_idx[self.targets_clas == 1.0]
 
-        # rng = np.random.default_rng(42)
-        # rng.shuffle(self.ary_idx)
+        rng = np.random.default_rng(42)
+        rng.shuffle(self.ary_idx)
 
     def update_targets_energy(self):
         # set legacy targets to be module energies
