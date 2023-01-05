@@ -1,6 +1,5 @@
 import numpy as np
 import os
-from uproot_methods import TVector3
 
 
 def gen_input(RootParser):

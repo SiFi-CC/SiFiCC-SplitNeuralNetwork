@@ -61,11 +61,11 @@ for i in range(len(NPZ_FILE_EVAL)):
 
 # load up the Tensorflow model
 from models import DNN_base_classifier
+
 tf_model = DNN_base_classifier.return_model(54)
 neuralnetwork_classifier = NeuralNetwork.NeuralNetwork(model=tf_model,
                                                        model_name=RUN_NAME,
                                                        model_tag=RUN_TAG)
-
 
 # CHANGE DIRECTORY INTO THE NEWLY GENERATED RESULTS DIRECTORY
 # TODO: fix this pls
@@ -76,7 +76,6 @@ if b_training:
 else:
     neuralnetwork_classifier.load()
 
-
 ########################################################################################################################
 # Evaluation schedule
 ########################################################################################################################
@@ -84,13 +83,3 @@ else:
 for i in range(len(NPZ_FILE_EVAL)):
     os.chdir(dir_results + RUN_NAME + "_" + RUN_TAG + "/" + NPZ_FILE_EVAL[i][:-4] + "/")
     EvaluationHandler.eval_classifier(neuralnetwork_classifier, dir_npz + NPZ_FILE_EVAL[i])
-
-
-
-
-
-
-
-
-
-
