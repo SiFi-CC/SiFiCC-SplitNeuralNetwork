@@ -59,11 +59,11 @@ neuralnetwork_regression = NeuralNetwork.NeuralNetwork(model=tf_model,
 os.chdir(dir_results + RUN_NAME + "_" + RUN_TAG + "/")
 
 if b_training:
-    TrainingHandler.train_base(neuralnetwork_regression, dir_npz + NPZ_FILE_TRAIN, verbose=1)
+    TrainingHandler.train_regEnergy(neuralnetwork_regression, dir_npz + NPZ_FILE_TRAIN, verbose=1)
 else:
     neuralnetwork_regression.load()
 
 
 for i in range(len(NPZ_FILE_EVAL)):
     os.chdir(dir_results + RUN_NAME + "_" + RUN_TAG + "/" + NPZ_FILE_EVAL[i][:-4] + "/")
-    EvaluationHandler.eval_classifier(neuralnetwork_regression, dir_npz + NPZ_FILE_EVAL[i])
+    EvaluationHandler.eval_regression_energy(neuralnetwork_regression, dir_npz + NPZ_FILE_EVAL[i])
