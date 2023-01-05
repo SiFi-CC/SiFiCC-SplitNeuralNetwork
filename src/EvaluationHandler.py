@@ -201,7 +201,7 @@ def export_mlem_cutbased(nn_classifier, data_cluster):
     ary_py = data_cluster.features[list_idx_positives, 12]
     ary_pz = data_cluster.features[list_idx_positives, 13]
 
-    from src import MLEMExportCutBased
+    from src import MLEMExport
     MLEMExportCutBased.export_mlem(ary_e, ary_p, ary_ex, ary_ey, ary_ez, ary_px, ary_py, ary_pz,
                                    "OptimizedGeometry_BP0mm_2e10protons_DNN_S1AX_Mixed")
 
