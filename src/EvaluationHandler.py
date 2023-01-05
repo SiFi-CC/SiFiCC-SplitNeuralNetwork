@@ -148,6 +148,9 @@ def eval_classifier(NeuralNetwork, npz_file, theta=0.5, predict_full=True):
 def export_mlem_simpleregression(nn_classifier, data_cluster):
     # set classification threshold
     theta = 0.5
+    
+    # standardize input
+    data_cluster.standardize()
 
     # get classification results
     y_scores_classifier = nn_classifier.predict(data_cluster.features)

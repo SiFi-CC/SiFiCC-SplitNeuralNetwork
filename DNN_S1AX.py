@@ -33,7 +33,8 @@ ROOT_FILE_BP5mm = "OptimisedGeometry_BP5mm_4e9protons.root"
 NPZ_FILE_TRAIN = "OptimizedGeometry_BP05_S1AX.npz"
 # NPZ_FILE_TRAIN = "OptimisedGeometry_BP0mm_2e10protons_DNN_S1AX.npz"
 # Evaluation file (can be list)
-NPZ_FILE_EVAL = ["OptimisedGeometry_BP0mm_2e10protons_DNN_S1AX.npz", "OptimisedGeometry_BP5mm_4e9protons_DNN_S1AX.npz"]
+NPZ_FILE_EVAL = ["OptimisedGeometry_BP0mm_2e10protons_DNN_S1AX.npz",
+                 "OptimisedGeometry_BP5mm_4e9protons_DNN_S1AX.npz"]
 
 # GLOBAL SETTINGS
 RUN_NAME = "DNN_S1AX"
