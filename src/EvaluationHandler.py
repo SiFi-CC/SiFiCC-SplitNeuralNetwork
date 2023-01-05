@@ -145,13 +145,34 @@ def eval_classifier(NeuralNetwork, npz_file, theta=0.5, predict_full=True):
     """
 
 
+def eval_regression_energy(NeuralNetwork, npz_file, predict_full=True):
+    # load npz file into DataCluster object
+    data_cluster = NPZParser.parse(npz_file)
+
+    # standardize input
+    data_cluster.standardize()
+
+    # set regression
+    data_cluster.update_targets_energy()
+    data_cluster.update_indexing_positives()
+
+    if predict_full:
+        y_pred = NeuralNetwork.predict(data_cluster.features)
+        y_true = data_cluster.targets_clas
+    else:
+        y_pred = NeuralNetwork.predict(data_cluster.x_test())
+        y_true = data_cluster.y_test()
+
+    Plotter.plot_regression_energy_error(y_pred, y_true, "error_regression_energy")
+
+
 def export_mlem_simpleregression(nn_classifier, npz_file):
     # set classification threshold
     theta = 0.5
 
     # load npz file into DataCluster object
     data_cluster = NPZParser.parse(npz_file)
-    
+
     # standardize input
     data_cluster.standardize()
 

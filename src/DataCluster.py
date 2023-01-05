@@ -26,10 +26,6 @@ class DataCluster:
         rng = np.random.default_rng(42)
         rng.shuffle(self.ary_idx)
 
-        # repeat with indices of positive events
-        self.ary_idx_pos = [i for i in range(len(self.targets_clas)) if self.targets_clas[i] == 1]
-        rng.shuffle(self.ary_idx_pos)
-
     ####################################################################################################################
 
     def idx_train(self):
@@ -41,16 +37,6 @@ class DataCluster:
 
     def idx_test(self):
         return self.ary_idx[int(len(self.ary_idx) * (self.p_train + self.p_valid)):]
-
-    def idx_train_pos(self):
-        return self.ary_idx_pos[0: int(len(self.ary_idx_pos) * self.p_train)]
-
-    def idx_valid_pos(self):
-        return self.ary_idx_pos[
-               int(len(self.ary_idx_pos) * self.p_train): int(len(self.ary_idx_pos) * (self.p_train + self.p_valid))]
-
-    def idx_test_pos(self):
-        return self.ary_idx_pos[int(len(self.ary_idx_pos) * (self.p_train + self.p_valid)):]
 
     # classification
     def x_train(self):
@@ -74,37 +60,6 @@ class DataCluster:
     def y_test(self):
         return self.targets[self.idx_test()]
 
-    # regression
-    def x_train_reg(self):
-        return self.features[self.idx_train_pos()]
-
-    def w_train_reg(self):
-        return self.weights[self.idx_train_pos()]
-
-    def x_valid_reg(self):
-        return self.features[self.idx_valid_pos()]
-
-    def x_test_reg(self):
-        return self.features[self.idx_test_pos()]
-
-    def y_train_reg1(self):
-        return self.targets_reg1[self.idx_train_pos()]
-
-    def y_train_reg2(self):
-        return self.targets_reg2[self.idx_train_pos()]
-
-    def y_valid_reg1(self):
-        return self.targets_reg1[self.idx_valid_pos()]
-
-    def y_valid_reg2(self):
-        return self.targets_reg2[self.idx_valid_pos()]
-
-    def y_test_reg1(self):
-        return self.targets_reg1[self.idx_test_pos()]
-
-    def y_test_reg2(self):
-        return self.targets_reg2[self.idx_test_pos()]
-
     def num_features(self):
         return self.features.shape[1]
 
@@ -122,35 +77,24 @@ class DataCluster:
 
             self.features[:, i] = (self.features[:, i] - np.mean(self.features[:, i])) / np.std(self.features[:, i])
 
-
-    def remove_background_events(self):
+    def update_indexing_positives(self):
         # grab indices of all positives events
-        list_idx_positives = self.targets_clas == 1
-
-        # remove all background events
-        self.targets = self.targets[list_idx_positives, :]
-        self.targets_clas = self.targets_clas[list_idx_positives, :]
-        self.targets_reg1 = self.targets_reg1[list_idx_positives, :]
-        self.targets_reg2 = self.targets_reg2[list_idx_positives, :]
+        ary_idx_pos = self.ary_idx[self.targets_clas == 1]
 
         # generate shuffled indices with a random generator
-        self.ary_idx = np.arange(0, self.entries, 1.0, dtype=int)
         rng = np.random.default_rng(42)
         rng.shuffle(self.ary_idx)
 
-    """
-    # COMMENTED OUT AS NORMALIZING WITH MONTE CARLO FEATURES DOES NOT MAKE SENSE
-    def normalize_by_eprimary(self):
-        # TODO: UPDATE INDEXING
-        ary_idx_e = [3, 8, 13, 18, 23, 28, 33, 38]
+        # update indexing
+        self.ary_idx = ary_idx_pos
 
-        for i in range(self.features.shape[1]):
-            if i not in ary_idx_e:
-                self.features[:, i] = (self.features[:, i] - np.mean(self.features[:, i])) / np.std(self.features[:, i])
+    def update_targets_energy(self):
+        # set legacy targets to be module energies
+        self.targets = self.targets_reg1
 
-        for i in range(len(self.targets)):
-            self.features[i, ary_idx_e] = self.features[i, ary_idx_e] / self.meta[i, 1]
-    """
+    def update_targets_position(self):
+        # set legacy targets to be module energies
+        self.targets = self.targets_reg2
 
     def get_classweights(self):
         # set sample weights to class weights
@@ -206,4 +150,3 @@ class DataCluster:
         self.ary_idx = np.arange(0, self.entries, 1.0, dtype=int)
         rng = np.random.default_rng(42)
         rng.shuffle(self.ary_idx)
-
