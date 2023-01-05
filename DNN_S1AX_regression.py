@@ -66,4 +66,4 @@ else:
 
 for i in range(len(NPZ_FILE_EVAL)):
     os.chdir(dir_results + RUN_NAME + "_" + RUN_TAG + "/" + NPZ_FILE_EVAL[i][:-4] + "/")
-    EvaluationHandler.eval_regression_energy(neuralnetwork_regression, dir_npz + NPZ_FILE_EVAL[i])
+    EvaluationHandler.eval_regression_energy(neuralnetwork_regression, dir_npz + NPZ_FILE_EVAL[i], predict_full=False)
