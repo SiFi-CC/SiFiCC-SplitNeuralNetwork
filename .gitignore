@@ -5,7 +5,9 @@
 # ignore folder to temporarely store files not needing to be pushed
 ignore/
 
-results/
+# ignore png's and root files in the results subdirectory
+results/**/*.png
+results/**/*.root
 
 # root_files directory since the datafiles are too large
 root_files/
@@ -13,3 +15,7 @@ root_files/*.root
 
 # npz_files in the directory are ignored due to their size
 npz_files/*.npz
+
+# ignore example_code.py
+# it is a redundant file just to test code
+example_code.py
