@@ -145,9 +145,12 @@ def eval_classifier(NeuralNetwork, npz_file, theta=0.5, predict_full=True):
     """
 
 
-def export_mlem_simpleregression(nn_classifier, data_cluster):
+def export_mlem_simpleregression(nn_classifier, npz_file):
     # set classification threshold
     theta = 0.5
+
+    # load npz file into DataCluster object
+    data_cluster = NPZParser.parse(npz_file)
     
     # standardize input
     data_cluster.standardize()
