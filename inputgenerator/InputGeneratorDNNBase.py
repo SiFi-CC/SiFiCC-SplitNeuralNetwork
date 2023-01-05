@@ -71,7 +71,7 @@ def gen_input(RootParser):
         # get indices of clusters sorted by highest energy and module
         idx_scatterer, idx_absorber = event.sort_clusters_by_module(use_energy=True)
 
-        if not len(idx_scatterer) == 1:
+        if not len(idx_scatterer) > 0:
             continue
 
         if not len(idx_absorber) > 0:
