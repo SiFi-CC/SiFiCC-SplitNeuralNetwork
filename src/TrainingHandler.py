@@ -2,7 +2,7 @@ from src import NPZParser
 from src import Plotter
 
 
-def train_base(NeuralNetwork, npz_file, verbose=0):
+def train_clas(NeuralNetwork, npz_file, verbose=0):
     """
 
     Args:

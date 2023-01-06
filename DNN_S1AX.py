@@ -74,7 +74,7 @@ neuralnetwork_classifier = NeuralNetwork.NeuralNetwork(model=tf_model,
 os.chdir(dir_results + RUN_NAME + "_" + RUN_TAG + "/")
 
 if b_training:
-    TrainingHandler.train_base(neuralnetwork_classifier, dir_npz + NPZ_FILE_TRAIN, verbose=1)
+    TrainingHandler.train_clas(neuralnetwork_classifier, dir_npz + NPZ_FILE_TRAIN, verbose=1)
 else:
     neuralnetwork_classifier.load()
 
