@@ -118,14 +118,14 @@ def eval_classifier(NeuralNetwork, npz_file, theta=0.5, predict_full=True):
 
     # evaluate primary energy spectrum
     ary_primaryenergy_pos = [float(data_cluster.meta[data_cluster.idx_test()[i], 1]) for i in range(len(y_scores))
-                             if (y_scores[i] > theta and data_cluster.meta[i, 1] != 0.0)]
+                             if (y_scores[i] > theta and data_cluster.meta[data_cluster.idx_test()[i], 1] != 0.0)]
     ary_primaryenergy_all = [float(data_cluster.meta[data_cluster.idx_test()[i], 1]) for i in range(len(y_true)) if
                              y_true[i] == 1]
     Plotter.plot_primary_energy_dist(ary_primaryenergy_pos, ary_primaryenergy_all, "dist_primaryenergy")
 
     # evaluate source position spectrum
     ary_sourcepos_pos = [float(data_cluster.meta[data_cluster.idx_test()[i], 2]) for i in range(len(y_scores))
-                         if (y_scores[i] > theta and data_cluster.meta[i, 2] != 0.0)]
+                         if (y_scores[i] > theta and data_cluster.meta[data_cluster.idx_test()[i], 2] != 0.0)]
     ary_sourcepos_all = [float(data_cluster.meta[data_cluster.idx_test()[i], 2]) for i in range(len(y_true)) if
                          y_true[i] == 1]
     Plotter.plot_source_position(ary_sourcepos_pos, ary_sourcepos_all, "dist_sourcepos")
