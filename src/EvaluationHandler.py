@@ -223,11 +223,11 @@ def eval_full(NeuralNetwork_clas, NeuralNetwork_regE, NeuralNetwork_regP, npz_fi
     counter_pos = 0
     for i in range(len(y_pred_class)):
         identified = 1
-        if not y_pred_class[i] == 1 and y_true_clas[i] == 1:
+        if not (y_pred_class[i] == 1 and y_true_clas[i] == 1):
             identified = 0
-        if np.abs(y_pred_energy[i, 0] - y_pred_energy[i, 0]) > 2 * 0.06 * y_true_e[i, 0]:
+        if np.abs(float(y_pred_energy[i, 0]) - float(y_pred_energy[i, 0])) > 2 * 0.06 * y_true_e[i, 0]:
             identified = 0
-        if np.abs(y_pred_energy[i, 1] - y_pred_energy[i, 1]) > 2 * 0.06 * y_true_e[i, 1]:
+        if np.abs(float(y_pred_energy[i, 1]) - float(y_pred_energy[i, 1])) > 2 * 0.06 * y_true_e[i, 1]:
             identified = 0
         if np.abs(y_pred_position[i, 0] - y_true_p[i, 0]) > 1.3 * 2:
             identified = 0
@@ -244,6 +244,7 @@ def eval_full(NeuralNetwork_clas, NeuralNetwork_regE, NeuralNetwork_regP, npz_fi
 
         if identified == 1:
             counter_pos += 1
+
 
     print("# Full evaluation statistics: ")
     print("Efficiency: {:.1f}".format(counter_pos / np.sum(data_cluster.targets_clas) * 100))
