@@ -199,6 +199,57 @@ def eval_regression_position(NeuralNetwork, npz_file, predict_full=True):
     Plotter.plot_regression_position_error(y_pred, y_true, "error_regression_position")
 
 
+def eval_full(NeuralNetwork_clas, NeuralNetwork_regE, NeuralNetwork_regP, npz_file,
+              theta=0.5):
+    # load npz file into DataCluster object
+    data_cluster = NPZParser.parse(npz_file)
+
+    # standardize input
+    data_cluster.standardize()
+
+    # grab all positive identified events by the neural network
+    y_scores = NeuralNetwork_clas.predict(data_cluster.features)
+    idx_pos = y_scores > theta
+
+    # predict energy and position of all positive events
+    y_pred_energy = NeuralNetwork_regE.predict(data_cluster.features[idx_pos, :])
+    y_pred_position = NeuralNetwork_regP.predict(data_cluster.features[idx_pos, :])
+
+    y_pred_class = (y_scores[idx_pos] > theta) * 1
+    y_true_clas = data_cluster.targets_clas[idx_pos]
+    y_true_e = data_cluster.targets_reg1[idx_pos, :]
+    y_true_p = data_cluster.targets_reg2[idx_pos, :]
+
+    counter_pos = 0
+    for i in range(len(y_pred_class)):
+        identified = 1
+        if not y_pred_class[i] == y_true_clas[i]:
+            identified = 0
+        if np.abs(y_pred_energy[i, 0] - y_pred_energy[i, 0]) > 2 * 0.06 * y_true_e[i, 0]:
+            identified = 0
+        if np.abs(y_pred_energy[i, 1] - y_pred_energy[i, 1]) > 2 * 0.06 * y_true_e[i, 1]:
+            identified = 0
+        if np.abs(y_pred_position[i, 0] - y_true_p[i, 0]) > 1.3 * 2:
+            identified = 0
+        if np.abs(y_pred_position[i, 1] - y_true_p[i, 1]) > 10.0 * 2:
+            identified = 0
+        if np.abs(y_pred_position[i, 2] - y_true_p[i, 2]) > 1.3 * 2:
+            identified = 0
+        if np.abs(y_pred_position[i, 3] - y_true_p[i, 3]) > 1.3 * 2:
+            identified = 0
+        if np.abs(y_pred_position[i, 4] - y_true_p[i, 4]) > 20.0 * 2:
+            identified = 0
+        if np.abs(y_pred_position[i, 5] - y_true_p[i, 5]) > 1.3 * 2:
+            identified = 0
+
+        if identified == 1:
+            counter_pos += 1
+
+    print("# Full evaluation statistics: ")
+    print("Efficiency: {:.1f}".format(np.sum(y_pred_class) / np.sum(data_cluster.targets_clas)))
+    print("Purity: {:.1f}".format(counter_pos / np.sum(y_true_clas)))
+
+
 def export_mlem_simpleregression(nn_classifier, npz_file):
     # set classification threshold
     theta = 0.5
