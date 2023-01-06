@@ -104,11 +104,13 @@ def eval_classifier(NeuralNetwork, npz_file, theta=0.5, predict_full=True):
     data_cluster.standardize()
 
     if predict_full:
-        y_scores = NeuralNetwork.predict(data_cluster.features)
-        y_true = data_cluster.targets_clas
-    else:
-        y_scores = NeuralNetwork.predict(data_cluster.x_test())
-        y_true = data_cluster.y_test()
+        data_cluster.p_train = 0.0
+        data_cluster.p_valid = 0.0
+        data_cluster.p_test = 1.0
+
+    y_scores = NeuralNetwork.predict(data_cluster.x_test())
+    y_true = data_cluster.y_test()
+    # print(y_true)
 
     write_metrics_classifier(y_scores, y_true)
     Plotter.plot_score_dist(y_scores, y_true, "score_dist")

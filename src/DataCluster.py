@@ -85,6 +85,15 @@ class DataCluster:
         rng = np.random.default_rng(42)
         rng.shuffle(self.ary_idx)
 
+    def update_indexing_all(self):
+        ary_idx = np.arange(0, self.entries, 1.0, dtype=int)
+        rng = np.random.default_rng(42)
+        rng.shuffle(self.ary_idx)
+
+    def update_targets_energy(self):
+        # set legacy targets to be module energies
+        self.targets = self.targets_clas
+
     def update_targets_energy(self):
         # set legacy targets to be module energies
         self.targets = self.targets_reg1
