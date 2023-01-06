@@ -23,7 +23,7 @@ NPZ_FILE_EVAL = ["OptimisedGeometry_BP0mm_2e10protons_DNN_S1AX.npz",
 
 # GLOBAL SETTINGS
 RUN_NAME = "DNN_S1AX_Full"
-RUN_TAG = "mixed"
+RUN_TAG = "filter"
 
 b_mlemexport = True
 b_eval = True
