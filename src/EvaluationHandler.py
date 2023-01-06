@@ -209,7 +209,7 @@ def eval_full(NeuralNetwork_clas, NeuralNetwork_regE, NeuralNetwork_regP, npz_fi
 
     # grab all positive identified events by the neural network
     y_scores = NeuralNetwork_clas.predict(data_cluster.features)
-    idx_pos = y_scores > theta
+    idx_pos = [float(y_scores[i]) > theta for i in range(len(y_scores))]
 
     # predict energy and position of all positive events
     y_pred_energy = NeuralNetwork_regE.predict(data_cluster.features[idx_pos, :])
@@ -223,7 +223,7 @@ def eval_full(NeuralNetwork_clas, NeuralNetwork_regE, NeuralNetwork_regP, npz_fi
     counter_pos = 0
     for i in range(len(y_pred_class)):
         identified = 1
-        if not y_pred_class[i] == y_true_clas[i]:
+        if not y_pred_class[i] == 1 and y_true_clas[i] == 1:
             identified = 0
         if np.abs(y_pred_energy[i, 0] - y_pred_energy[i, 0]) > 2 * 0.06 * y_true_e[i, 0]:
             identified = 0
@@ -237,7 +237,7 @@ def eval_full(NeuralNetwork_clas, NeuralNetwork_regE, NeuralNetwork_regP, npz_fi
             identified = 0
         if np.abs(y_pred_position[i, 3] - y_true_p[i, 3]) > 1.3 * 2:
             identified = 0
-        if np.abs(y_pred_position[i, 4] - y_true_p[i, 4]) > 20.0 * 2:
+        if np.abs(y_pred_position[i, 4] - y_true_p[i, 4]) > 10.0 * 2:
             identified = 0
         if np.abs(y_pred_position[i, 5] - y_true_p[i, 5]) > 1.3 * 2:
             identified = 0
@@ -246,8 +246,8 @@ def eval_full(NeuralNetwork_clas, NeuralNetwork_regE, NeuralNetwork_regP, npz_fi
             counter_pos += 1
 
     print("# Full evaluation statistics: ")
-    print("Efficiency: {:.1f}".format(np.sum(y_pred_class) / np.sum(data_cluster.targets_clas)))
-    print("Purity: {:.1f}".format(counter_pos / np.sum(y_true_clas)))
+    print("Efficiency: {:.1f}".format(counter_pos / np.sum(data_cluster.targets_clas) * 100))
+    print("Purity: {:.1f}".format(counter_pos / np.sum(y_true_clas) * 100))
 
 
 def export_mlem_simpleregression(nn_classifier, npz_file):

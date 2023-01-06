@@ -27,9 +27,9 @@ RUN_TAG = "filter"
 
 b_mlemexport = True
 b_eval = True
-b_loadclas = False
-b_loadregE = False
-b_loadregP = False
+b_loadclas = True
+b_loadregE = True
+b_loadregP = True
 
 # define directory paths
 dir_main = os.getcwd()
