@@ -168,9 +168,6 @@ def eval_regression_energy(NeuralNetwork, npz_file, predict_full=True):
     y_pred = NeuralNetwork.predict(data_cluster.x_test())
     y_true = data_cluster.y_test()
 
-    for i in range(100):
-        print(y_pred[i, :], " | ", y_true[i, :])
-
     Plotter.plot_regression_energy_error(y_pred, y_true, "error_regression_energy")
 
 
@@ -193,13 +190,14 @@ def eval_regression_position(NeuralNetwork, npz_file, predict_full=True):
     y_pred = NeuralNetwork.predict(data_cluster.x_test())
     y_true = data_cluster.y_test()
 
-    for i in range(100):
-        print(y_pred[i, :], " | ", y_true[i, :])
-
     Plotter.plot_regression_position_error(y_pred, y_true, "error_regression_position")
 
 
-def eval_full(NeuralNetwork_clas, NeuralNetwork_regE, NeuralNetwork_regP, npz_file,
+def eval_full(NeuralNetwork_clas,
+              NeuralNetwork_regE,
+              NeuralNetwork_regP,
+              npz_file,
+              file_name="",
               theta=0.5):
     # load npz file into DataCluster object
     data_cluster = NPZParser.parse(npz_file)
@@ -225,9 +223,9 @@ def eval_full(NeuralNetwork_clas, NeuralNetwork_regE, NeuralNetwork_regP, npz_fi
         identified = 1
         if not (y_pred_class[i] == 1 and y_true_clas[i] == 1):
             identified = 0
-        if np.abs(float(y_pred_energy[i, 0]) - float(y_pred_energy[i, 0])) > 2 * 0.06 * y_true_e[i, 0]:
+        if np.abs(float(y_pred_energy[i, 0]) - float(y_true_e[i, 0])) > 2 * 0.06 * float(y_true_e[i, 0]):
             identified = 0
-        if np.abs(float(y_pred_energy[i, 1]) - float(y_pred_energy[i, 1])) > 2 * 0.06 * y_true_e[i, 1]:
+        if np.abs(float(y_pred_energy[i, 1]) - float(y_true_e[i, 1])) > 2 * 0.06 * float(y_true_e[i, 1]):
             identified = 0
         if np.abs(y_pred_position[i, 0] - y_true_p[i, 0]) > 1.3 * 2:
             identified = 0
@@ -245,13 +243,24 @@ def eval_full(NeuralNetwork_clas, NeuralNetwork_regE, NeuralNetwork_regP, npz_fi
         if identified == 1:
             counter_pos += 1
 
-
     print("# Full evaluation statistics: ")
     print("Efficiency: {:.1f}".format(counter_pos / np.sum(data_cluster.targets_clas) * 100))
     print("Purity: {:.1f}".format(counter_pos / np.sum(y_true_clas) * 100))
 
+    from src import MLEMExport
+    MLEMExport.export_mlem(ary_e=y_pred_energy[:, 0],
+                           ary_p=y_pred_energy[:, 1],
+                           ary_ex=y_pred_position[:, 0],
+                           ary_ey=y_pred_position[:, 1],
+                           ary_ez=y_pred_position[:, 2],
+                           ary_px=y_pred_position[:, 3],
+                           ary_py=y_pred_position[:, 4],
+                           ary_pz=y_pred_position[:, 5],
+                           filename=file_name,
+                           verbose=1)
 
-def export_mlem_simpleregression(nn_classifier, npz_file):
+
+def export_mlem_simpleregression(nn_classifier, npz_file, file_name=""):
     # set classification threshold
     theta = 0.5
 
@@ -303,6 +312,15 @@ def export_mlem_simpleregression(nn_classifier, npz_file):
     ary_pz = data_cluster.features[list_idx_positives, 13]
 
     from src import MLEMExport
-    MLEMExport.export_mlem(ary_e, ary_p, ary_ex, ary_ey, ary_ez, ary_px, ary_py, ary_pz,
-                           "OptimizedGeometry_BP0mm_2e10protons_DNN_S1AX_Mixed",
+    MLEMExport.export_mlem(ary_e,
+                           ary_p,
+                           ary_ex,
+                           ary_ey,
+                           ary_ez,
+                           ary_px,
+                           ary_py,
+                           ary_pz,
+                           filename=file_name,
+                           b_comptonkinematics=False,
+                           b_dacfilter=False,
                            verbose=1)
