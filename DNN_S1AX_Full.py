@@ -92,4 +92,9 @@ for i in range(len(NPZ_FILE_EVAL)):
     #EvaluationHandler.eval_classifier(nn_clas, dir_npz + NPZ_FILE_EVAL[i], predict_full=False)
     #EvaluationHandler.eval_regression_energy(nn_regE, dir_npz + NPZ_FILE_EVAL[i], predict_full=False)
     #EvaluationHandler.eval_regression_position(nn_regP, dir_npz + NPZ_FILE_EVAL[i], predict_full=False)
-    EvaluationHandler.eval_full(nn_clas, nn_regE, nn_regP, dir_npz + NPZ_FILE_EVAL[i])
+
+    EvaluationHandler.eval_full(nn_clas,
+                                nn_regE,
+                                nn_regP,
+                                dir_npz + NPZ_FILE_EVAL[i],
+                                file_name=NPZ_FILE_EVAL[i][:-4] + "_" + RUN_NAME + "_" + RUN_TAG)

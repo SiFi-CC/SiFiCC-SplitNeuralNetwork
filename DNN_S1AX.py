@@ -38,9 +38,9 @@ NPZ_FILE_EVAL = ["OptimisedGeometry_BP0mm_2e10protons_DNN_S1AX.npz",
 
 # GLOBAL SETTINGS
 RUN_NAME = "DNN_S1AX"
-RUN_TAG = "mixed"
+RUN_TAG = "nofilter"
 
-b_training = True
+b_training = False
 b_mlemexport = True
 
 # define directory paths
@@ -87,4 +87,6 @@ for i in range(len(NPZ_FILE_EVAL)):
     EvaluationHandler.eval_classifier(neuralnetwork_classifier, dir_npz + NPZ_FILE_EVAL[i])
 
     if b_mlemexport:
-        EvaluationHandler.export_mlem_simpleregression(neuralnetwork_classifier, dir_npz + NPZ_FILE_EVAL[i])
+        EvaluationHandler.export_mlem_simpleregression(neuralnetwork_classifier,
+                                                       dir_npz + NPZ_FILE_EVAL[i],
+                                                       NPZ_FILE_EVAL[i])
