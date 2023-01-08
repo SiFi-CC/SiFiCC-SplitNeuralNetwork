@@ -41,25 +41,28 @@ def export_mlem(ary_e, ary_p, ary_ex, ary_ey, ary_ez, ary_px, ary_py, ary_pz,
             error_valid_prediction += 1
             continue
 
-        # check for validity of arc
-        if not CBSelector.check_compton_arc(e, p):
-            ary_identified[i] = 0
-            error_arc += 1
-            continue
+        if b_arc:
+            # check for validity of arc
+            if not CBSelector.check_compton_arc(e, p):
+                ary_identified[i] = 0
+                error_arc += 1
+                continue
 
-        # check compton kinematics
-        if not CBSelector.check_compton_kinematics(e, p, ee=0, ep=0, compton=True):
-            # print("failed compton kinematics")
-            ary_identified[i] = 0
-            error_compton_kinematics += 1
-            continue
+        if b_comptonkinematics:
+            # check compton kinematics
+            if not CBSelector.check_compton_kinematics(e, p, ee=0, ep=0, compton=True):
+                # print("failed compton kinematics")
+                ary_identified[i] = 0
+                error_compton_kinematics += 1
+                continue
 
-        # check DAC-filter
-        if not CBSelector.beam_origin(e, p, p_ex, p_ey, p_ez, p_px, p_py, p_pz, beam_diff, inverse=False):
-            # print("failed DAAC")
-            ary_identified[i] = 0
-            error_beam_origin += 1
-            continue
+        if b_dacfilter:
+            # check DAC-filter
+            if not CBSelector.beam_origin(e, p, p_ex, p_ey, p_ez, p_px, p_py, p_pz, beam_diff, inverse=False):
+                # print("failed DAAC")
+                ary_identified[i] = 0
+                error_beam_origin += 1
+                continue
 
     # print MLEM export statistics
     if verbose == 1:
