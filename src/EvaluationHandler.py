@@ -130,9 +130,15 @@ def eval_classifier(NeuralNetwork, npz_file, theta=0.5, predict_full=True):
                          y_true[i] == 1]
     Plotter.plot_source_position(ary_sourcepos_pos, ary_sourcepos_all, "dist_sourcepos")
 
-    idx_pos = [i for i in data_cluster.idx_test() if data_cluster.targets_clas[i] == 1]
-    Plotter.plot_2dhist_score_sourcepos(y_scores[idx_pos], data_cluster.meta[idx_pos, 2], "hist2d_score_sourcepos")
-    Plotter.plot_2dhist_score_eprimary(y_scores[idx_pos], data_cluster.meta[idx_pos, 1], "hist2d_score_eprimary")
+    # score distributions as 2dhistorgrams
+    y_scores_pos = y_scores[y_true == 1]
+    y_sourcepos = data_cluster.meta[data_cluster.idx_test(), 2]
+    y_eprimary = data_cluster.meta[data_cluster.idx_test(), 1]
+    y_eprimary = y_eprimary[y_true == 1]
+    y_sourcepos = y_sourcepos[y_true == 1]
+
+    Plotter.plot_2dhist_score_sourcepos(y_scores_pos, y_sourcepos, "hist2d_score_sourcepos")
+    Plotter.plot_2dhist_score_eprimary(y_scores_pos, y_eprimary, "hist2d_score_eprimary")
 
 
 def eval_regression_energy(NeuralNetwork, npz_file, predict_full=True):
