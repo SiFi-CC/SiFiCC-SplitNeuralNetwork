@@ -196,7 +196,7 @@ def plot_primary_energy_dist(ary_primary_energy, ary_primary_energy_all, figure_
 
 
 def plot_2dhist_score_sourcepos(ary_score, ary_sp, figure_name):
-    bin_score = np.arange(0.0, 1.0, 0.01)
+    bin_score = np.arange(0.0, 1.0, 0.05)
     bin_sp = np.arange(-80.0, 20.0, 1.0)
 
     list_score = []
@@ -216,7 +216,7 @@ def plot_2dhist_score_sourcepos(ary_score, ary_sp, figure_name):
 
 
 def plot_2dhist_score_eprimary(ary_score, ary_ep, figure_name):
-    bin_score = np.arange(0.0, 1.0, 0.01)
+    bin_score = np.arange(0.0, 1.0, 0.05)
     bin_sp = np.arange(0.0, 16.0, 0.1)
 
     list_score = []

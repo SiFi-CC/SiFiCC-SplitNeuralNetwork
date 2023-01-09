@@ -130,7 +130,7 @@ def eval_classifier(NeuralNetwork, npz_file, theta=0.5, predict_full=True):
                          y_true[i] == 1]
     Plotter.plot_source_position(ary_sourcepos_pos, ary_sourcepos_all, "dist_sourcepos")
 
-    idx_pos = [data_cluster.idx_test()[i] for i in range(len(y_scores)) if y_true[i] == 1]
+    idx_pos = [i for i in data_cluster.idx_test() if data_cluster.targets_clas[i] == 1]
     Plotter.plot_2dhist_score_sourcepos(y_scores[idx_pos], data_cluster.meta[idx_pos, 2], "hist2d_score_sourcepos")
     Plotter.plot_2dhist_score_eprimary(y_scores[idx_pos], data_cluster.meta[idx_pos, 1], "hist2d_score_eprimary")
 
