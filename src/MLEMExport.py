@@ -10,6 +10,8 @@ def export_mlem(ary_e, ary_p, ary_ex, ary_ey, ary_ez, ary_px, ary_py, ary_pz,
                 b_comptonkinematics=True,
                 b_dacfilter=True,
                 b_backscattering=False,
+                b_elim=False,
+                elim=1.0,
                 beam_diff=20,
                 verbose=0):
     # By default all events are accepted
@@ -62,6 +64,11 @@ def export_mlem(ary_e, ary_p, ary_ex, ary_ey, ary_ez, ary_px, ary_py, ary_pz,
                 # print("failed DAAC")
                 ary_identified[i] = 0
                 error_beam_origin += 1
+                continue
+
+        if b_elim:
+            if not e > elim:
+                ary_identified[i] = 0
                 continue
 
     # print MLEM export statistics
