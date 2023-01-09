@@ -193,3 +193,23 @@ def plot_primary_energy_dist(ary_primary_energy, ary_primary_energy_all, figure_
     plt.grid()
     plt.tight_layout()
     plt.savefig(figure_name + ".png")
+
+
+def plot_2dhist_score_sourcepos(ary_score, ary_sp, figure_name):
+    bin_score = np.arange(0.0, 1.0, 0.01)
+    bin_sp = np.arange(-80.0, 20.0, 1.0)
+
+    list_score = []
+    list_sp = []
+    for i in range(len(ary_score)):
+        if not ary_sp[i] == 0.0:
+            list_score.append(ary_score[i])
+            list_sp.append(ary_sp[i])
+
+    plt.figure()
+    plt.xlabel("MC Source Position z [mm]")
+    plt.ylabel("Score")
+    plt.hist2d(ary_sp, ary_score, bins=[bin_sp, bin_score])
+    plt.colorbar()
+    plt.tight_layout()
+    plt.savefig(figure_name + ".png")
