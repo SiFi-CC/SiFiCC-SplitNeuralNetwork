@@ -129,8 +129,10 @@ def eval_classifier(NeuralNetwork, npz_file, theta=0.5, predict_full=True):
     ary_sourcepos_all = [float(data_cluster.meta[data_cluster.idx_test()[i], 2]) for i in range(len(y_true)) if
                          y_true[i] == 1]
     Plotter.plot_source_position(ary_sourcepos_pos, ary_sourcepos_all, "dist_sourcepos")
-    Plotter.plot_2dhist_score_sourcepos(y_scores, data_cluster.meta[data_cluster.idx_test(), 2],
-                                        "hist2d_score_sourcepos")
+
+    idx_pos = [data_cluster.idx_test()[i] for i in range(len(y_scores)) if y_true[i] == 1]
+    Plotter.plot_2dhist_score_sourcepos(y_scores[idx_pos], data_cluster.meta[idx_pos, 2], "hist2d_score_sourcepos")
+    Plotter.plot_2dhist_score_eprimary(y_scores[idx_pos], data_cluster.meta[idx_pos, 1], "hist2d_score_eprimary")
 
 
 def eval_regression_energy(NeuralNetwork, npz_file, predict_full=True):

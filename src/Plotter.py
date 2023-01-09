@@ -213,3 +213,23 @@ def plot_2dhist_score_sourcepos(ary_score, ary_sp, figure_name):
     plt.colorbar()
     plt.tight_layout()
     plt.savefig(figure_name + ".png")
+
+
+def plot_2dhist_score_eprimary(ary_score, ary_ep, figure_name):
+    bin_score = np.arange(0.0, 1.0, 0.01)
+    bin_sp = np.arange(0.0, 16.0, 0.1)
+
+    list_score = []
+    list_sp = []
+    for i in range(len(ary_score)):
+        if not ary_ep[i] == 0.0:
+            list_score.append(ary_score[i])
+            list_sp.append(ary_ep[i])
+
+    plt.figure()
+    plt.xlabel("MC Primary Energy [MeV]")
+    plt.ylabel("Score")
+    plt.hist2d(list_sp, list_score, bins=[bin_sp, bin_score])
+    plt.colorbar()
+    plt.tight_layout()
+    plt.savefig(figure_name + ".png")
