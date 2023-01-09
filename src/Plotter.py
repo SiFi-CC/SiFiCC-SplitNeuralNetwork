@@ -209,7 +209,7 @@ def plot_2dhist_score_sourcepos(ary_score, ary_sp, figure_name):
     plt.figure()
     plt.xlabel("MC Source Position z [mm]")
     plt.ylabel("Score")
-    plt.hist2d(ary_sp, ary_score, bins=[bin_sp, bin_score])
+    plt.hist2d(list_sp, list_score, bins=[bin_sp, bin_score])
     plt.colorbar()
     plt.tight_layout()
     plt.savefig(figure_name + ".png")
