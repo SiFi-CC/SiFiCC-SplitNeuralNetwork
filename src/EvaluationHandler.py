@@ -129,25 +129,8 @@ def eval_classifier(NeuralNetwork, npz_file, theta=0.5, predict_full=True):
     ary_sourcepos_all = [float(data_cluster.meta[data_cluster.idx_test()[i], 2]) for i in range(len(y_true)) if
                          y_true[i] == 1]
     Plotter.plot_source_position(ary_sourcepos_pos, ary_sourcepos_all, "dist_sourcepos")
-
-    """ 
-    counter = 0
-    for i in range(len(y_scores)):
-        if y_scores[i] < 0.85:
-            continue
-        if y_true[i] == 1:
-            continue
-
-        idx = data_cluster.idx_test()[i]
-        print("score: {} | class: {}".format(y_scores[i], y_true[i]))
-        print("index: {} | event number: {}".format(idx, meta_data.event_number()[idx]))
-        print("")
-        counter += 1
-
-        if counter > 10:
-            break
-    """
-
+    Plotter.plot_2dhist_score_sourcepos(y_scores, data_cluster.meta[data_cluster.idx_test(), 2])
+    
 
 def eval_regression_energy(NeuralNetwork, npz_file, predict_full=True):
     # load npz file into DataCluster object
