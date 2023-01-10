@@ -23,10 +23,11 @@ NPZ_FILE_EVAL = ["OptimisedGeometry_BP0mm_2e10protons_DNN_S1AX.npz",
 
 # GLOBAL SETTINGS
 RUN_NAME = "DNN_S1AX"
-RUN_TAG = "mixed"
+RUN_TAG = ""
 
 b_training = True
-b_mlemexport = True
+b_loadregE = False
+b_loadregP = False
 
 # define directory paths
 dir_main = os.getcwd()
@@ -46,45 +47,42 @@ for i in range(len(NPZ_FILE_EVAL)):
 # Training schedule
 ########################################################################################################################
 
-# load up the Tensorflow model
 from models import DNN_base_regression_energy
-
-tf_model = DNN_base_regression_energy.return_model(54)
-neuralnetwork_regression = NeuralNetwork.NeuralNetwork(model=tf_model,
-                                                       model_name=RUN_NAME,
-                                                       model_tag=RUN_TAG + "_regEnergy")
-
-# CHANGE DIRECTORY INTO THE NEWLY GENERATED RESULTS DIRECTORY
-# TODO: fix this pls
-os.chdir(dir_results + RUN_NAME + "_" + RUN_TAG + "/")
-
-if b_training:
-    TrainingHandler.train_regEnergy(neuralnetwork_regression, dir_npz + NPZ_FILE_TRAIN, verbose=1)
-else:
-    neuralnetwork_regression.load()
-
-for i in range(len(NPZ_FILE_EVAL)):
-    os.chdir(dir_results + RUN_NAME + "_" + RUN_TAG + "/" + NPZ_FILE_EVAL[i][:-4] + "/")
-    EvaluationHandler.eval_regression_energy(neuralnetwork_regression, dir_npz + NPZ_FILE_EVAL[i], predict_full=False)
-
-# load up the Tensorflow model position regression
 from models import DNN_base_regression_position
 
-tf_model = DNN_base_regression_position.return_model(54)
-neuralnetwork_regression_position = NeuralNetwork.NeuralNetwork(model=tf_model,
-                                                                model_name=RUN_NAME,
-                                                                model_tag=RUN_TAG + "_regPosition")
+tf_model_regE = DNN_base_regression_energy.return_model(54)
+tf_model_regP = DNN_base_regression_position.return_model(54)
+
+nn_regE = NeuralNetwork.NeuralNetwork(model=tf_model_regE,
+                                      model_name=RUN_NAME,
+                                      model_tag=RUN_TAG + "_regE")
+nn_regP = NeuralNetwork.NeuralNetwork(model=tf_model_regP,
+                                      model_name=RUN_NAME,
+                                      model_tag=RUN_TAG + "_regP")
 
 # CHANGE DIRECTORY INTO THE NEWLY GENERATED RESULTS DIRECTORY
 # TODO: fix this pls
 os.chdir(dir_results + RUN_NAME + "_" + RUN_TAG + "/")
 
-if b_training:
-    TrainingHandler.train_regPosition(neuralnetwork_regression_position, dir_npz + NPZ_FILE_TRAIN, verbose=1)
+if not b_loadregE:
+    TrainingHandler.train_regEnergy(nn_regE, dir_npz + NPZ_FILE_TRAIN, verbose=1)
 else:
-    neuralnetwork_regression_position.load()
+    nn_regE.load()
+if not b_loadregP:
+    TrainingHandler.train_regPosition(nn_regP, dir_npz + NPZ_FILE_TRAIN, verbose=1)
+else:
+    nn_regP.load()
+
+########################################################################################################################
+# Evaluation schedule
+########################################################################################################################
 
 for i in range(len(NPZ_FILE_EVAL)):
     os.chdir(dir_results + RUN_NAME + "_" + RUN_TAG + "/" + NPZ_FILE_EVAL[i][:-4] + "/")
-    EvaluationHandler.eval_regression_position(neuralnetwork_regression_position, dir_npz + NPZ_FILE_EVAL[i],
-                                               predict_full=False)
+    EvaluationHandler.eval_regression_energy(nn_regE, dir_npz + NPZ_FILE_EVAL[i], predict_full=False)
+    EvaluationHandler.eval_regression_position(nn_regP, dir_npz + NPZ_FILE_EVAL[i], predict_full=False)
+
+    EvaluationHandler.montecarlo_regression(nn_regE,
+                                            nn_regP,
+                                            dir_npz + NPZ_FILE_EVAL[i],
+                                            file_name=NPZ_FILE_EVAL[i][:-4] + "_" + RUN_TAG)

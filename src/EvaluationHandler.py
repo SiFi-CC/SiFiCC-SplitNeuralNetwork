@@ -316,3 +316,52 @@ def export_mlem_simpleregression(nn_classifier, npz_file, file_name=""):
                            b_comptonkinematics=False,
                            b_dacfilter=False,
                            verbose=1)
+
+
+def montecarlo_regression(NeuralNetwork_regE,
+                          NeuralNetwork_regP,
+                          npz_file,
+                          file_name):
+    """
+    This method takes two fully trained Neural Networks for Energy and Position regression and evaluates them on all
+    positive events of the dataset. The goal is to investigate how the image reconstruction reacts to a sample with
+    perfect classification and DNN regression.
+
+    Args:
+        NeuralNetwork_regE:
+        NeuralNetwork_regP:
+        npz_file:
+        file_name:
+
+    Return:
+         None
+    """
+    # load npz file into DataCluster object
+    # apply needed preprocessing steps:
+    #   - set test set ratio to 1.0 for full evaluation of the data sample
+    #   - Standardize evaluation set
+    #   - update indexing to take only true positive events
+    data_cluster = NPZParser.parse(npz_file)
+    data_cluster.p_train = 0.0
+    data_cluster.p_valid = 0.0
+    data_cluster.p_test = 1.0
+    data_cluster.standardize()
+    data_cluster.update_targets_position()
+    data_cluster.update_indexing_positives()
+
+    # evaluation sample and Neural Network prediction
+    y_pred_e = NeuralNetwork_regE.predict(data_cluster.x_test())
+    y_pred_p = NeuralNetwork_regP.predict(data_cluster.x_test())
+
+    # export Neural Network prediction to MLEM input
+    from src import MLEMExport
+    MLEMExport.export_mlem(ary_e=y_pred_e[:, 0],
+                           ary_p=y_pred_e[:, 1],
+                           ary_ex=y_pred_p[:, 0],
+                           ary_ey=y_pred_p[:, 1],
+                           ary_ez=y_pred_p[:, 2],
+                           ary_px=y_pred_p[:, 3],
+                           ary_py=y_pred_p[:, 4],
+                           ary_pz=y_pred_p[:, 5],
+                           filename=file_name,
+                           verbose=1)
