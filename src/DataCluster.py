@@ -90,7 +90,7 @@ class DataCluster:
         rng = np.random.default_rng(42)
         rng.shuffle(self.ary_idx)
 
-    def update_targets_energy(self):
+    def update_targets_clas(self):
         # set legacy targets to be module energies
         self.targets = self.targets_clas
 
@@ -147,9 +147,14 @@ class DataCluster:
         for i in range(self.entries):
             if not e_min < self.meta[i, 1] < e_max:
                 list_idx.append(i)
+
+        self.entries -= len(list_idx)
         # update features, targets and weights
         self.features = np.delete(self.features, obj=np.array(list_idx), axis=0)
         self.targets = np.delete(self.targets, obj=np.array(list_idx), axis=0)
+        self.targets_clas = np.delete(self.targets_clas, obj=np.array(list_idx), axis=0)
+        self.targets_reg1 = np.delete(self.targets_reg1, obj=np.array(list_idx), axis=0)
+        self.targets_reg2 = np.delete(self.targets_reg2, obj=np.array(list_idx), axis=0)
         self.weights = np.delete(self.weights, obj=np.array(list_idx), axis=0)
 
         # reshuffle the train-test indexing
