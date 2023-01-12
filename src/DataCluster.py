@@ -156,7 +156,8 @@ class DataCluster:
         self.targets_reg1 = np.delete(self.targets_reg1, obj=np.array(list_idx), axis=0)
         self.targets_reg2 = np.delete(self.targets_reg2, obj=np.array(list_idx), axis=0)
         self.weights = np.delete(self.weights, obj=np.array(list_idx), axis=0)
-
+        self.meta = np.delete(self.meta, obj=np.array(list_idx), axis=0)
+        
         # reshuffle the train-test indexing
         self.ary_idx = np.arange(0, self.entries, 1.0, dtype=int)
         rng = np.random.default_rng(42)
