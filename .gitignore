@@ -19,3 +19,6 @@ npz_files/*.npz
 # ignore example_code.py
 # it is a redundant file just to test code
 example_code.py
+
+# 2023 Beamtime HIT
+Jan2023HIT/
