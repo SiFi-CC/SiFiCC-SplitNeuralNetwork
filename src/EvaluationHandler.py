@@ -96,6 +96,22 @@ def write_metrics_classifier(y_scores, y_true):
 
 ########################################################################################################################
 
+def npz_wrapper(npz_file,
+                predict_all=False,
+                standardize=True,
+                energy_weights=True,
+                energy_limit=None):
+    # load npz file into DataCluster object
+    data_cluster = NPZParser.parse(npz_file)
+
+    # if predict_all, set test-train ratio to 1.0 to fully predict the dataset
+    if predict_all:
+        data_cluster.p_train = 0.0
+        data_cluster.p_valid = 0.0
+        data_cluster.p_test = 1.0
+
+
+
 def eval_classifier(NeuralNetwork, npz_file, theta=0.5, predict_full=True):
     # load npz file into DataCluster object
     data_cluster = NPZParser.parse(npz_file)

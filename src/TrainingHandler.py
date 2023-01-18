@@ -28,7 +28,7 @@ def train_clas(NeuralNetwork, npz_file, verbose=0):
     data_cluster.standardize()
 
     # update run settings
-    NeuralNetwork.epochs = 30
+    NeuralNetwork.epochs = 500
     NeuralNetwork.batch_size = 256
 
     if verbose == 1:

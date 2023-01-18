@@ -62,9 +62,9 @@ for i in range(len(NPZ_FILE_EVAL)):
 ########################################################################################################################
 
 # load up the Tensorflow model
-from models import DNN_base_classifier
+from models import DNN_test_classifier
 
-tf_model = DNN_base_classifier.return_model(54)
+tf_model = DNN_test_classifier.return_model(54)
 neuralnetwork_classifier = NeuralNetwork.NeuralNetwork(model=tf_model,
                                                        model_name=RUN_NAME,
                                                        model_tag=RUN_TAG)
