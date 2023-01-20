@@ -38,7 +38,7 @@ NPZ_FILE_EVAL = ["OptimisedGeometry_BP0mm_2e10protons_DNN_Base.npz",
 
 # GLOBAL SETTINGS
 RUN_NAME = "DNN_Base"
-RUN_TAG = "test"
+RUN_TAG = "eweights"
 
 b_training = True
 b_mlemexport = False
@@ -62,9 +62,9 @@ for i in range(len(NPZ_FILE_EVAL)):
 ########################################################################################################################
 
 # load up the Tensorflow model
-from models import DNN_test_classifier
+from models import DNN_base_classifier
 
-tf_model = DNN_test_classifier.return_model(54)
+tf_model = DNN_base_classifier.return_model(72)
 neuralnetwork_classifier = NeuralNetwork.NeuralNetwork(model=tf_model,
                                                        model_name=RUN_NAME,
                                                        model_tag=RUN_TAG)
@@ -84,7 +84,13 @@ else:
 
 for i in range(len(NPZ_FILE_EVAL)):
     os.chdir(dir_results + RUN_NAME + "_" + RUN_TAG + "/" + NPZ_FILE_EVAL[i][:-4] + "/")
-    EvaluationHandler.eval_classifier(neuralnetwork_classifier, dir_npz + NPZ_FILE_EVAL[i])
+    # npz wrapper
+    data_cluster = EvaluationHandler.npz_wrapper(dir_npz + NPZ_FILE_EVAL[i],
+                                                 predict_all=True,
+                                                 standardize=True)
+
+    EvaluationHandler.eval_classifier(neuralnetwork_classifier,
+                                      data_cluster=data_cluster)
 
     if b_mlemexport:
         EvaluationHandler.export_mlem_simpleregression(neuralnetwork_classifier,
