@@ -99,7 +99,6 @@ def write_metrics_classifier(y_scores, y_true):
 def npz_wrapper(npz_file,
                 predict_all=False,
                 standardize=True,
-                energy_weights=True,
                 energy_limit=None):
     # load npz file into DataCluster object
     data_cluster = NPZParser.parse(npz_file)
@@ -110,20 +109,31 @@ def npz_wrapper(npz_file,
         data_cluster.p_valid = 0.0
         data_cluster.p_test = 1.0
 
+    if standardize:
+        data_cluster.standardize()
+
+    if energy_limit:
+        data_cluster.update_energy_range(1.0, 100.0)
+
+    return data_cluster
 
 
-def eval_classifier(NeuralNetwork, npz_file, theta=0.5, predict_full=True):
-    # load npz file into DataCluster object
-    data_cluster = NPZParser.parse(npz_file)
+def get_primary_energy(y_scores, y_true, y_primary_energy, theta=0.5):
+    ary_primaryenergy_pos = [y_primary_energy[i] for i in range(len(y_scores))
+                             if (y_scores[i] > theta and y_primary_energy[i] != 0.0)]
+    ary_primaryenergy_all = [y_primary_energy[i] for i in range(len(y_true)) if y_true[i] == 1]
+    return ary_primaryenergy_pos, ary_primaryenergy_all
 
-    # standardize input
-    data_cluster.standardize()
 
-    if predict_full:
-        data_cluster.p_train = 0.0
-        data_cluster.p_valid = 0.0
-        data_cluster.p_test = 1.0
+def get_source_position(y_scores, y_true, y_source_pos, theta=0.5):
+    ary_sourcepos_pos = [y_source_pos[i] for i in range(len(y_scores))
+                         if (y_scores[i] > theta and y_source_pos[i] != 0.0)]
+    ary_sourcepos_all = [y_source_pos[i] for i in range(len(y_true)) if y_true[i] == 1]
+    return ary_sourcepos_pos, ary_sourcepos_all
 
+
+def eval_classifier(NeuralNetwork, data_cluster, theta=0.5):
+    # get neural network prediction
     y_scores = NeuralNetwork.predict(data_cluster.x_test())
     y_true = data_cluster.y_test()
     # print(y_true)
@@ -131,20 +141,24 @@ def eval_classifier(NeuralNetwork, npz_file, theta=0.5, predict_full=True):
     write_metrics_classifier(y_scores, y_true)
     Plotter.plot_score_dist(y_scores, y_true, "score_dist")
     fastROCAUC.fastROCAUC(y_scores, y_true, save_fig="ROCAUC")
+    _, theta_opt = fastROCAUC.fastROCAUC(y_scores, y_true, return_score=True)
 
     # evaluate primary energy spectrum
-    ary_primaryenergy_pos = [float(data_cluster.meta[data_cluster.idx_test()[i], 1]) for i in range(len(y_scores))
-                             if (y_scores[i] > theta and data_cluster.meta[data_cluster.idx_test()[i], 1] != 0.0)]
-    ary_primaryenergy_all = [float(data_cluster.meta[data_cluster.idx_test()[i], 1]) for i in range(len(y_true)) if
-                             y_true[i] == 1]
-    Plotter.plot_primary_energy_dist(ary_primaryenergy_pos, ary_primaryenergy_all, "dist_primaryenergy")
+    for threshold in [theta, 0.7, theta_opt]:
+        ary_primE_pos, ary_primE_all = get_primary_energy(y_scores,
+                                                          y_true,
+                                                          data_cluster.meta[data_cluster.idx_test(), 1],
+                                                          threshold)
+        Plotter.plot_primary_energy_dist(ary_primE_pos, ary_primE_all, "dist_primE_theta" + str(threshold))
 
     # evaluate source position spectrum
-    ary_sourcepos_pos = [float(data_cluster.meta[data_cluster.idx_test()[i], 2]) for i in range(len(y_scores))
-                         if (y_scores[i] > theta and data_cluster.meta[data_cluster.idx_test()[i], 2] != 0.0)]
-    ary_sourcepos_all = [float(data_cluster.meta[data_cluster.idx_test()[i], 2]) for i in range(len(y_true)) if
-                         y_true[i] == 1]
-    Plotter.plot_source_position(ary_sourcepos_pos, ary_sourcepos_all, "dist_sourcepos")
+
+    for threshold in [theta, 0.7, theta_opt]:
+        ary_sourcep_pos, ary_sourcep_all = get_primary_energy(y_scores,
+                                                              y_true,
+                                                              data_cluster.meta[data_cluster.idx_test(), 2],
+                                                              threshold)
+        Plotter.plot_source_position(ary_sourcep_pos, ary_sourcep_all, "dist_sourcep_theta" + str(threshold))
 
     # score distributions as 2dhistorgrams
     y_scores_pos = y_scores[y_true == 1]

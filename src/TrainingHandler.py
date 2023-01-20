@@ -23,12 +23,13 @@ def train_clas(NeuralNetwork, npz_file, verbose=0):
 
     # set class weights as sample weights
     data_cluster.weights *= data_cluster.get_classweights()
+    data_cluster.weights *= data_cluster.get_energyweights()
 
     # standardize input
     data_cluster.standardize()
 
     # update run settings
-    NeuralNetwork.epochs = 500
+    NeuralNetwork.epochs = 50
     NeuralNetwork.batch_size = 256
 
     if verbose == 1:
