@@ -145,6 +145,9 @@ class DataCluster:
                 ary_w[i] = 5
         return ary_w
 
+    def reset_weights(self):
+        self.weights = np.ones(shape=(self.entries,))
+
     def update_energy_range(self, e_min, e_max):
         """
         updates feature and target data based on energy range. Needs total cluster energy as meta[:,2] entry

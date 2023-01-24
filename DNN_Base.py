@@ -44,7 +44,7 @@ epochs = 50
 
 train_clas = False
 train_regE = True
-train_regP = False
+train_regP = True
 mlemexport = False
 
 # define directory paths
@@ -94,7 +94,7 @@ os.chdir(dir_results + RUN_NAME + "_" + RUN_TAG + "/")
 data_cluster = NPZParser.wrapper(dir_npz + NPZ_FILE_TRAIN,
                                  standardize=True,
                                  set_classweights=True,
-                                 set_peakweights=True)
+                                 set_peakweights=False)
 
 if train_clas:
     TrainingHandler.train_clas(neuralnetwork_clas,
@@ -103,6 +103,12 @@ if train_clas:
                                epochs=epochs)
 else:
     neuralnetwork_clas.load()
+
+# generate DataCluster object from npz file
+data_cluster = NPZParser.wrapper(dir_npz + NPZ_FILE_TRAIN,
+                                 standardize=True,
+                                 set_classweights=False,
+                                 set_peakweights=False)
 
 if train_regE:
     TrainingHandler.train_regE(neuralnetwork_regE,

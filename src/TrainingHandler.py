@@ -37,6 +37,7 @@ def train_regE(NeuralNetwork,
                verbose=0,
                epochs=50,
                batch_size=256):
+
     # set regression
     DataCluster.update_targets_energy()
     DataCluster.update_indexing_positives()
@@ -70,6 +71,7 @@ def train_regP(NeuralNetwork,
                verbose=0,
                epochs=50,
                batch_size=256):
+
     # set regression
     DataCluster.update_targets_position()
     DataCluster.update_indexing_positives()
