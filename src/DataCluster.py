@@ -137,11 +137,11 @@ class DataCluster:
         # get full range of source positions
         # take the last 10% as heavier weighted peak positions
         source_pos_range = abs(max(ary_mc_source_position) - min(ary_mc_source_position))
-        f = 0.1
+        source_pos_threshold = max(ary_mc_source_position) - 0.1 * source_pos_range
 
         ary_w = np.ones(shape=(self.entries,))
         for i in range(len(ary_w)):
-            if ary_mc_source_position[i] > max(ary_mc_source_position) - f * source_pos_range:
+            if ary_mc_source_position[i] > source_pos_threshold:
                 ary_w[i] = 5
         return ary_w
 
