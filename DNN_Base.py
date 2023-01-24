@@ -105,7 +105,7 @@ else:
     neuralnetwork_clas.load()
 
 if train_regE:
-    TrainingHandler.train_clas(neuralnetwork_regE,
+    TrainingHandler.train_regE(neuralnetwork_regE,
                                data_cluster,
                                verbose=1,
                                epochs=epochs)
@@ -113,7 +113,7 @@ else:
     neuralnetwork_regE.load()
 
 if train_regP:
-    TrainingHandler.train_clas(neuralnetwork_regP,
+    TrainingHandler.train_regP(neuralnetwork_regP,
                                data_cluster,
                                verbose=1,
                                epochs=epochs)

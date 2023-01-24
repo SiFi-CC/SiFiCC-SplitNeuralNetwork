@@ -32,11 +32,11 @@ def train_clas(NeuralNetwork,
     NeuralNetwork.save()
 
 
-def train_regEnergy(NeuralNetwork,
-                    DataCluster,
-                    verbose=0,
-                    epochs=50,
-                    batch_size=256):
+def train_regE(NeuralNetwork,
+               DataCluster,
+               verbose=0,
+               epochs=50,
+               batch_size=256):
     # set regression
     DataCluster.update_targets_energy()
     DataCluster.update_indexing_positives()
@@ -65,11 +65,11 @@ def train_regEnergy(NeuralNetwork,
     NeuralNetwork.save()
 
 
-def train_regPosition(NeuralNetwork,
-                      DataCluster,
-                      verbose=0,
-                      epochs=50,
-                      batch_size=256):
+def train_regP(NeuralNetwork,
+               DataCluster,
+               verbose=0,
+               epochs=50,
+               batch_size=256):
     # set regression
     DataCluster.update_targets_position()
     DataCluster.update_indexing_positives()

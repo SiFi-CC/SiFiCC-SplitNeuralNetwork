@@ -179,7 +179,7 @@ class Event:
     def get_photon_energy(self):
         _, idx_absorber = self.sort_clusters_by_module(use_energy=True)
         photon_energy_value = np.sum(self.RecoClusterEnergies_values[idx_absorber])
-        photon_energy_uncertainty = np.sqrt(np.sum(self.RecoClusterEnergies_uncertainty[idx_absorber]**2))
+        photon_energy_uncertainty = np.sqrt(np.sum(self.RecoClusterEnergies_uncertainty[idx_absorber] ** 2))
         return photon_energy_value, photon_energy_uncertainty
 
     def get_electron_position(self):
