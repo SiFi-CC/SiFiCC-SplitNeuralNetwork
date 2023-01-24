@@ -25,8 +25,8 @@ def gen_input(RootParser):
 
     # global settings for easier on the fly changes
     NAME_TAG = "DNN_CBpos"
-    n_cluster_scatterer = 2
-    n_cluster_absorber = 6
+    n_cluster_scatterer = 1
+    n_cluster_absorber = 5
 
     n_features = 9 * n_cluster_scatterer + 9 * n_cluster_absorber
     n_cluster = n_cluster_scatterer + n_cluster_absorber
@@ -51,7 +51,7 @@ def gen_input(RootParser):
                     counter_absorber += 1
 
             # filter condition
-            if counter_scatterer == 1  and counter_absorber > 1 and ary_identified[j] != 0.0:
+            if counter_scatterer > 0  and counter_absorber > 0 and ary_identified[j] != 0.0:
                 n_events += 1
         print(n_events, "valid events found")
         list_entries.append(n_events)
@@ -83,10 +83,10 @@ def gen_input(RootParser):
             # get indices of clusters sorted by highest energy and module
             idx_scatterer, idx_absorber = event.sort_clusters_by_module(use_energy=True)
 
-            if not len(idx_scatterer) == 1.0:
+            if not len(idx_scatterer) > 0.0:
                 continue
 
-            if not len(idx_absorber) > 1.0:
+            if not len(idx_absorber) > 0.0:
                 continue
 
             if not event.Identified != 0.0:
