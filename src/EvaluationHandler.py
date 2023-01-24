@@ -224,7 +224,7 @@ def eval_full(NeuralNetwork_clas,
     print("# Full evaluation statistics: ")
     print("Efficiency: {:.1f}".format(counter_pos / np.sum(data_cluster.targets_clas) * 100))
     print("Purity: {:.1f}".format(counter_pos / np.sum(y_true_clas) * 100))
-
+    """
     from src import MLEMExport
     MLEMExport.export_mlem(ary_e=y_pred_energy[:, 0],
                            ary_p=y_pred_energy[:, 1],
@@ -236,7 +236,7 @@ def eval_full(NeuralNetwork_clas,
                            ary_pz=y_pred_position[:, 5],
                            filename=file_name,
                            verbose=1)
-
+    """
 
 def export_mlem_simpleregression(nn_classifier, npz_file, file_name=""):
     # set classification threshold
