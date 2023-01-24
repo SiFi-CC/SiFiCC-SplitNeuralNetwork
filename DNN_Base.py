@@ -38,7 +38,7 @@ NPZ_FILE_EVAL = ["OptimisedGeometry_BP0mm_2e10protons_DNN_Base.npz",
 
 # GLOBAL SETTINGS
 RUN_NAME = "DNN_Base"
-RUN_TAG = "eweights"
+RUN_TAG = "peakweights"
 
 epochs = 50
 
@@ -91,7 +91,10 @@ neuralnetwork_regP = NeuralNetwork.NeuralNetwork(model=tfmodel_regP,
 os.chdir(dir_results + RUN_NAME + "_" + RUN_TAG + "/")
 
 # generate DataCluster object from npz file
-data_cluster = NPZParser.wrapper(dir_npz + NPZ_FILE_TRAIN)
+data_cluster = NPZParser.wrapper(dir_npz + NPZ_FILE_TRAIN,
+                                 standardize=True,
+                                 set_classweights=True,
+                                 set_peakweights=True)
 
 if train_clas:
     TrainingHandler.train_clas(neuralnetwork_clas,
@@ -100,7 +103,7 @@ if train_clas:
                                epochs=epochs)
 else:
     neuralnetwork_clas.load()
-
+"""
 if train_regE:
     TrainingHandler.train_clas(neuralnetwork_regE,
                                data_cluster,
@@ -116,7 +119,7 @@ if train_regP:
                                epochs=epochs)
 else:
     neuralnetwork_regP.load()
-
+"""
 ########################################################################################################################
 # Evaluation schedule
 ########################################################################################################################
