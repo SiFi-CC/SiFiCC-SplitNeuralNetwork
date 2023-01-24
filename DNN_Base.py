@@ -38,12 +38,12 @@ NPZ_FILE_EVAL = ["OptimisedGeometry_BP0mm_2e10protons_DNN_Base.npz",
 
 # GLOBAL SETTINGS
 RUN_NAME = "DNN_Base"
-RUN_TAG = "peakweights"
+RUN_TAG = "baseline"
 
 epochs = 50
 
-train_clas = True
-train_regE = False
+train_clas = False
+train_regE = True
 train_regP = False
 mlemexport = False
 
@@ -103,7 +103,7 @@ if train_clas:
                                epochs=epochs)
 else:
     neuralnetwork_clas.load()
-"""
+
 if train_regE:
     TrainingHandler.train_clas(neuralnetwork_regE,
                                data_cluster,
@@ -119,7 +119,7 @@ if train_regP:
                                epochs=epochs)
 else:
     neuralnetwork_regP.load()
-"""
+
 ########################################################################################################################
 # Evaluation schedule
 ########################################################################################################################
