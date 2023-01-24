@@ -1,6 +1,8 @@
 import numpy as np
 import uproot
 import matplotlib.pyplot as plt
+from scipy.optimize import curve_fit
+import copy
 
 
 def process_eventtime(rootfile_path,
@@ -31,12 +33,14 @@ def process_eventtime(rootfile_path,
 
     # background noise level factor
     # beam signal needs to pass > f * noise_level
-    f = 1.3
+    f = 1.30
+    # pad additional bins before and after each detected beam spill
+    padding = 3  # no. of bins
 
     # binning
     # times are given in pico-seconds -> step size of 1e12 = 1 second
     # Binning until end time is reached + 1 additional bin to cover full time range
-    step = 5e10
+    step = 1e10
     lim_max = int(max(ary_time) / step) + 1
     bins = np.arange(0, lim_max * step, step)
 
@@ -63,30 +67,52 @@ def process_eventtime(rootfile_path,
 
     # scan for sequential bin indices (these are the beam spill bins)
     # for each sequential bin group, take start and stop for lower/upper time bound for beam spills
-    idx_lower_lim.append(list_signal_idx[0])
-    time_lower_lim.append(bins[list_signal_idx[0]])
+    # shift the lower and upper bounds by the given padding value
+    idx_lower_lim.append(list_signal_idx[0] - padding)
+    time_lower_lim.append(bins[list_signal_idx[0] - padding])
     for i in range(1, len(list_signal_idx) - 1):
         if list_signal_idx[i] == list_signal_idx[i + 1] - 1:
             continue
         else:
-            idx_upper_lim.append(list_signal_idx[i])
-            time_upper_lim.append(bins[list_signal_idx[i] + 1])
+            idx_upper_lim.append(list_signal_idx[i] + padding)
+            time_upper_lim.append(bins[list_signal_idx[i] + 1 + padding])
 
-            idx_lower_lim.append(list_signal_idx[i + 1])
-            time_lower_lim.append(bins[list_signal_idx[i + 1]])
+            idx_lower_lim.append(list_signal_idx[i + 1] - padding)
+            time_lower_lim.append(bins[list_signal_idx[i + 1] - padding])
             continue
-    idx_upper_lim.append(list_signal_idx[-1])
-    time_upper_lim.append(bins[list_signal_idx[-1] + 1])
+    idx_upper_lim.append(list_signal_idx[-1] + padding)
+    time_upper_lim.append(bins[list_signal_idx[-1]] + padding)
+
+    # update list of signal indices
+    list_signal_idx = []
+    for i in range(len(idx_lower_lim)):
+        for k in range(idx_lower_lim[i], idx_upper_lim[i]+1):
+            list_signal_idx.append(k)
 
     # determine background slope
     # slope determined by determining slope of first beam spill lower bound and last beam spill upper bound
     def linear(x, m, b):
         return m * x + b
 
+    # grab all background bins between the beam spills + additional buffer left and right of the
+    # first / last beam spill
+    idx_buffer = 50
+    list_background_counts = []
+    list_background_time = []
+    for i in range(idx_lower_lim[0] - idx_buffer, idx_upper_lim[-1] + idx_buffer):
+        if i not in list_signal_idx:
+            list_background_counts.append(hist_hits[i])
+            list_background_time.append(bins[i] + step/2)
+
+    popt, pcov = curve_fit(linear, list_background_time, list_background_counts, p0=[1e-12, noise_lvl])
+    m = popt[0]
+    b = popt[1]
+
+    """
     m = (hist_hits[idx_upper_lim[-1] + 2] - hist_hits[idx_lower_lim[0] - 2]) / (
             bins[idx_upper_lim[-1] + 2] - bins[idx_lower_lim[0] - 2])
     b = hist_hits[idx_lower_lim[0] - 2] - m * bins[idx_lower_lim[0] - 2]
-
+    """
     if plotting:
         times = np.linspace(min(ary_time), max(ary_time), 1000)
 
@@ -105,6 +131,7 @@ def process_eventtime(rootfile_path,
                              color="red", alpha=0.2)
         plt.hlines(y=noise_lvl * f, xmin=times[0], xmax=times[-1], color="blue", linestyles="--", alpha=0.2
                    , label="noise threshold")
+        # plt.plot(list_background_time, list_background_counts, ".", color="green")
         plt.legend(loc="lower right")
         plt.tight_layout()
         # plt.show()
@@ -149,7 +176,8 @@ def process_eventtime(rootfile_path,
         f.write("Binning step size: {} [ps]\n".format(step))
         f.write("Noise level: {:.2f} +- {:.2f} (counts)\n".format(noise_lvl, noise_lvl_std))
         f.write("Integrated event number: {} (counts)\n".format(np.sum(integral)))
-        f.write("Integral height: {:.2f} +- {:.2f} (counts)\n".format(np.mean(list_signal_height), np.std(list_signal_height)))
+        f.write("Integral height: {:.2f} +- {:.2f} (counts)\n".format(np.mean(list_signal_height),
+                                                                      np.std(list_signal_height)))
         f.write("# Slope parameter: \n")
         f.write("x1: {} | x2: {}\n".format(bins[idx_lower_lim[0] - 2], bins[idx_upper_lim[-1] + 2]))
         f.write("y1: {} | y2: {}\n".format(hist_hits[idx_lower_lim[0] - 2], hist_hits[idx_upper_lim[-1] + 2]))
@@ -166,4 +194,4 @@ def process_eventtime(rootfile_path,
         f.close()
 
 
-process_eventtime("run00491_single.root", "run00491_single", plotting=True)
+process_eventtime("Jan2023HIT/run00491_single.root", "run00491_single", plotting=True)
