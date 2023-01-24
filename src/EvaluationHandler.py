@@ -96,28 +96,6 @@ def write_metrics_classifier(y_scores, y_true):
 
 ########################################################################################################################
 
-def npz_wrapper(npz_file,
-                predict_all=False,
-                standardize=True,
-                energy_limit=None):
-    # load npz file into DataCluster object
-    data_cluster = NPZParser.parse(npz_file)
-
-    # if predict_all, set test-train ratio to 1.0 to fully predict the dataset
-    if predict_all:
-        data_cluster.p_train = 0.0
-        data_cluster.p_valid = 0.0
-        data_cluster.p_test = 1.0
-
-    if standardize:
-        data_cluster.standardize()
-
-    if energy_limit:
-        data_cluster.update_energy_range(1.0, 100.0)
-
-    return data_cluster
-
-
 def get_primary_energy(y_scores, y_true, y_primary_energy, theta=0.5):
     ary_primaryenergy_pos = [y_primary_energy[i] for i in range(len(y_scores))
                              if (y_scores[i] > theta and y_primary_energy[i] != 0.0)]

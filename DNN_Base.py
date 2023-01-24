@@ -1,6 +1,6 @@
 """
 Deep Neural Network Model for event classification and event topology regression for the SiFiCC-project.
-This Network operates on the S1AX setting: 1 scatterer cluster and X absorber cluster (X > 0) per event.
+This Network operates on the Base setting: X scatterer cluster and X absorber cluster (X > 0) per event.
 
 Currently implemented:
 
@@ -40,8 +40,12 @@ NPZ_FILE_EVAL = ["OptimisedGeometry_BP0mm_2e10protons_DNN_Base.npz",
 RUN_NAME = "DNN_Base"
 RUN_TAG = "eweights"
 
-b_training = True
-b_mlemexport = False
+epochs = 50
+
+train_clas = True
+train_regE = False
+train_regP = False
+mlemexport = False
 
 # define directory paths
 dir_main = os.getcwd()
@@ -63,20 +67,55 @@ for i in range(len(NPZ_FILE_EVAL)):
 
 # load up the Tensorflow model
 from models import DNN_base_classifier
+from models import DNN_base_regression_energy
+from models import DNN_base_regression_position
 
-tf_model = DNN_base_classifier.return_model(72)
-neuralnetwork_classifier = NeuralNetwork.NeuralNetwork(model=tf_model,
-                                                       model_name=RUN_NAME,
-                                                       model_tag=RUN_TAG)
+tfmodel_clas = DNN_base_classifier.return_model(72)
+tfmodel_regE = DNN_base_regression_energy.return_model(72)
+tfmodel_regP = DNN_base_regression_position.return_model(72)
+
+neuralnetwork_clas = NeuralNetwork.NeuralNetwork(model=tfmodel_clas,
+                                                 model_name=RUN_NAME,
+                                                 model_tag=RUN_TAG)
+
+neuralnetwork_regE = NeuralNetwork.NeuralNetwork(model=tfmodel_regE,
+                                                 model_name=RUN_NAME,
+                                                 model_tag=RUN_TAG)
+
+neuralnetwork_regP = NeuralNetwork.NeuralNetwork(model=tfmodel_regP,
+                                                 model_name=RUN_NAME,
+                                                 model_tag=RUN_TAG)
 
 # CHANGE DIRECTORY INTO THE NEWLY GENERATED RESULTS DIRECTORY
 # TODO: fix this pls
 os.chdir(dir_results + RUN_NAME + "_" + RUN_TAG + "/")
 
-if b_training:
-    TrainingHandler.train_clas(neuralnetwork_classifier, dir_npz + NPZ_FILE_TRAIN, verbose=1)
+# generate DataCluster object from npz file
+data_cluster = NPZParser.wrapper(dir_npz + NPZ_FILE_TRAIN)
+
+if train_clas:
+    TrainingHandler.train_clas(neuralnetwork_clas,
+                               data_cluster,
+                               verbose=1,
+                               epochs=epochs)
 else:
-    neuralnetwork_classifier.load()
+    neuralnetwork_clas.load()
+
+if train_regE:
+    TrainingHandler.train_clas(neuralnetwork_regE,
+                               data_cluster,
+                               verbose=1,
+                               epochs=epochs)
+else:
+    neuralnetwork_regE.load()
+
+if train_regP:
+    TrainingHandler.train_clas(neuralnetwork_regP,
+                               data_cluster,
+                               verbose=1,
+                               epochs=epochs)
+else:
+    neuralnetwork_regP.load()
 
 ########################################################################################################################
 # Evaluation schedule
@@ -85,14 +124,9 @@ else:
 for i in range(len(NPZ_FILE_EVAL)):
     os.chdir(dir_results + RUN_NAME + "_" + RUN_TAG + "/" + NPZ_FILE_EVAL[i][:-4] + "/")
     # npz wrapper
-    data_cluster = EvaluationHandler.npz_wrapper(dir_npz + NPZ_FILE_EVAL[i],
-                                                 predict_all=True,
-                                                 standardize=True)
+    data_cluster = NPZParser.wrapper(dir_npz + NPZ_FILE_EVAL[i],
+                                     set_testall=True,
+                                     standardize=True)
 
-    EvaluationHandler.eval_classifier(neuralnetwork_classifier,
+    EvaluationHandler.eval_classifier(neuralnetwork_clas,
                                       data_cluster=data_cluster)
-
-    if b_mlemexport:
-        EvaluationHandler.export_mlem_simpleregression(neuralnetwork_classifier,
-                                                       dir_npz + NPZ_FILE_EVAL[i],
-                                                       NPZ_FILE_EVAL[i])
