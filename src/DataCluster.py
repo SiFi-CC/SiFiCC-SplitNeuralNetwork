@@ -130,6 +130,21 @@ class DataCluster:
 
         return ary_w
 
+    def get_peakweights(self):
+        # grab MC source positions from meta data
+        ary_mc_source_position = self.meta[:, 2]
+
+        # get full range of source positions
+        # take the last 10% as heavier weighted peak positions
+        source_pos_range = abs(max(ary_mc_source_position) - min(ary_mc_source_position))
+        f = 0.1
+
+        ary_w = np.ones(shape=(self.entries,))
+        for i in range(len(ary_w)):
+            if ary_mc_source_position[i] > max(ary_mc_source_position) - f * source_pos_range:
+                ary_w[i] = 5
+        return ary_w
+
     def update_energy_range(self, e_min, e_max):
         """
         updates feature and target data based on energy range. Needs total cluster energy as meta[:,2] entry
