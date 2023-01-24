@@ -149,46 +149,24 @@ def eval_classifier(NeuralNetwork, data_cluster, theta=0.5):
     Plotter.plot_2dhist_score_eprimary(y_scores_pos, y_eprimary, "hist2d_score_eprimary")
 
 
-def eval_regression_energy(NeuralNetwork, npz_file, predict_full=True):
-    # load npz file into DataCluster object
-    data_cluster = NPZParser.parse(npz_file)
-
-    # standardize input
-    data_cluster.standardize()
-
+def eval_regression_energy(NeuralNetwork, DataCluster):
     # set regression
-    data_cluster.update_targets_energy()
-    data_cluster.update_indexing_positives()
+    DataCluster.update_targets_energy()
+    DataCluster.update_indexing_positives()
 
-    if predict_full:
-        data_cluster.p_train = 0.0
-        data_cluster.p_valid = 0.0
-        data_cluster.p_test = 1.0
-
-    y_pred = NeuralNetwork.predict(data_cluster.x_test())
-    y_true = data_cluster.y_test()
+    y_pred = NeuralNetwork.predict(DataCluster.x_test())
+    y_true = DataCluster.y_test()
 
     Plotter.plot_regression_energy_error(y_pred, y_true, "error_regression_energy")
 
 
-def eval_regression_position(NeuralNetwork, npz_file, predict_full=True):
-    # load npz file into DataCluster object
-    data_cluster = NPZParser.parse(npz_file)
-
-    # standardize input
-    data_cluster.standardize()
-
+def eval_regression_position(NeuralNetwork, DataCluster):
     # set regression
-    data_cluster.update_targets_position()
-    data_cluster.update_indexing_positives()
+    DataCluster.update_targets_position()
+    DataCluster.update_indexing_positives()
 
-    if predict_full:
-        data_cluster.p_train = 0.0
-        data_cluster.p_valid = 0.0
-        data_cluster.p_test = 1.0
-
-    y_pred = NeuralNetwork.predict(data_cluster.x_test())
-    y_true = data_cluster.y_test()
+    y_pred = NeuralNetwork.predict(DataCluster.x_test())
+    y_true = DataCluster.y_test()
 
     Plotter.plot_regression_position_error(y_pred, y_true, "error_regression_position")
 

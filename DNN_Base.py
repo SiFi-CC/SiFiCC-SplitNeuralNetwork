@@ -76,15 +76,15 @@ tfmodel_regP = DNN_base_regression_position.return_model(72)
 
 neuralnetwork_clas = NeuralNetwork.NeuralNetwork(model=tfmodel_clas,
                                                  model_name=RUN_NAME,
-                                                 model_tag=RUN_TAG)
+                                                 model_tag=RUN_TAG + "_clas")
 
 neuralnetwork_regE = NeuralNetwork.NeuralNetwork(model=tfmodel_regE,
                                                  model_name=RUN_NAME,
-                                                 model_tag=RUN_TAG)
+                                                 model_tag=RUN_TAG + "_regE")
 
 neuralnetwork_regP = NeuralNetwork.NeuralNetwork(model=tfmodel_regP,
                                                  model_name=RUN_NAME,
-                                                 model_tag=RUN_TAG)
+                                                 model_tag=RUN_TAG + "_regP")
 
 # CHANGE DIRECTORY INTO THE NEWLY GENERATED RESULTS DIRECTORY
 # TODO: fix this pls
@@ -133,3 +133,5 @@ for i in range(len(NPZ_FILE_EVAL)):
 
     EvaluationHandler.eval_classifier(neuralnetwork_clas,
                                       data_cluster=data_cluster)
+    EvaluationHandler.eval_regression_energy(neuralnetwork_regE, DataCluster=data_cluster)
+    EvaluationHandler.eval_regression_position(neuralnetwork_regP, DataCluster=data_cluster)
