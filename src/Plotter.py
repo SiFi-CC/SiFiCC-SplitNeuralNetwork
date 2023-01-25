@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-
+from matplotlib.colors import LogNorm
 
 def plot_score_dist(y_scores, y_true, figure_name):
     # score distribution plot
@@ -209,8 +209,8 @@ def plot_2dhist_score_sourcepos(ary_score, ary_sp, figure_name):
     plt.figure()
     plt.xlabel("MC Source Position z [mm]")
     plt.ylabel("Score")
-    plt.hist2d(list_sp, list_score, bins=[bin_sp, bin_score])
-    plt.colorbar()
+    h0 = plt.hist2d(list_sp, list_score, bins=[bin_sp, bin_score], norm=LogNorm())
+    plt.colorbar(h0[3])
     plt.tight_layout()
     plt.savefig(figure_name + ".png")
 
@@ -229,7 +229,7 @@ def plot_2dhist_score_eprimary(ary_score, ary_ep, figure_name):
     plt.figure()
     plt.xlabel("MC Primary Energy [MeV]")
     plt.ylabel("Score")
-    plt.hist2d(list_sp, list_score, bins=[bin_sp, bin_score])
-    plt.colorbar()
+    h0 = plt.hist2d(list_sp, list_score, bins=[bin_sp, bin_score], norm=LogNorm())
+    plt.colorbar(h0[3])
     plt.tight_layout()
     plt.savefig(figure_name + ".png")
