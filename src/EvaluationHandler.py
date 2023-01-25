@@ -185,8 +185,8 @@ def eval_full(NeuralNetwork_clas,
     idx_clas_p = [float(y_scores[i]) > theta for i in range(len(y_scores))]
 
     # predict energy and position of all positive events
-    y_pred_energy = NeuralNetwork_regE.predict(DataCluster.features[idx_clas_p, :])
-    y_pred_position = NeuralNetwork_regP.predict(DataCluster.features[idx_clas_p, :])
+    y_pred_energy = NeuralNetwork_regE.predict(DataCluster.features)
+    y_pred_position = NeuralNetwork_regP.predict(DataCluster.features)
 
     # plotting score distribution vs neural network error
     idx_clas_tp = []
@@ -202,6 +202,7 @@ def eval_full(NeuralNetwork_clas,
                                          y_pred_energy[idx_clas_tp, 1] - DataCluster.targets_reg1[idx_clas_tp, 1],
                                          "hist2d_score_error_energy_p")
 
+    """
     y_pred_class = (y_scores[idx_clas_p] > theta) * 1
     y_true_clas = DataCluster.targets_clas[idx_clas_p]
     y_true_e = DataCluster.targets_reg1[idx_clas_p, :]
@@ -235,7 +236,7 @@ def eval_full(NeuralNetwork_clas,
     print("# Full evaluation statistics: ")
     print("Efficiency: {:.1f}".format(counter_pos / np.sum(DataCluster.targets_clas) * 100))
     print("Purity: {:.1f}".format(counter_pos / np.sum(y_true_clas) * 100))
-    """
+    
     from src import MLEMExport
     MLEMExport.export_mlem(ary_e=y_pred_energy[:, 0],
                            ary_p=y_pred_energy[:, 1],

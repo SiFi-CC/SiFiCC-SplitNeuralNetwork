@@ -43,8 +43,8 @@ RUN_TAG = "baseline"
 epochs = 50
 
 train_clas = False
-train_regE = True
-train_regP = True
+train_regE = False
+train_regP = False
 mlemexport = False
 
 # define directory paths
@@ -142,4 +142,8 @@ for i in range(len(NPZ_FILE_EVAL)):
     EvaluationHandler.eval_regression_energy(neuralnetwork_regE, DataCluster=data_cluster)
     EvaluationHandler.eval_regression_position(neuralnetwork_regP, DataCluster=data_cluster)
 
-    EvaluationHandler.eval_full(neuralnetwork_clas, neuralnetwork_regE, neuralnetwork_regP, theta=0.5)
+    EvaluationHandler.eval_full(neuralnetwork_clas,
+                                neuralnetwork_regE,
+                                neuralnetwork_regP,
+                                DataCluster=data_cluster,
+                                theta=0.5)
