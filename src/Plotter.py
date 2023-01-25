@@ -233,3 +233,15 @@ def plot_2dhist_score_eprimary(ary_score, ary_ep, figure_name):
     plt.colorbar(h0[3])
     plt.tight_layout()
     plt.savefig(figure_name + ".png")
+
+def plot_2dhist_score_regE_error(ary_score, ary_regE_err, figure_name):
+    bin_score = np.arange(0.0, 1.0, 0.05)
+    bin_sp = np.arange(-2.0, 2.0, 0.1)
+
+    plt.figure()
+    plt.xlabel(r" $E_{Reco} - E_{True}$ [MeV]")
+    plt.ylabel("Score")
+    h0 = plt.hist2d(ary_regE_err, ary_score, bins=[bin_sp, bin_score], norm=LogNorm())
+    plt.colorbar(h0[3])
+    plt.tight_layout()
+    plt.savefig(figure_name + ".png")

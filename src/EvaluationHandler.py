@@ -174,27 +174,38 @@ def eval_regression_position(NeuralNetwork, DataCluster):
 def eval_full(NeuralNetwork_clas,
               NeuralNetwork_regE,
               NeuralNetwork_regP,
-              npz_file,
+              DataCluster,
               file_name="",
               theta=0.5):
-    # load npz file into DataCluster object
-    data_cluster = NPZParser.parse(npz_file)
-
     # standardize input
-    data_cluster.standardize()
+    DataCluster.standardize()
 
     # grab all positive identified events by the neural network
-    y_scores = NeuralNetwork_clas.predict(data_cluster.features)
-    idx_pos = [float(y_scores[i]) > theta for i in range(len(y_scores))]
+    y_scores = NeuralNetwork_clas.predict(DataCluster.features)
+    idx_clas_p = [float(y_scores[i]) > theta for i in range(len(y_scores))]
 
     # predict energy and position of all positive events
-    y_pred_energy = NeuralNetwork_regE.predict(data_cluster.features[idx_pos, :])
-    y_pred_position = NeuralNetwork_regP.predict(data_cluster.features[idx_pos, :])
+    y_pred_energy = NeuralNetwork_regE.predict(DataCluster.features[idx_clas_p, :])
+    y_pred_position = NeuralNetwork_regP.predict(DataCluster.features[idx_clas_p, :])
 
-    y_pred_class = (y_scores[idx_pos] > theta) * 1
-    y_true_clas = data_cluster.targets_clas[idx_pos]
-    y_true_e = data_cluster.targets_reg1[idx_pos, :]
-    y_true_p = data_cluster.targets_reg2[idx_pos, :]
+    # plotting score distribution vs neural network error
+    idx_clas_tp = []
+    for i in range(len(y_scores)):
+        if y_scores[i] > theta and DataCluster.targets_clas[i] == 1.0:
+            idx_clas_tp.append(True)
+        else:
+            idx_clas_tp.append(False)
+    Plotter.plot_2dhist_score_regE_error(y_scores[idx_clas_tp],
+                                         y_pred_energy[idx_clas_tp, 0] - DataCluster.targets_reg1[idx_clas_tp, 0],
+                                         "hist2d_score_error_energy_e")
+    Plotter.plot_2dhist_score_regE_error(y_scores[idx_clas_tp],
+                                         y_pred_energy[idx_clas_tp, 1] - DataCluster.targets_reg1[idx_clas_tp, 1],
+                                         "hist2d_score_error_energy_p")
+
+    y_pred_class = (y_scores[idx_clas_p] > theta) * 1
+    y_true_clas = DataCluster.targets_clas[idx_clas_p]
+    y_true_e = DataCluster.targets_reg1[idx_clas_p, :]
+    y_true_p = DataCluster.targets_reg2[idx_clas_p, :]
 
     counter_pos = 0
     for i in range(len(y_pred_class)):
@@ -222,7 +233,7 @@ def eval_full(NeuralNetwork_clas,
             counter_pos += 1
 
     print("# Full evaluation statistics: ")
-    print("Efficiency: {:.1f}".format(counter_pos / np.sum(data_cluster.targets_clas) * 100))
+    print("Efficiency: {:.1f}".format(counter_pos / np.sum(DataCluster.targets_clas) * 100))
     print("Purity: {:.1f}".format(counter_pos / np.sum(y_true_clas) * 100))
     """
     from src import MLEMExport
@@ -237,6 +248,7 @@ def eval_full(NeuralNetwork_clas,
                            filename=file_name,
                            verbose=1)
     """
+
 
 def export_mlem_simpleregression(nn_classifier, npz_file, file_name=""):
     # set classification threshold
