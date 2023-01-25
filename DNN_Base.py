@@ -141,3 +141,5 @@ for i in range(len(NPZ_FILE_EVAL)):
                                       data_cluster=data_cluster)
     EvaluationHandler.eval_regression_energy(neuralnetwork_regE, DataCluster=data_cluster)
     EvaluationHandler.eval_regression_position(neuralnetwork_regP, DataCluster=data_cluster)
+
+    EvaluationHandler.eval_full(neuralnetwork_clas, neuralnetwork_regE, neuralnetwork_regP, theta=0.5)
