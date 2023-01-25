@@ -237,8 +237,8 @@ def plot_2dhist_score_eprimary(ary_score, ary_ep, figure_name):
 
 
 def plot_2dhist_score_regE_error(ary_score, ary_regE_err, figure_name):
-    bin_score = np.arange(0.0, 1.0, 0.05)
-    bin_sp = np.arange(-2.0, 2.0, 0.1)
+    bin_score = np.arange(0.4, 1.0, 0.05)
+    bin_sp = np.arange(-2.0, 2.0, 0.05)
 
     ary_score = np.reshape(ary_score, (len(ary_score),))
     ary_regE_err = np.reshape(ary_regE_err, (len(ary_regE_err),))
