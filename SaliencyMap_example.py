@@ -117,7 +117,13 @@ score_pred = float(neuralnetwork_clas.predict(x_feat))
 print("True class: {:.1f} | Predicted class: {:.2f}".format(score_true, score_pred))
 
 x_feat = np.array([data_cluster.features[8], ])
-x_feat[22] = 0.0
+x_feat[:, 22] = 0.0
+score_true = data_cluster.targets_clas[8]
+score_pred = float(neuralnetwork_clas.predict(x_feat))
+print("True class: {:.1f} | Predicted class: {:.2f}".format(score_true, score_pred))
+
+x_feat = np.array([data_cluster.features[8], ])
+x_feat[:, 31] = 0.0
 score_true = data_cluster.targets_clas[8]
 score_pred = float(neuralnetwork_clas.predict(x_feat))
 print("True class: {:.1f} | Predicted class: {:.2f}".format(score_true, score_pred))
