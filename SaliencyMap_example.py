@@ -84,11 +84,11 @@ def get_saliency_map(model, features):
 
 def smap_plot(smap, file_name):
     plt.figure()
-    plt.xticks(ticks=[0, 1, 2, 3, 4, 5, 6, 7],
+    plt.xticks(ticks=[0, 1, 2, 3, 4, 5, 6, 7, 8],
                labels=["No. fibers", "Energy", "Pos X", "Pos Y", "Pos Z", "Unc. Energy", "Unc. Pos X", "Unc. Pos Y",
                        "Unc. Pos Z"],
                rotation=90)
-    plt.yticks(ticks=[0, 1, 2, 3, 4, 5, 6, 7, 8],
+    plt.yticks(ticks=[0, 1, 2, 3, 4, 5, 6, 7],
                labels=["S1", "S2", "A1", "A2", "A2", "A4", "A5", "A6"])
     plt.imshow(smap, vmin=0.0, vmax=1.0, cmap="Reds")
     plt.colorbar()
@@ -96,14 +96,14 @@ def smap_plot(smap, file_name):
     plt.savefig(file_name + ".png")
 
 
-# example gradient:
-idx = 0
-x_feat = np.array([data_cluster.features[idx], ])
-score_true = data_cluster.targets_clas[idx]
-score_pred = float(neuralnetwork_clas.predict(x_feat))
-print("True class: {:.1f} | Predicted class: {:.2f}".format(score_true, score_pred))
+for i in range(10):
+    x_feat = np.array([data_cluster.features[i], ])
+    score_true = data_cluster.targets_clas[i]
+    score_pred = float(neuralnetwork_clas.predict(x_feat))
+    print("True class: {:.1f} | Predicted class: {:.2f}".format(score_true, score_pred))
 
-smap = get_saliency_map(neuralnetwork_clas.model, x_feat)
-smap = np.reshape(smap, (8, 9))
-print(smap)
-smap_plot(smap, "smap_sample")
+    smap = get_saliency_map(neuralnetwork_clas.model, x_feat)
+    smap = np.reshape(smap, (8, 9))
+    print(smap)
+    str_title = "smap_sample_{}_{:.1f}/{:.2f}".format(i,score_true, score_pred)
+    smap_plot(smap, str_title)
