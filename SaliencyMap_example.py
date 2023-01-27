@@ -96,21 +96,24 @@ def smap_plot(smap, title, file_name):
     plt.tight_layout()
     plt.savefig(file_name + ".png")
 
+tfmodel_clas_untrained = DNN_base_classifier.return_model(72)
+neuralnetwork_clas_untrained = NeuralNetwork.NeuralNetwork(model=tfmodel_clas_untrained,
+                                                           model_name=RUN_NAME,
+                                                           model_tag=RUN_TAG + "_clas_untrained")
 
-"""
 for i in range(10):
     x_feat = np.array([data_cluster.features[i], ])
     score_true = data_cluster.targets_clas[i]
-    score_pred = float(neuralnetwork_clas.predict(x_feat))
+    score_pred = float(neuralnetwork_clas_untrained.predict(x_feat))
     print("True class: {:.1f} | Predicted class: {:.2f}".format(score_true, score_pred))
 
-    smap = get_saliency_map(neuralnetwork_clas.model, x_feat)
+    smap = get_saliency_map(neuralnetwork_clas_untrained.model, x_feat)
     smap = np.reshape(smap, (8, 9))
     str_title = "Event ID: {}\nTrue class: {:.1f}\nPred class: {:.2f}".format(data_cluster.meta[i, 0], score_true,
                                                                               score_pred)
     smap_plot(smap, str_title, "sample_" + str(i))
-"""
 
+"""
 x_feat = np.array([data_cluster.features[8], ])
 score_true = data_cluster.targets_clas[8]
 score_pred = float(neuralnetwork_clas.predict(x_feat))
@@ -127,3 +130,5 @@ x_feat[:, 31] = 0.0
 score_true = data_cluster.targets_clas[8]
 score_pred = float(neuralnetwork_clas.predict(x_feat))
 print("True class: {:.1f} | Predicted class: {:.2f}".format(score_true, score_pred))
+
+"""
