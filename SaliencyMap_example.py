@@ -97,6 +97,7 @@ def smap_plot(smap, title, file_name):
     plt.savefig(file_name + ".png")
 
 
+"""
 for i in range(10):
     x_feat = np.array([data_cluster.features[i], ])
     score_true = data_cluster.targets_clas[i]
@@ -108,3 +109,15 @@ for i in range(10):
     str_title = "Event ID: {}\nTrue class: {:.1f}\nPred class: {:.2f}".format(data_cluster.meta[i, 0], score_true,
                                                                               score_pred)
     smap_plot(smap, str_title, "sample_" + str(i))
+"""
+
+x_feat = np.array([data_cluster.features[8], ])
+score_true = data_cluster.targets_clas[8]
+score_pred = float(neuralnetwork_clas.predict(x_feat))
+print("True class: {:.1f} | Predicted class: {:.2f}".format(score_true, score_pred))
+
+x_feat = np.array([data_cluster.features[8], ])
+x_feat[22] = 0.0
+score_true = data_cluster.targets_clas[8]
+score_pred = float(neuralnetwork_clas.predict(x_feat))
+print("True class: {:.1f} | Predicted class: {:.2f}".format(score_true, score_pred))
