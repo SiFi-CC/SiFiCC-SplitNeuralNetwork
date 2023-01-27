@@ -82,8 +82,9 @@ def get_saliency_map(model, features):
     return smap
 
 
-def smap_plot(smap, file_name):
+def smap_plot(smap, title, file_name):
     plt.figure()
+    plt.title(title)
     plt.xticks(ticks=[0, 1, 2, 3, 4, 5, 6, 7, 8],
                labels=["No. fibers", "Energy", "Pos X", "Pos Y", "Pos Z", "Unc. Energy", "Unc. Pos X", "Unc. Pos Y",
                        "Unc. Pos Z"],
@@ -104,6 +105,6 @@ for i in range(10):
 
     smap = get_saliency_map(neuralnetwork_clas.model, x_feat)
     smap = np.reshape(smap, (8, 9))
-    print(smap)
-    str_title = "smap_sample_{}_{:.1f}_{:.2f}".format(i,score_true, score_pred)
-    smap_plot(smap, str_title)
+    str_title = "Event ID: {}\nTrue class: {:.1f}\nPred class: {:.2f}".format(data_cluster.meta[i, 0], score_true,
+                                                                              score_pred)
+    smap_plot(smap, str_title, "sample_" + str(i))
