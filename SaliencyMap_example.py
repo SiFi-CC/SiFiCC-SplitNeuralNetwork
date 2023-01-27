@@ -105,5 +105,5 @@ for i in range(10):
     smap = get_saliency_map(neuralnetwork_clas.model, x_feat)
     smap = np.reshape(smap, (8, 9))
     print(smap)
-    str_title = "smap_sample_{}_{:.1f}/{:.2f}".format(i,score_true, score_pred)
+    str_title = "smap_sample_{}_{:.1f}_{:.2f}".format(i,score_true, score_pred)
     smap_plot(smap, str_title)
