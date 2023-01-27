@@ -64,7 +64,7 @@ def smap_plot(smap, feat, title, file_name):
                       labels=["No. fibers", "Energy", "Pos X", "Pos Y", "Pos Z", "Unc. Energy", "Unc. Pos X",
                               "Unc. Pos Y", "Unc. Pos Z"],
                       rotation=90)
-    axs[1].set_yticks()
+    axs[1].set_yticks([])
     axs[1].imshow(feat, cmap="viridis")
     axs[0].colorbar()
     plt.tight_layout()
