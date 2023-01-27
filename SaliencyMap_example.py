@@ -1,5 +1,7 @@
 import os
 import numpy as np
+import matplotlib.pyplot as plt
+
 import tensorflow as tf
 from tensorflow import keras
 
@@ -58,32 +60,41 @@ neuralnetwork_clas.load()
 # Saliency Maps
 ########################################################################################################################
 
-def get_saliency_map(model, x_feat, y_targ):
+def get_saliency_map(model, features):
     # from : https://stackoverflow.com/questions/63107141/how-to-compute-saliency-map-using-keras-backend
+
+    # conversion from numpy array to tensorflow tensor
+    image = tf.convert_to_tensor(features)
     with tf.GradientTape() as tape:
-        tape.watch(x_feat)
-        prediction = model(x_feat)
+        tape.watch(image)
+        prediction = model(image)
 
     # Get the gradients of the loss w.r.t to the input image.
-    gradient = tape.gradient(prediction, x_feat)
-
-    # take maximum across channels
-    gradient = tf.reduce_max(gradient, axis=-1)
+    gradient = tape.gradient(prediction, image)
 
     # convert to numpy
     gradient = gradient.numpy()
 
-    # normaliz between 0 and 1
+    # normalize between 0 and 1
     min_val, max_val = np.min(gradient), np.max(gradient)
     smap = (gradient - min_val) / (max_val - min_val + keras.backend.epsilon())
 
     return smap
 
 
+def smap_plot(smap, file_name):
+    plt.figure()
+    plt.imshow(smap)
+    plt.savefig(file_name + ".png")
+
+
 # example gradient:
 idx = 0
+x_feat = np.array([data_cluster.features[idx], ])
 score_true = data_cluster.targets_clas[idx]
-score_pred = float(neuralnetwork_clas.predict(data_cluster.features[idx, :]))
+score_pred = float(neuralnetwork_clas.predict(x_feat))
 print("True class: {:.1f} | Predicted class: {:.2f}".format(score_true, score_pred))
 
-smap = get_saliency_map(neuralnetwork_clas.model, data_cluster.features[idx, :], score_true)
+smap = get_saliency_map(neuralnetwork_clas.model, x_feat)
+smap = smap.reshape(smap, (8, 9))
+smap_plot(smap, "smap_sample")
