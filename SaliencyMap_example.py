@@ -56,7 +56,6 @@ data_cluster = NPZParser.wrapper(dir_npz + NPZ_FILE_TRAIN,
 
 neuralnetwork_clas.load()
 
-
 ########################################################################################################################
 # Saliency Maps
 ########################################################################################################################
@@ -71,7 +70,7 @@ for i in range(10):
     smap = np.reshape(smap, (8, 9))
     str_title = "Event ID: {}\nTrue class: {:.1f}\nPred class: {:.2f}".format(data_cluster.meta[i, 0], score_true,
                                                                               score_pred)
-    SaliencyMap.smap_plot(smap, str_title, "sample_" + str(i))
+    SaliencyMap.smap_plot(smap, x_feat, str_title, "sample_" + str(i))
 
 """
 x_feat = np.array([data_cluster.features[8], ])
