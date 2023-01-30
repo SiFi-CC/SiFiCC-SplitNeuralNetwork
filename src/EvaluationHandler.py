@@ -2,6 +2,7 @@ import numpy as np
 from src import NPZParser
 from src import fastROCAUC
 from src import Plotter
+from src import SaliencyMap
 
 
 def get_metrics(y_scores, y_true, threshold, weighted=False):
@@ -198,6 +199,20 @@ def eval_classifier(NeuralNetwork, data_cluster, theta=0.5):
     y_sourcepos = y_sourcepos[y_true == 1]
     Plotter.plot_2dhist_score_sourcepos(y_scores_pos, y_sourcepos, "hist2d_score_sourcepos")
     Plotter.plot_2dhist_score_eprimary(y_scores_pos, y_eprimary, "hist2d_score_eprimary")
+
+    # saliency maps for the first 10 entries of the data sample
+    # TODO: prob needs an update
+    for i in range(10):
+        x_feat = np.array([data_cluster.features[i], ])
+        score_true = data_cluster.targets_clas[i]
+        score_pred = float(NeuralNetwork.predict(x_feat))
+        print("True class: {:.1f} | Predicted class: {:.2f}".format(score_true, score_pred))
+
+        smap = SaliencyMap.get_smap(NeuralNetwork.model, x_feat)
+        smap = np.reshape(smap, (8, 9))
+        str_title = "Event ID: {}\nTrue class: {:.1f}\nPred class: {:.2f}".format(data_cluster.meta[i, 0], score_true,
+                                                                                  score_pred)
+        SaliencyMap.smap_plot(smap, x_feat, str_title, "SMAP_sample_" + str(i))
 
 
 def eval_regression_energy(NeuralNetwork, DataCluster):

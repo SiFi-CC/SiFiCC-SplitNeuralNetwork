@@ -42,7 +42,7 @@ def get_smap(model, image):
     return smap
 
 
-def smap_plot(smap, feat, title, file_name):
+def smap_plot(smap, image, title, file_name):
     """
     Generation of matplotlib plot of the saliency map
 
@@ -51,6 +51,8 @@ def smap_plot(smap, feat, title, file_name):
          title: (string): custom string for title
          file_name: (string): file name for the saved .png file
     """
+    # TODO: update to variable cluster number
+
     fig, axs = plt.subplots(1, 2)
     axs[0].set_title(title)
     axs[0].set_xticks(ticks=[0, 1, 2, 3, 4, 5, 6, 7, 8],
@@ -65,7 +67,7 @@ def smap_plot(smap, feat, title, file_name):
                               "Unc. Pos Y", "Unc. Pos Z"],
                       rotation=90)
     axs[1].set_yticks([])
-    axs[1].imshow(feat, cmap="viridis")
-    axs[0].colorbar()
+    axs[1].imshow(image, cmap="viridis")
+    axs[0].set_colorbar()
     plt.tight_layout()
     plt.savefig(file_name + ".png")
