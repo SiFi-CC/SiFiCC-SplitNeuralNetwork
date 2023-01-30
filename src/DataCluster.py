@@ -77,6 +77,28 @@ class DataCluster:
 
             self.features[:, i] = (self.features[:, i] - np.mean(self.features[:, i])) / np.std(self.features[:, i])
 
+    def new_standardie(self):
+        n_cluster = 8
+        n_features = 9
+        self.list_mean = []
+        self.list_std = []
+        list_idx = np.arange(0, n_cluster * n_features, n_features)
+
+        for i in range(9):
+            # print(np.array(list_idx) + i)
+            ary_con = np.reshape(self.features[:, np.array(list_idx) + i], (self.features.shape[0] * n_cluster,))
+            self.list_mean.append(np.mean(ary_con))
+            self.list_std.append(np.std(ary_con))
+
+        self.list_mean = self.list_mean * n_cluster
+        self.list_std = self.list_std * n_cluster
+
+        for i in range(len(self.list_mean)):
+            mean = self.list_mean[i]
+            std = self.list_std[i]
+            self.features[:, i] -= mean
+            self.features[:, i] /= std
+
     def update_indexing_positives(self):
         ary_idx = np.arange(0, self.entries, 1.0, dtype=int)
         # grab indices of all positives events
