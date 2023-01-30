@@ -104,22 +104,58 @@ def get_primary_energy(y_scores, y_true, y_primary_energy, theta=0.5):
 
 
 def get_source_position(y_scores, y_true, y_source_pos, theta=0.5):
-    ary_sourcepos_pos = [y_source_pos[i] for i in range(len(y_scores))
-                         if (y_scores[i] > theta and y_source_pos[i] != 0.0)]
-    ary_sourcepos_all = [y_source_pos[i] for i in range(len(y_true)) if y_true[i] == 1]
-    return ary_sourcepos_pos, ary_sourcepos_all
+    """
+    Grab source positions arrays of all positive, signal and total events
+    """
+    # neural network positive events
+    ary_sp_pos = [y_source_pos[i] for i in range(len(y_scores))
+                  if (y_scores[i] > theta and y_source_pos[i] != 0.0)]
+    # all signal events
+    ary_sp_tp = [y_source_pos[i] for i in range(len(y_true)) if y_true[i] == 1]
+    # total events with condition that source position cannot be zero
+    ary_sp_tot = [y_source_pos[i] for i in range(len(y_true)) if y_source_pos[i] != 0.0]
+    return ary_sp_pos, ary_sp_tp, ary_sp_tot
 
 
 def eval_classifier(NeuralNetwork, data_cluster, theta=0.5):
-    # get neural network prediction
+    """
+    Standard evaluation script for neural network classifier.
+
+    Args:
+
+    return:
+
+    """
+
+    # grab neural network predictions for test dataset
     y_scores = NeuralNetwork.predict(data_cluster.x_test())
     y_true = data_cluster.y_test()
-    # print(y_true)
 
+    # write general binary classifier metrics into console and .txt file
     write_metrics_classifier(y_scores, y_true)
+    # Plotting of score distributions and ROC-analysis
+    # grab optimal threshold from ROC-analysis
     Plotter.plot_score_dist(y_scores, y_true, "score_dist")
     fastROCAUC.fastROCAUC(y_scores, y_true, save_fig="ROCAUC")
     _, theta_opt = fastROCAUC.fastROCAUC(y_scores, y_true, return_score=True)
+
+    # evaluate source position spectrum for baseline and optimal threshold
+    ary_sp_pos, ary_sp_tp, ary_sp_tot = get_source_position(y_scores,
+                                                            y_true,
+                                                            data_cluster.meta[data_cluster.idx_test(), 2],
+                                                            0.5)
+    Plotter.plot_source_position(ary_sp_pos,
+                                 ary_sp_tp,
+                                 ary_sp_tot,
+                                 "dist_sourcep_theta" + str(0.5))
+    ary_sp_pos, ary_sp_tp, ary_sp_tot = get_source_position(y_scores,
+                                                            y_true,
+                                                            data_cluster.meta[data_cluster.idx_test(), 2],
+                                                            theta_opt)
+    Plotter.plot_source_position(ary_sp_pos,
+                                 ary_sp_tp,
+                                 ary_sp_tot,
+                                 "dist_sourcep_thetaOPT")
 
     # evaluate primary energy spectrum
     for threshold in [theta, 0.7, theta_opt]:
@@ -128,18 +164,6 @@ def eval_classifier(NeuralNetwork, data_cluster, theta=0.5):
                                                           data_cluster.meta[data_cluster.idx_test(), 1],
                                                           threshold)
         Plotter.plot_primary_energy_dist(ary_primE_pos, ary_primE_all, "dist_primE_theta" + str(threshold))
-
-    # evaluate source position spectrum
-
-    for threshold in [theta, 0.7, theta_opt]:
-        ary_sourcep_pos, ary_sourcep_all = get_source_position(y_scores,
-                                                               y_true,
-                                                               data_cluster.meta[data_cluster.idx_test(), 2],
-                                                               threshold)
-        Plotter.plot_source_position(ary_sourcep_pos,
-                                     ary_sourcep_all,
-                                     data_cluster.meta[:, 2],
-                                     "dist_sourcep_theta" + str(threshold))
 
     # score distributions as 2dhistorgrams
     y_scores_pos = y_scores[y_true == 1]

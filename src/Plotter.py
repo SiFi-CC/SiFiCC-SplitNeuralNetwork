@@ -138,13 +138,13 @@ def plot_regression_position_error(y_pred, y_true, figure_name):
     plt.savefig(figure_name + "_z.png")
 
 
-def plot_source_position(ary_sp, ary_sp_tp, ary_sp_bg, figure_name):
+def plot_source_position(ary_sp_pos, ary_sp_tp, ary_sp_tot, figure_name):
     # plot MC Source Position z-direction
     bins = np.arange(-80, 20, 1.0)
     width = abs(bins[0] - bins[1])
-    hist1, _ = np.histogram(ary_sp, bins=bins)
+    hist1, _ = np.histogram(ary_sp_pos, bins=bins)
     hist2, _ = np.histogram(ary_sp_tp, bins=bins)
-    hist3, _ = np.histogram(ary_sp_bg, bins=bins)
+    hist3, _ = np.histogram(ary_sp_tot, bins=bins)
 
     # generate plots
     # MC Total / MC Ideal Compton
