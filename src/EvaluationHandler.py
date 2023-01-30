@@ -210,6 +210,7 @@ def eval_classifier(NeuralNetwork, data_cluster, theta=0.5):
 
         smap = SaliencyMap.get_smap(NeuralNetwork.model, x_feat)
         smap = np.reshape(smap, (8, 9))
+        x_feat = np.reshape(x_feat, (8, 9))
         str_title = "Event ID: {}\nTrue class: {:.1f}\nPred class: {:.2f}".format(data_cluster.meta[i, 0], score_true,
                                                                                   score_pred)
         SaliencyMap.smap_plot(smap, x_feat, str_title, "SMAP_sample_" + str(i))
