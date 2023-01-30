@@ -103,10 +103,17 @@ def write_metrics_classifier(y_scores, y_true):
 ########################################################################################################################
 
 def get_primary_energy(y_scores, y_true, y_primary_energy, theta=0.5):
-    ary_primaryenergy_pos = [y_primary_energy[i] for i in range(len(y_scores))
-                             if (y_scores[i] > theta and y_primary_energy[i] != 0.0)]
-    ary_primaryenergy_all = [y_primary_energy[i] for i in range(len(y_true)) if y_true[i] == 1]
-    return ary_primaryenergy_pos, ary_primaryenergy_all
+    """
+    Grab primary energy arrays of all positive, signal and total events
+    """
+    # neural network positive events
+    ary_pe_pos = [y_primary_energy[i] for i in range(len(y_scores))
+                  if (y_scores[i] > theta and y_primary_energy[i] != 0.0)]
+    # all signal events
+    ary_pe_tp = [y_primary_energy[i] for i in range(len(y_true)) if y_true[i] == 1]
+    # total events with condition that primary energy cannot be zero
+    ary_pe_tot = [y_primary_energy[i] for i in range(len(y_true)) if y_primary_energy[i] != 0.0]
+    return ary_pe_pos, ary_pe_tp, ary_pe_tot
 
 
 def get_source_position(y_scores, y_true, y_source_pos, theta=0.5):
@@ -164,20 +171,23 @@ def eval_classifier(NeuralNetwork, data_cluster, theta=0.5):
                                  "dist_sourcep_thetaOPT")
 
     # evaluate primary energy spectrum
-    for threshold in [theta, 0.7, theta_opt]:
-        ary_primE_pos, ary_primE_all = get_primary_energy(y_scores,
-                                                          y_true,
-                                                          data_cluster.meta[data_cluster.idx_test(), 1],
-                                                          threshold)
-        Plotter.plot_primary_energy_dist(ary_primE_pos, ary_primE_all, "dist_primE_theta" + str(threshold))
+    ary_pe_pos, ary_pe_tp, ary_pe_tot = get_primary_energy(y_scores,
+                                                           y_true,
+                                                           data_cluster.meta[data_cluster.idx_test(), 1],
+                                                           0.5)
+    Plotter.plot_primary_energy_dist(ary_pe_pos, ary_pe_tp, ary_pe_tot, "dist_primE_theta" + str(0.5))
+    ary_pe_pos, ary_pe_tp, ary_pe_tot = get_primary_energy(y_scores,
+                                                           y_true,
+                                                           data_cluster.meta[data_cluster.idx_test(), 1],
+                                                           theta_opt)
+    Plotter.plot_primary_energy_dist(ary_pe_pos, ary_pe_tp, ary_pe_tot, "dist_primE_thetaOPT")
 
-    # score distributions as 2dhistorgrams
+    # score distributions as 2d-historgrams
     y_scores_pos = y_scores[y_true == 1]
     y_sourcepos = data_cluster.meta[data_cluster.idx_test(), 2]
     y_eprimary = data_cluster.meta[data_cluster.idx_test(), 1]
     y_eprimary = y_eprimary[y_true == 1]
     y_sourcepos = y_sourcepos[y_true == 1]
-
     Plotter.plot_2dhist_score_sourcepos(y_scores_pos, y_sourcepos, "hist2d_score_sourcepos")
     Plotter.plot_2dhist_score_eprimary(y_scores_pos, y_eprimary, "hist2d_score_eprimary")
 

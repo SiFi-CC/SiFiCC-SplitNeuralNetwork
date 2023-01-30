@@ -164,12 +164,13 @@ def plot_source_position(ary_sp_pos, ary_sp_tp, ary_sp_tot, figure_name):
     plt.savefig(figure_name + ".png")
 
 
-def plot_primary_energy_dist(ary_primary_energy, ary_primary_energy_all, figure_name):
+def plot_primary_energy_dist(ary_pe_pos, ary_pe_tp, ary_pe_tot, figure_name):
     # plot MC Source Position z-direction
-    bins = np.arange(0.0, 16.0, 0.1)
+    bins = np.arange(0.0, 10.0, 0.1)
     width = abs(bins[0] - bins[1])
-    hist1, _ = np.histogram(ary_primary_energy, bins=bins)
-    hist2, _ = np.histogram(ary_primary_energy_all, bins=bins)
+    hist1, _ = np.histogram(ary_pe_pos, bins=bins)
+    hist2, _ = np.histogram(ary_pe_tp, bins=bins)
+    hist3, _ = np.histogram(ary_pe_tot, bins=bins)
 
     # generate plots
     # MC Total / MC Ideal Compton
@@ -177,16 +178,13 @@ def plot_primary_energy_dist(ary_primary_energy, ary_primary_energy_all, figure_
     plt.title("MC Energy Primary")
     plt.xlabel("Energy [MeV]")
     plt.ylabel("counts (normalized)")
-    plt.xlim(0.0, 16.0)
+    plt.xlim(0.0, 10.0)
     # total event histogram
-    plt.hist(ary_primary_energy, bins=bins, histtype=u"step", color="black", label="Total Ideal Compton", density=True,
-             alpha=0.5, linestyle="--")
-    plt.hist(ary_primary_energy_all, bins=bins, histtype=u"step", color="red", label="NN positives", density=True,
-             alpha=0.5, linestyle="--")
-    plt.errorbar(bins[1:] - width / 2, hist2 / np.sum(hist2) / width,
-                 np.sqrt(hist2) / np.sum(hist2) / width, color="black", fmt=".")
-    plt.errorbar(bins[1:] - width / 2, hist1 / np.sum(hist1) / width,
-                 np.sqrt(hist1) / np.sum(hist1) / width, color="red", fmt=".")
+    plt.hist(ary_pe_tot, bins=bins, color="orange", alpha=0.5, label="All events")
+    plt.errorbar(bins[1:] - width / 2, hist3, np.sqrt(hist3), color="orange", fmt=".")
+    plt.errorbar(bins[1:] - width / 2, hist2, np.sqrt(hist2), color="black", fmt=".", label="Ideal Compton events")
+    plt.errorbar(bins[1:] - width / 2, hist1, np.sqrt(hist1), color="red", fmt=".", label="NN positive\nevents")
+    plt.yscale("log")
     plt.legend()
     plt.grid()
     plt.tight_layout()
