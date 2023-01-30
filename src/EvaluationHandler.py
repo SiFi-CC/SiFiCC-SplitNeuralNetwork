@@ -169,6 +169,14 @@ def eval_classifier(NeuralNetwork, data_cluster, theta=0.5):
                                  ary_sp_tp,
                                  ary_sp_tot,
                                  "dist_sourcep_thetaOPT")
+    ary_sp_pos, ary_sp_tp, ary_sp_tot = get_source_position(y_scores,
+                                                            y_true,
+                                                            data_cluster.meta[data_cluster.idx_test(), 2],
+                                                            0.3)
+    Plotter.plot_source_position(ary_sp_pos,
+                                 ary_sp_tp,
+                                 ary_sp_tot,
+                                 "dist_sourcep_theta" + str(0.3))
 
     # evaluate primary energy spectrum
     ary_pe_pos, ary_pe_tp, ary_pe_tot = get_primary_energy(y_scores,
