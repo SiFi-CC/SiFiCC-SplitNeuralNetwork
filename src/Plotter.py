@@ -138,29 +138,27 @@ def plot_regression_position_error(y_pred, y_true, figure_name):
     plt.savefig(figure_name + "_z.png")
 
 
-def plot_source_position(ary_source_pos, ary_source_pos_all, figure_name):
+def plot_source_position(ary_sp, ary_sp_tp, ary_sp_bg, figure_name):
     # plot MC Source Position z-direction
     bins = np.arange(-80, 20, 1.0)
     width = abs(bins[0] - bins[1])
-    hist1, _ = np.histogram(ary_source_pos, bins=bins)
-    hist2, _ = np.histogram(ary_source_pos_all, bins=bins)
+    hist1, _ = np.histogram(ary_sp, bins=bins)
+    hist2, _ = np.histogram(ary_sp_tp, bins=bins)
+    hist3, _ = np.histogram(ary_sp_bg, bins=bins)
 
     # generate plots
     # MC Total / MC Ideal Compton
     plt.figure()
     plt.title("MC Source Position z")
     plt.xlabel("z-position [mm]")
-    plt.ylabel("counts (normalized)")
+    plt.ylabel("counts")
     plt.xlim(-80.0, 20.0)
     # total event histogram
-    plt.hist(ary_source_pos_all, bins=bins, histtype=u"step", color="black", label="Total Ideal Compton", density=True,
+    plt.hist(ary_sp_tp, bins=bins, histtype=u"step", color="y", label="Total Ideal Compton",
              alpha=0.5, linestyle="--")
-    plt.hist(ary_source_pos, bins=bins, histtype=u"step", color="red", label="NN positives", density=True, alpha=0.5,
-             linestyle="--")
-    plt.errorbar(bins[1:] - width / 2, hist2 / np.sum(hist2) / width,
-                 np.sqrt(hist2) / np.sum(hist2) / width, color="black", fmt=".")
-    plt.errorbar(bins[1:] - width / 2, hist1 / np.sum(hist1) / width,
-                 np.sqrt(hist1) / np.sum(hist1) / width, color="red", fmt=".")
+    plt.hist(ary_sp, bins=bins, color="red", label="NN positives", density=True, alpha=0.5)
+    plt.errorbar(bins[1:] - width / 2, hist2, np.sqrt(hist2), color="y", fmt=".")
+    plt.errorbar(bins[1:] - width / 2, hist1, np.sqrt(hist1), color="red", fmt=".")
     plt.legend()
     plt.grid()
     plt.tight_layout()
