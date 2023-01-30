@@ -132,11 +132,14 @@ def eval_classifier(NeuralNetwork, data_cluster, theta=0.5):
     # evaluate source position spectrum
 
     for threshold in [theta, 0.7, theta_opt]:
-        ary_sourcep_pos, ary_sourcep_all = get_primary_energy(y_scores,
-                                                              y_true,
-                                                              data_cluster.meta[data_cluster.idx_test(), 2],
-                                                              threshold)
-        Plotter.plot_source_position(ary_sourcep_pos, ary_sourcep_all, "dist_sourcep_theta" + str(threshold))
+        ary_sourcep_pos, ary_sourcep_all = get_source_position(y_scores,
+                                                               y_true,
+                                                               data_cluster.meta[data_cluster.idx_test(), 2],
+                                                               threshold)
+        Plotter.plot_source_position(ary_sourcep_pos,
+                                     ary_sourcep_all,
+                                     data_cluster.meta[:, 2],
+                                     "dist_sourcep_theta" + str(threshold))
 
     # score distributions as 2dhistorgrams
     y_scores_pos = y_scores[y_true == 1]

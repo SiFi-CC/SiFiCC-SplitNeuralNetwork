@@ -154,11 +154,10 @@ def plot_source_position(ary_sp, ary_sp_tp, ary_sp_bg, figure_name):
     plt.ylabel("counts")
     plt.xlim(-80.0, 20.0)
     # total event histogram
-    plt.hist(ary_sp_tp, bins=bins, histtype=u"step", color="y", label="Total Ideal Compton",
-             alpha=0.5, linestyle="--")
-    plt.hist(ary_sp, bins=bins, color="red", label="NN positives", density=True, alpha=0.5)
-    plt.errorbar(bins[1:] - width / 2, hist2, np.sqrt(hist2), color="y", fmt=".")
-    plt.errorbar(bins[1:] - width / 2, hist1, np.sqrt(hist1), color="red", fmt=".")
+    plt.hist(ary_sp_tp, bins=bins, color="y", alpha=0.5, label="All events")
+    plt.errorbar(bins[1:] - width / 2, hist3, np.sqrt(hist3), color="y", fmt=".")
+    plt.errorbar(bins[1:] - width / 2, hist1, np.sqrt(hist1), color="red", fmt=".", label="Ideal Compton events")
+    plt.errorbar(bins[1:] - width / 2, hist2, np.sqrt(hist2), color="black", fmt=".", label="NN positive\nevents")
     plt.legend()
     plt.grid()
     plt.tight_layout()
