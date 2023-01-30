@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 
 import tensorflow as tf
 from tensorflow import keras
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 # update matplotlib parameter for bigger font size
 plt.rcParams.update({'font.size': 14})
@@ -61,13 +62,22 @@ def smap_plot(smap, image, title, file_name):
                       rotation=90)
     axs[0].set_yticks(ticks=[0, 1, 2, 3, 4, 5, 6, 7],
                       labels=["S1", "S2", "A1", "A2", "A2", "A4", "A5", "A6"])
-    axs[0].imshow(smap, vmin=0.0, vmax=1.0, cmap="Reds")
+    im1 = axs[0].imshow(smap, vmin=0.0, vmax=1.0, cmap="Reds")
     axs[1].set_xticks(ticks=[0, 1, 2, 3, 4, 5, 6, 7, 8],
                       labels=["No. fibers", "Energy", "Pos X", "Pos Y", "Pos Z", "Unc. Energy", "Unc. Pos X",
                               "Unc. Pos Y", "Unc. Pos Z"],
                       rotation=90)
     axs[1].set_yticks([])
-    axs[1].imshow(image, cmap="viridis")
-    axs[0].set_colorbar()
+    im2 = axs[1].imshow(image, cmap="viridis")
+
+    # color bars
+    divider = make_axes_locatable(axs[0])
+    cax = divider.append_axes('right', size='5%', pad=0.05)
+    fig.colorbar(im1, cax=cax, orientation='vertical')
+
+    divider = make_axes_locatable(axs[1])
+    cax = divider.append_axes('right', size='5%', pad=0.05)
+    fig.colorbar(im2, cax=cax, orientation='vertical')
+
     plt.tight_layout()
     plt.savefig(file_name + ".png")
