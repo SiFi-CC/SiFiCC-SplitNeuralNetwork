@@ -60,6 +60,9 @@ class Event:
                  RecoClusterEnergies_values,
                  RecoClusterEnergies_uncertainty,
                  RecoClusterEntries,
+                 RecoClusterTimestamps,
+                 MCEventStartTime,
+                 MCComptonTime,
                  scatterer,
                  absorber):
 
@@ -77,6 +80,8 @@ class Event:
         self.MCInteractions_e = MCInteractions_e
         self.MCPosition_p = MCPosition_p
         self.MCInteractions_p = MCInteractions_p
+        self.MCEventStartTime = MCEventStartTime
+        self.MCComptonTime = MCComptonTime
 
         # Cut-Based information
         self.Identified = Identified
@@ -88,6 +93,12 @@ class Event:
         self.RecoClusterEnergies_values = RecoClusterEnergies_values
         self.RecoClusterEnergies_uncertainty = RecoClusterEnergies_uncertainty
         self.RecoClusterEntries = RecoClusterEntries
+
+        # timing information
+        self.RecoClusterTimestamps = RecoClusterTimestamps
+        # get position sorted indices
+        idx_position = self.sort_clusters_position()
+        self.RecoClusterTimestamps_relative = RecoClusterTimestamps - RecoClusterTimestamps[idx_position[0]]
 
         self.scatterer = scatterer
         self.absorber = absorber
@@ -197,6 +208,14 @@ class Event:
 
         """
         return np.flip(np.argsort(self.RecoClusterEnergies_values))
+
+    def sort_clusters_position(self):
+        """ sort events by lowest x position in ascending order
+
+        return: sorted array idx
+
+        """
+        return np.argsort(self.RecoClusterPosition.x)
 
     def sort_clusters_by_module(self, use_energy=True):
         """ sort clusters (sorted by energy) by corresponding module only creates list of array idx's.

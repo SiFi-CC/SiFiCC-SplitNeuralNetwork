@@ -64,7 +64,10 @@ class RootParser:
                        'RecoClusterPositions.uncertainty',
                        'RecoClusterEnergies.value',
                        'RecoClusterEnergies.uncertainty',
-                       'RecoClusterEntries']
+                       'RecoClusterEntries',
+                       "RecoClusterTimestamps",
+                       "MCEventStartTime",
+                       "MCComptonTime"]
 
     def iterate_events(self, n=None):
         """iteration over the events root tree
@@ -132,6 +135,9 @@ class RootParser:
                       RecoClusterEnergies_uncertainty=basket['RecoClusterEnergies.uncertainty'][idx],
                       RecoClusterEntries=basket['RecoClusterEntries'][idx],
                       MCSimulatedEventType=basket['MCSimulatedEventType'][idx],
+                      RecoClusterTimestamps=basket["RecoClusterTimestamps"][idx],
+                      MCEventStartTime=basket["MCEventStartTime"][idx],
+                      MCComptonTime=basket["MCComptonTime"][idx],
                       scatterer=self.scatterer,
                       absorber=self.absorber)
         return event

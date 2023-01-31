@@ -44,12 +44,15 @@ def print_event_summary(Rootdata, n=0):
     print("\n Cluster Entries: ")
     print("Energy / Position / Entries / Module")
     for i, cluster in enumerate(event.RecoClusterPosition):
-        print("{:.3f} | {} | ({:7.3f}, {:7.3f}, {:7.3f}) | {:3} ".format(i,
-                                                                         event.RecoClusterEnergies_values[i],
-                                                                         cluster.x,
-                                                                         cluster.y,
-                                                                         cluster.z,
-                                                                         event.RecoClusterEntries[i]))
+        print("{:.3f} | {:.3f} | ({:7.3f}, {:7.3f}, {:7.3f}) | {:3} | {:7.5}".format(i,
+                                                                                     event.RecoClusterEnergies_values[
+                                                                                         i],
+                                                                                     cluster.x,
+                                                                                     cluster.y,
+                                                                                     cluster.z,
+                                                                                     event.RecoClusterEntries[i],
+                                                                                     event.RecoClusterTimestamps_relative[
+                                                                                         i]))
 
     RecoCluster_idx_scatterer, RecoCluster_idx_absorber = event.sort_clusters_by_module(use_energy=True)
     print("\nCluster in Scatterer: {} | Cluster idx: {}".format(len(RecoCluster_idx_scatterer),
