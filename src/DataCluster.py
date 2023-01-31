@@ -77,16 +77,18 @@ class DataCluster:
 
             self.features[:, i] = (self.features[:, i] - np.mean(self.features[:, i])) / np.std(self.features[:, i])
 
-    def new_standardie(self):
+    def new_standardize(self):
         n_cluster = 8
         n_features = 9
         self.list_mean = []
         self.list_std = []
         list_idx = np.arange(0, n_cluster * n_features, n_features)
+        ary_padding = np.array([0.0, -1.0, 0.0, -55.0, -55.0, 0.0, 0.0, 0.0, 0.0])
 
         for i in range(9):
             # print(np.array(list_idx) + i)
             ary_con = np.reshape(self.features[:, np.array(list_idx) + i], (self.features.shape[0] * n_cluster,))
+            ary_con = ary_con[ary_con != ary_padding[i]]
             self.list_mean.append(np.mean(ary_con))
             self.list_std.append(np.std(ary_con))
 
