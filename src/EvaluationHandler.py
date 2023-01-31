@@ -3,6 +3,7 @@ from src import NPZParser
 from src import fastROCAUC
 from src import Plotter
 from src import SaliencyMap
+from src import Metrics
 
 
 def get_metrics(y_scores, y_true, threshold, weighted=False):
@@ -244,8 +245,6 @@ def eval_full(NeuralNetwork_clas,
               DataCluster,
               file_name="",
               theta=0.5):
-    # standardize input
-    DataCluster.standardize()
 
     # grab all positive identified events by the neural network
     y_scores = NeuralNetwork_clas.predict(DataCluster.features)
@@ -269,41 +268,25 @@ def eval_full(NeuralNetwork_clas,
                                          y_pred_energy[idx_clas_tp, 1] - DataCluster.targets_reg1[idx_clas_tp, 1],
                                          "hist2d_score_error_energy_p")
 
+    # collect full prediction and true values of test dataset
     y_pred_class = (y_scores[idx_clas_p] > theta) * 1
     y_true_clas = DataCluster.targets_clas[idx_clas_p]
-    y_true_e = DataCluster.targets_reg1[idx_clas_p, :]
-    y_true_p = DataCluster.targets_reg2[idx_clas_p, :]
+    y_true_energy = DataCluster.targets_reg1[idx_clas_p, :]
+    y_true_position = DataCluster.targets_reg2[idx_clas_p, :]
     y_pred_energy = y_pred_energy[idx_clas_p, :]
     y_pred_position = y_pred_position[idx_clas_p, :]
 
-    counter_pos = 0
-    for i in range(len(y_pred_class)):
-        identified = 1
-        if not (y_pred_class[i] == 1 and y_true_clas[i] == 1):
-            identified = 0
-        if np.abs(float(y_pred_energy[i, 0]) - float(y_true_e[i, 0])) > 2 * 0.06 * float(y_true_e[i, 0]):
-            identified = 0
-        if np.abs(float(y_pred_energy[i, 1]) - float(y_true_e[i, 1])) > 2 * 0.06 * float(y_true_e[i, 1]):
-            identified = 0
-        if np.abs(y_pred_position[i, 0] - y_true_p[i, 0]) > 1.3 * 2:
-            identified = 0
-        if np.abs(y_pred_position[i, 1] - y_true_p[i, 1]) > 10.0 * 2:
-            identified = 0
-        if np.abs(y_pred_position[i, 2] - y_true_p[i, 2]) > 1.3 * 2:
-            identified = 0
-        if np.abs(y_pred_position[i, 3] - y_true_p[i, 3]) > 1.3 * 2:
-            identified = 0
-        if np.abs(y_pred_position[i, 4] - y_true_p[i, 4]) > 10.0 * 2:
-            identified = 0
-        if np.abs(y_pred_position[i, 5] - y_true_p[i, 5]) > 1.3 * 2:
-            identified = 0
-
-        if identified == 1:
-            counter_pos += 1
+    efficiency, purity = Metrics.get_global_effpur(np.sum(DataCluster.targets_clas),
+                                                   y_pred_class,
+                                                   y_pred_energy,
+                                                   y_pred_position,
+                                                   y_true_clas,
+                                                   y_true_energy,
+                                                   y_true_position)
 
     print("# Full evaluation statistics: ")
-    print("Efficiency: {:.1f}".format(counter_pos / np.sum(DataCluster.targets_clas) * 100))
-    print("Purity: {:.1f}".format(counter_pos / np.sum(y_true_clas) * 100))
+    print("Efficiency: {:.1f}".format(efficiency * 100))
+    print("Purity: {:.1f}".format(purity * 100))
 
     """
     from src import MLEMExport
