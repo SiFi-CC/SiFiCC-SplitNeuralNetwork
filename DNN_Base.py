@@ -134,13 +134,17 @@ for i in range(len(NPZ_FILE_EVAL)):
     os.chdir(dir_results + RUN_NAME + "_" + RUN_TAG + "/" + NPZ_FILE_EVAL[i][:-4] + "/")
     # npz wrapper
     data_cluster = NPZParser.wrapper(dir_npz + NPZ_FILE_EVAL[i],
-                                     set_testall=True,
+                                     set_testall=False,
                                      standardize=True)
 
     EvaluationHandler.eval_classifier(neuralnetwork_clas,
                                       data_cluster=data_cluster)
     EvaluationHandler.eval_regression_energy(neuralnetwork_regE, DataCluster=data_cluster)
     EvaluationHandler.eval_regression_position(neuralnetwork_regP, DataCluster=data_cluster)
+
+    data_cluster = NPZParser.wrapper(dir_npz + NPZ_FILE_EVAL[i],
+                                     set_testall=False,
+                                     standardize=True)
 
     EvaluationHandler.eval_full(neuralnetwork_clas,
                                 neuralnetwork_regE,
