@@ -1,7 +1,10 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.colors import LogNorm
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 
+# update matplotlib parameter for bigger font size
+plt.rcParams.update({'font.size': 12})
 
 def plot_score_dist(y_scores, y_true, figure_name):
     # score distribution plot
@@ -243,5 +246,36 @@ def plot_2dhist_score_regE_error(ary_score, ary_regE_err, figure_name):
     plt.ylabel("Score")
     h0 = plt.hist2d(ary_regE_err, ary_score, bins=[bin_sp, bin_score], norm=LogNorm())
     plt.colorbar(h0[3])
+    plt.tight_layout()
+    plt.savefig(figure_name + ".png")
+
+
+def plot_sourceposition_heatmap(ary_sp_z, ary_sp_y, figure_name):
+    bins_z = np.arange(-80, 20, 1.0)
+    bins_y = np.arange(-20, 20, 1.0)
+
+    hist0, _, _ = np.histogram2d(x=ary_sp_z, y=ary_sp_y, bins=[bins_z, bins_y])
+    hist1, _ = np.histogram(ary_sp_z, bins=bins_z)
+
+    # normalize histogram to range [0.0, 1.0]
+    min_val, max_val = np.min(hist0), np.max(hist0)
+    hmap = (hist0 - min_val) / (max_val - min_val + 1e-10)
+
+    # plot
+    fig, axs = plt.subplots(1, 2)
+    axs[0].set_xlabel("MC Source Position z [mm]")
+    axs[0].set_ylabel("MC Source Position y [mm]")
+    im0 = axs[0].imshow(hmap)
+
+    axs[1].set_xlabel("MC Source Position z [mm]")
+    axs[1].set_ylabel("Counts")
+    axs[1].hist(ary_sp_z, bins=bins_z, histtype=u"step", color="black", linestyle="--", alpha=0.7)
+    axs[1].errorbar(bins_z[:-1] - 0.5, hist1, np.sqrt(hist1), fmt=".", color="black")
+
+    # color-bars
+    divider = make_axes_locatable(axs[0])
+    cax = divider.append_axes('right', size='5%', pad=0.05)
+    fig.colorbar(im0, cax=cax, orientation='vertical')
+
     plt.tight_layout()
     plt.savefig(figure_name + ".png")

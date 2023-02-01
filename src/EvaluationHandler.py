@@ -245,7 +245,6 @@ def eval_full(NeuralNetwork_clas,
               DataCluster,
               file_name="",
               theta=0.5):
-
     # grab all positive identified events by the neural network
     y_scores = NeuralNetwork_clas.predict(DataCluster.features)
     idx_clas_p = [float(y_scores[i]) > theta for i in range(len(y_scores))]
@@ -287,6 +286,20 @@ def eval_full(NeuralNetwork_clas,
     print("# Full evaluation statistics: ")
     print("Efficiency: {:.1f}".format(efficiency * 100))
     print("Purity: {:.1f}".format(purity * 100))
+
+    # source position plot heatmap
+    list_sp_z = []
+    list_sp_y = []
+    for i in idx_clas_p:
+        if Metrics.is_event_correct((y_scores[i] > theta) * 1,
+                                    y_pred_energy[i],
+                                    y_pred_position[i],
+                                    DataCluster.targets_clas[i],
+                                    y_true_energy[i],
+                                    y_true_position[i]):
+            list_sp_y.append(0)
+            list_sp_z.append(DataCluster.meta[i, 2])
+    Plotter.plot_sourceposition_heatmap(list_sp_z, list_sp_y, "heatmap_sourcepos")
 
     """
     from src import MLEMExport
