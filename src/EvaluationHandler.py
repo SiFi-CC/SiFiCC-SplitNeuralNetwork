@@ -291,10 +291,10 @@ def eval_full(NeuralNetwork_clas,
     list_sp_z = []
     list_sp_y = []
     for i in idx_clas_p:
-        if Metrics.is_event_correct((y_scores[i] > theta) * 1,
+        if Metrics.is_event_correct(int((y_scores[i] > theta) * 1),
                                     y_pred_energy[i],
                                     y_pred_position[i],
-                                    DataCluster.targets_clas[i],
+                                    int(DataCluster.targets_clas[i]),
                                     y_true_energy[i],
                                     y_true_position[i]):
             list_sp_y.append(0)
