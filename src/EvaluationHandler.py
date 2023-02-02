@@ -267,6 +267,26 @@ def eval_full(NeuralNetwork_clas,
                                          y_pred_energy[idx_clas_tp, 1] - DataCluster.targets_reg1[idx_clas_tp, 1],
                                          "hist2d_score_error_energy_p")
 
+
+    # source position plot heatmap
+    list_sp_z = []
+    list_sp_y = []
+    for i in range(len(idx_clas_p)):
+        if not idx_clas_p[i]:
+            continue
+
+        if Metrics.is_event_correct(int((y_scores[i] > theta) * 1),
+                                    y_pred_energy[i],
+                                    y_pred_position[i],
+                                    int(DataCluster.targets_clas[i]),
+                                    DataCluster.targets_reg1[i, :],
+                                    DataCluster.targets_reg2[i, :]):
+            list_sp_y.append(0)
+            list_sp_z.append(DataCluster.meta[i, 2])
+    Plotter.plot_sourceposition_heatmap(list_sp_z, list_sp_y, "heatmap_sourcepos")
+
+
+
     # collect full prediction and true values of test dataset
     y_pred_class = (y_scores[idx_clas_p] > theta) * 1
     y_true_clas = DataCluster.targets_clas[idx_clas_p]
@@ -286,23 +306,6 @@ def eval_full(NeuralNetwork_clas,
     print("# Full evaluation statistics: ")
     print("Efficiency: {:.1f}".format(efficiency * 100))
     print("Purity: {:.1f}".format(purity * 100))
-
-    # source position plot heatmap
-    list_sp_z = []
-    list_sp_y = []
-    for i in range(len(idx_clas_p)):
-        if not idx_clas_p[i]:
-            continue
-
-        if Metrics.is_event_correct(int((y_scores[i] > theta) * 1),
-                                    y_pred_energy[i],
-                                    y_pred_position[i],
-                                    int(DataCluster.targets_clas[i]),
-                                    y_true_energy[i],
-                                    y_true_position[i]):
-            list_sp_y.append(0)
-            list_sp_z.append(DataCluster.meta[i, 2])
-    Plotter.plot_sourceposition_heatmap(list_sp_z, list_sp_y, "heatmap_sourcepos")
 
     """
     from src import MLEMExport
