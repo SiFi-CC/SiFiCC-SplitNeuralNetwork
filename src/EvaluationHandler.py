@@ -290,10 +290,10 @@ def eval_full(NeuralNetwork_clas,
     # source position plot heatmap
     list_sp_z = []
     list_sp_y = []
-    for i in idx_clas_p:
-        print(y_scores[i])
-        print((y_scores[i] > theta) * 1)
-        print(int((y_scores[i] > theta) * 1))
+    for i in range(len(idx_clas_p)):
+        if not idx_clas_p[i]:
+            continue
+
         if Metrics.is_event_correct(int((y_scores[i] > theta) * 1),
                                     y_pred_energy[i],
                                     y_pred_position[i],
