@@ -21,23 +21,31 @@ root1 = RootParser(dir_main + root_files.OptimisedGeometry_BP0mm_2e10protons_off
 root2 = RootParser(dir_main + root_files.OptimisedGeometry_BP5mm_4e9protons_offline)
 # root2.export_npz(dir_npz + "OptimisedGeometry_BP5mm_4e9protons.npz")
 
-from src import MLEMBackprojection
-from src import Plotter
-npz_data = np.load(dir_npz + "OptimisedGeometry_BP0mm_2e10protons_DNN_Base.npz")
-y_class = npz_data["targets_clas"]
-y_energy = npz_data["targets_reg1"]
-y_position = npz_data["targets_reg2"]
-idx_pos = y_class == 1
 
-image = MLEMBackprojection.reconstruct_image(y_energy[idx_pos, 0],
-                                             y_energy[idx_pos, 1],
-                                             y_position[idx_pos, 0],
-                                             y_position[idx_pos, 1],
-                                             y_position[idx_pos, 2],
-                                             y_position[idx_pos, 3],
-                                             y_position[idx_pos, 4],
-                                             y_position[idx_pos, 5],)
-Plotter.plot_backprojection(image, "")
+from scripts import script_flipset
+
+script_flipset.random_flip(dir_npz + "OptimisedGeometry_BP5mm_4e9protons_DNN_Base.npz")
+
+
+def backrpojection():
+    from src import MLEMBackprojection
+    from src import Plotter
+    npz_data = np.load(dir_npz + "OptimisedGeometry_BP0mm_2e10protons_DNN_Base.npz")
+    y_class = npz_data["targets_clas"]
+    y_energy = npz_data["targets_reg1"]
+    y_position = npz_data["targets_reg2"]
+    idx_pos = y_class == 1
+
+    image = MLEMBackprojection.reconstruct_image(y_energy[idx_pos, 0],
+                                                 y_energy[idx_pos, 1],
+                                                 y_position[idx_pos, 0],
+                                                 y_position[idx_pos, 1],
+                                                 y_position[idx_pos, 2],
+                                                 y_position[idx_pos, 3],
+                                                 y_position[idx_pos, 4],
+                                                 y_position[idx_pos, 5], )
+    Plotter.plot_backprojection(image, "")
+
 
 def time_plot(root3):
     list_times = []
