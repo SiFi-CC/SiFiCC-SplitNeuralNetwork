@@ -21,30 +21,50 @@ root1 = RootParser(dir_main + root_files.OptimisedGeometry_BP0mm_2e10protons_off
 root2 = RootParser(dir_main + root_files.OptimisedGeometry_BP5mm_4e9protons_offline)
 # root2.export_npz(dir_npz + "OptimisedGeometry_BP5mm_4e9protons.npz")
 
+from src import MLEMBackprojection
+from src import Plotter
 npz_data = np.load(dir_npz + "OptimisedGeometry_BP0mm_2e10protons_DNN_Base.npz")
-features = npz_data["features"]
+y_class = npz_data["targets_clas"]
+y_energy = npz_data["targets_reg1"]
+y_position = npz_data["targets_reg2"]
+idx_pos = y_class == 1
 
-n_cluster = 8
-n_features = 9
-list_mean = []
-list_std = []
-list_idx = np.arange(0, n_cluster * n_features, n_features)
-for i in range(9):
-    # print(np.array(list_idx) + i)
-    ary_con = np.reshape(features[:, np.array(list_idx) + i], (features.shape[0]*n_cluster,))
-    list_mean.append(np.mean(ary_con))
-    list_std.append(np.std(ary_con))
-    print(list_mean[i], list_std[i])
+image = MLEMBackprojection.reconstruct_image(y_energy[idx_pos, 0],
+                                             y_energy[idx_pos, 1],
+                                             y_position[idx_pos, 0],
+                                             y_position[idx_pos, 1],
+                                             y_position[idx_pos, 2],
+                                             y_position[idx_pos, 3],
+                                             y_position[idx_pos, 4],
+                                             y_position[idx_pos, 5],)
+Plotter.plot_backprojection(image, "")
 
-list_mean = list_mean * n_cluster
-list_std = list_std * n_cluster
+def time_plot(root3):
+    list_times = []
+    list_times_bg = []
+    list_times_sg = []
+    for i in range(root3.events_entries):
+        event = root3.get_event(i)
+        for time in event.RecoClusterTimestamps_relative:
+            if time != 0.0:
+                list_times.append(time)
 
-for i in range(len(list_mean)):
-    mean = list_mean[i]
-    std = list_std[i]
-    features[:, i] -= mean
-    features[:, i] /= std
+                if event.is_ideal_compton:
+                    list_times_sg.append(time)
+                else:
+                    list_times_bg.append(time)
 
-x_feat = features[6, :]
-x_feat = np.reshape(x_feat, (8, 9))
-print(x_feat)
+    bins = np.arange(-5.0, 5.0, 0.05)
+    hist1, _ = np.histogram(list_times_sg, bins=bins)
+    hist2, _ = np.histogram(list_times_bg, bins=bins)
+
+    plt.figure()
+    plt.xlabel(r"$\Delta t$ [ns]")
+    plt.ylabel("counts")
+    plt.hist(list_times, bins=bins, color="orange", alpha=0.7, label="All events")
+    plt.errorbar(bins[:-1] + 0.05 / 2, hist1, np.sqrt(hist1) / 5, fmt=".", color="red", label="Positives")
+    plt.errorbar(bins[:-1] + 0.05 / 2, hist2, np.sqrt(hist2) / 5, fmt=".", color="black", label="Negatives")
+    plt.legend()
+    plt.tight_layout()
+    # plt.grid()
+    plt.show()

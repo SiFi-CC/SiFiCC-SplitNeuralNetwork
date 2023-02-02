@@ -6,6 +6,7 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 # update matplotlib parameter for bigger font size
 plt.rcParams.update({'font.size': 12})
 
+
 def plot_score_dist(y_scores, y_true, figure_name):
     # score distribution plot
     bins = np.arange(0.0, 1.0 + 0.05, 0.05)
@@ -279,3 +280,10 @@ def plot_sourceposition_heatmap(ary_sp_z, ary_sp_y, figure_name):
 
     plt.tight_layout()
     plt.savefig(figure_name + ".png")
+
+
+def plot_backprojection(image, figure_name):
+    plt.figure()
+    plt.imshow(image)
+    # plt.savefig(figure_name + ".png")
+    plt.show()

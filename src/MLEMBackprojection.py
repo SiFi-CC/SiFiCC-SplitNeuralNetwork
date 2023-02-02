@@ -26,7 +26,7 @@ def connect_points(vec1, vec2):
     """
 
     vec = vec2 - vec1
-    vec /= vec.Mag
+    vec /= vec.mag
     return vec
 
 
@@ -71,6 +71,9 @@ def reconstruct_image(ary_e1, ary_e2, ary_x1, ary_y1, ary_z1, ary_x2, ary_y2, ar
     widthz = zlimit * 2 / nbinsz
     widthy = ylimit * 2 / nbinsy
 
+    A = 1
+    D = 150
+
     # histogram
     ary_image = np.zeros(shape=(nbinsz, nbinsy))
 
@@ -89,9 +92,9 @@ def reconstruct_image(ary_e1, ary_e2, ary_x1, ary_y1, ary_z1, ary_x2, ary_y2, ar
             for y in range(nbinsy):
                 pixelCenter = TVector3(0.0, -ylimit + widthy / 2 + (y * widthy), -zlimit + widthz / 2 + (z * widthz))
                 linkingVector = connect_points(pixelCenter, cone.apex)
-                angle = cone.axis.Angle(linkingVector)
+                angle = cone.axis.angle(linkingVector)
 
-                resolution = np.arctan(0.5 * widthz * np.sqrt(2))
+                resolution = np.arctan(0.5 * widthz * np.sqrt(2) / (D / A))
 
                 if abs(cone.theta - angle) <= resolution:
                     ary_image[z, y] += 1

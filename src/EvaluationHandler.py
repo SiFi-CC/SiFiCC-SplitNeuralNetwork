@@ -291,6 +291,7 @@ def eval_full(NeuralNetwork_clas,
     list_sp_z = []
     list_sp_y = []
     for i in idx_clas_p:
+        print(y_scores[i])
         print((y_scores[i] > theta) * 1)
         print(int((y_scores[i] > theta) * 1))
         if Metrics.is_event_correct(int((y_scores[i] > theta) * 1),
