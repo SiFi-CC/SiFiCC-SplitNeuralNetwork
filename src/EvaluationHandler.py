@@ -267,7 +267,6 @@ def eval_full(NeuralNetwork_clas,
                                          y_pred_energy[idx_clas_tp, 1] - DataCluster.targets_reg1[idx_clas_tp, 1],
                                          "hist2d_score_error_energy_p")
 
-
     # source position plot heatmap
     list_sp_z = []
     list_sp_y = []
@@ -284,8 +283,6 @@ def eval_full(NeuralNetwork_clas,
             list_sp_y.append(0)
             list_sp_z.append(DataCluster.meta[i, 2])
     Plotter.plot_sourceposition_heatmap(list_sp_z, list_sp_y, "heatmap_sourcepos")
-
-
 
     # collect full prediction and true values of test dataset
     y_pred_class = (y_scores[idx_clas_p] > theta) * 1

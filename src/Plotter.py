@@ -263,7 +263,7 @@ def plot_sourceposition_heatmap(ary_sp_z, ary_sp_y, figure_name):
     hmap = (hist0 - min_val) / (max_val - min_val + 1e-10)
 
     # plot
-    fig, axs = plt.subplots(1, 2)
+    fig, axs = plt.subplots(1, 2, figsize=(12, 8))
     axs[0].set_xlabel("MC Source Position z [mm]")
     axs[0].set_ylabel("MC Source Position y [mm]")
     im0 = axs[0].imshow(hmap)
