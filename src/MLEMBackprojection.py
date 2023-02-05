@@ -41,7 +41,7 @@ def calculate_theta(e1, e2):
     kMe = 0.510999  # MeV/c^2
     costheta = 1.0 - kMe * (1.0 / e2 - 1.0 / e1)
 
-    # TODO: reformat pythin numpy arcos function
+    # TODO: reformat python numpy arcos function
     theta = np.arccos(costheta)  # rad
     return theta
 
@@ -64,10 +64,12 @@ def reconstruct_image(ary_e1, ary_e2, ary_x1, ary_y1, ary_z1, ary_x2, ary_y2, ar
 
     # histogram settings (in this case a 2d-array)
     # detector dimensions are hardcoded at the moment!
-    nbinsz = int(100.0)
-    nbinsy = int(98.8)
-    zlimit = 100.0 / 2.0
-    ylimit = 98.8 / 2.0
+    scatz = 100.0 / 2
+    scaty = 98.8 / 2
+    nbinsz = int(scatz)
+    nbinsy = int(scaty)
+    zlimit = scatz / 2.0
+    ylimit = scaty / 2.0
     widthz = zlimit * 2 / nbinsz
     widthy = ylimit * 2 / nbinsy
 
