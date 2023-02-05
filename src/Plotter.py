@@ -2,9 +2,20 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.colors import LogNorm
 from mpl_toolkits.axes_grid1 import make_axes_locatable
+from scipy.optimize import curve_fit
 
 # update matplotlib parameter for bigger font size
 plt.rcParams.update({'font.size': 12})
+
+
+# --------------------------------------------------------
+# fitting functions
+def gaussian(x, mu, sigma, A):
+    return A / (sigma * np.sqrt(2 * np.pi)) * np.exp(-1 / 2 * ((x - mu) / sigma) ** 2)
+
+
+def lorentzian(x, mu, sigma, A):
+    return A / np.pi * (1 / 2 * sigma) / ((x - mu) ** 2 + (1 / 2 * sigma) ** 2)
 
 
 def plot_score_dist(y_scores, y_true, figure_name):
@@ -22,6 +33,7 @@ def plot_score_dist(y_scores, y_true, figure_name):
     plt.legend()
     plt.tight_layout()
     plt.savefig(figure_name + ".png")
+    plt.close()
 
 
 def plot_history_classifier(nn_classifier, figure_name):
@@ -49,6 +61,7 @@ def plot_history_classifier(nn_classifier, figure_name):
     ax2.grid()
     plt.tight_layout()
     plt.savefig(figure_name + ".png")
+    plt.close()
 
 
 def plot_history_regression(nn_regression, figure_name):
@@ -75,71 +88,239 @@ def plot_history_regression(nn_regression, figure_name):
     ax2.grid()
     plt.tight_layout()
     plt.savefig(figure_name + ".png")
+    plt.close()
 
 
-def plot_regression_energy_error(y_pred, y_true, figure_name):
-    bins = np.arange(-2.0, 2.0, 0.05)
+def plot_energy_error(y_pred, y_true, figure_name):
+    width = 0.01
+    bins_err = np.arange(-2.0, 2.0, width)
+    bins_energy = np.arange(0.0, 10.0, width)
+
+    bins_err_center = bins_err[:-1] + (width / 2)
+
+    hist0, _ = np.histogram(y_pred[:, 0] - y_true[:, 0], bins=bins_err)
+    hist1, _ = np.histogram(y_pred[:, 1] - y_true[:, 1], bins=bins_err)
+
+    # fitting energy resolution
+    popt0, pcov0 = curve_fit(gaussian, bins_err_center, hist0, p0=[0.0, 1.0, np.sum(hist0) * width])
+    popt1, pcov1 = curve_fit(gaussian, bins_err_center, hist1, p0=[0.0, 1.0, np.sum(hist1) * width])
+    ary_x = np.linspace(min(bins_err), max(bins_err), 1000)
 
     plt.figure()
-    plt.title("Error Energy Electron")
+    plt.title("Electron Energy resolution")
     plt.xlabel(r"$E_{Pred}$ - $E_{True}$")
     plt.ylabel("counts")
-    plt.hist(y_pred[:, 0] - y_true[:, 0], bins=bins, histtype=u"step", color="blue")
+    plt.hist(y_pred[:, 0] - y_true[:, 0], bins=bins_err, histtype=u"step", color="blue")
+    plt.plot(ary_x, gaussian(ary_x, *popt0), color="orange",
+             label=r"$\mu$ = {:.2f}""\n"r"$\sigma$={:.2f}".format(popt0[0], popt0[1]))
+    plt.legend()
+    plt.tight_layout()
     plt.savefig(figure_name + "_electron.png")
+    plt.close()
 
     plt.figure()
     plt.title("Error Energy Photon")
     plt.xlabel(r"$E_{Pred}$ - $E_{True}$")
     plt.ylabel("counts")
-    plt.hist(y_pred[:, 1] - y_true[:, 1], bins=bins, histtype=u"step", color="blue")
+    plt.hist(y_pred[:, 1] - y_true[:, 1], bins=bins_err, histtype=u"step", color="blue")
+    plt.plot(ary_x, gaussian(ary_x, *popt1), color="orange",
+             label=r"$\mu$ = {:.2f}""\n"r"$\sigma$={:.2f}".format(popt1[0], popt1[1]))
+    plt.legend()
+    plt.tight_layout()
     plt.savefig(figure_name + "_photon.png")
-
-    e_diff = []
-    p_diff = []
-    for i in range(y_pred.shape[0]):
-        e_diff.append(y_pred[i, 0] - y_true[i, 0])
-        p_diff.append(y_pred[i, 1] - y_true[i, 1])
-    print(min(e_diff), max(e_diff))
-    print(min(p_diff), max(p_diff))
-
-    print("Electron Energy Resolution: {:.3f} MeV".format(np.std(e_diff)))
-    print("Photon Energy Resolution: {:.3f} MeV".format(np.std(p_diff)))
-
-
-def plot_regression_position_error(y_pred, y_true, figure_name):
-    bins_x = np.arange(-20.5, 20.5, 0.5)
-    bins_y = np.arange(-60.5, 60.5, 0.5)
-    bins_z = np.arange(-20.5, 20.5, 0.5)
+    plt.close()
 
     plt.figure()
-    plt.title("Error Position x")
-    plt.xlabel(r"$x_{Pred}$ - $x_{True}$")
-    plt.ylabel("counts")
-    plt.hist(y_pred[:, 0] - y_true[:, 0], bins=bins_x, histtype=u"step", color="blue", label=r"e_x")
-    plt.hist(y_pred[:, 3] - y_true[:, 3], bins=bins_x, histtype=u"step", color="orange", label=r"p_x")
-    plt.legend()
+    plt.title("Error Energy Electron")
+    plt.xlabel("$E_{True}$ [MeV]")
+    plt.ylabel(r"$E_{Pred}$ - $E_{True}$")
+    plt.hist2d(x=y_true[:, 0], y=y_pred[:, 0] - y_true[:, 0], bins=[bins_energy, bins_err], norm=LogNorm())
+    plt.colorbar()
     plt.tight_layout()
-    plt.savefig(figure_name + "_x.png")
+    plt.savefig(figure_name + "_electron_relative.png")
+    plt.close()
 
     plt.figure()
-    plt.title("Error Position x")
-    plt.xlabel(r"$y_{Pred}$ - $y_{True}$")
-    plt.ylabel("counts")
-    plt.hist(y_pred[:, 1] - y_true[:, 1], bins=bins_y, histtype=u"step", color="blue", label=r"e_y")
-    plt.hist(y_pred[:, 4] - y_true[:, 4], bins=bins_y, histtype=u"step", color="orange", label=r"p_y")
-    plt.legend()
+    plt.title("Error Energy Photon")
+    plt.xlabel("$E_{True}$ [MeV]")
+    plt.ylabel(r"$E_{Pred}$ - $E_{True}$")
+    plt.hist2d(x=y_true[:, 1], y=y_pred[:, 1] - y_true[:, 1], bins=[bins_energy, bins_err], norm=LogNorm())
+    plt.colorbar()
     plt.tight_layout()
-    plt.savefig(figure_name + "_y.png")
+    plt.savefig(figure_name + "_photon_relative.png")
+    plt.close()
+
+
+def plot_position_error(y_pred, y_true, figure_name):
+    width = 0.1
+    bins_err_x = np.arange(-20.5, 20.5, width)
+    bins_err_y = np.arange(-60.5, 60.5, width)
+    bins_err_z = np.arange(-20.5, 20.5, width)
+
+    bins_x = np.arange(150.0 - 20.8 / 2.0, 270.0 + 46.8 / 2.0, width)
+    bins_y = np.arange(-100.0 / 2.0, 100.0 / 2.0, width)
+    bins_z = np.arange(-98.8 / 2.0, 98.8 / 2.0, width)
+
+    hist0, _ = np.histogram(y_pred[:, 0] - y_true[:, 0], bins=bins_err_x)
+    hist1, _ = np.histogram(y_pred[:, 1] - y_true[:, 1], bins=bins_err_y)
+    hist2, _ = np.histogram(y_pred[:, 2] - y_true[:, 2], bins=bins_err_z)
+    hist3, _ = np.histogram(y_pred[:, 3] - y_true[:, 3], bins=bins_err_x)
+    hist4, _ = np.histogram(y_pred[:, 4] - y_true[:, 4], bins=bins_err_y)
+    hist5, _ = np.histogram(y_pred[:, 5] - y_true[:, 5], bins=bins_err_z)
+
+    # fitting position resolution
+    popt0, pcov0 = curve_fit(gaussian, bins_err_x[:-1] + width / 2, hist0, p0=[0.0, 1.0, np.sum(hist0) * width])
+    popt1, pcov1 = curve_fit(gaussian, bins_err_y[:-1] + width / 2, hist1, p0=[0.0, 20.0, np.sum(hist1) * width])
+    popt2, pcov2 = curve_fit(gaussian, bins_err_z[:-1] + width / 2, hist2, p0=[0.0, 1.0, np.sum(hist2) * width])
+    popt3, pcov3 = curve_fit(gaussian, bins_err_x[:-1] + width / 2, hist3, p0=[0.0, 1.0, np.sum(hist3) * width])
+    popt4, pcov4 = curve_fit(gaussian, bins_err_y[:-1] + width / 2, hist4, p0=[0.0, 20.0, np.sum(hist4) * width])
+    popt5, pcov5 = curve_fit(gaussian, bins_err_z[:-1] + width / 2, hist5, p0=[0.0, 1.0, np.sum(hist5) * width])
+
+    ary_x = np.linspace(min(bins_err_x), max(bins_err_x), 1000)
+    ary_y = np.linspace(min(bins_err_y), max(bins_err_y), 1000)
+    ary_z = np.linspace(min(bins_err_z), max(bins_err_z), 1000)
 
     plt.figure()
-    plt.title("Error Position x")
-    plt.xlabel(r"$z_{Pred}$ - $z_{True}$")
+    plt.title("Electron position-x resolution")
+    plt.xlabel(r"$e^{Pred}_{x}$ - $e^{True}_{x}$")
     plt.ylabel("counts")
-    plt.hist(y_pred[:, 2] - y_true[:, 2], bins=bins_z, histtype=u"step", color="blue", label=r"e_z")
-    plt.hist(y_pred[:, 5] - y_true[:, 5], bins=bins_z, histtype=u"step", color="orange", label=r"p_z")
+    plt.hist(y_pred[:, 0] - y_true[:, 0], bins=bins_err_x, histtype=u"step", color="blue")
+    plt.plot(ary_x, gaussian(ary_x, *popt0), color="orange",
+             label=r"$\mu$ = {:.2f}""\n"r"$\sigma$={:.2f}".format(popt0[0], popt0[1]))
     plt.legend()
     plt.tight_layout()
-    plt.savefig(figure_name + "_z.png")
+    plt.savefig(figure_name + "_electron_x.png")
+    plt.close()
+
+    plt.figure()
+    plt.title("Error position-x Electron")
+    plt.xlabel("$e^{True}_{x}$ [mm]")
+    plt.ylabel(r"$e^{Pred}_{x}$ - $e^{True}_{x}$")
+    plt.hist2d(x=y_true[:, 0], y=y_pred[:, 0] - y_true[:, 0], bins=[bins_x[:209], bins_err_x], norm=LogNorm())
+    plt.xlim(150.0 - 20.8 / 2.0, 150.0 + 20.8 / 2.0)
+    plt.hlines(xmin=150.0 - 20.8 / 2.0, xmax=150.0 + 20.8 / 2.0, y=0, color="red", linestyles="--")
+    plt.colorbar()
+    plt.tight_layout()
+    plt.savefig(figure_name + "_electron_x_relative.png")
+    plt.close()
+
+    plt.figure()
+    plt.title("Electron position-y resolution")
+    plt.xlabel(r"$e^{Pred}_{y}$ - $e^{True}_{y}$")
+    plt.ylabel("counts")
+    plt.hist(y_pred[:, 1] - y_true[:, 1], bins=bins_err_y, histtype=u"step", color="blue")
+    plt.plot(ary_y, gaussian(ary_y, *popt1), color="orange",
+             label=r"$\mu$ = {:.2f}""\n"r"$\sigma$={:.2f}".format(popt1[0], popt1[1]))
+    plt.legend()
+    plt.tight_layout()
+    plt.savefig(figure_name + "_electron_y.png")
+    plt.close()
+
+    plt.figure()
+    plt.title("Error position-y Electron")
+    plt.xlabel("$e^{True}_{y}$ [mm]")
+    plt.ylabel(r"$e^{Pred}_{y}$ - $e^{True}_{y}$")
+    plt.hist2d(x=y_true[:, 1], y=y_pred[:, 1] - y_true[:, 1], bins=[bins_y, bins_err_y], norm=LogNorm())
+    plt.hlines(xmin=min(bins_y), xmax=max(bins_y), y=0, color="red", linestyles="--")
+    plt.colorbar()
+    plt.tight_layout()
+    plt.savefig(figure_name + "_electron_y_relative.png")
+    plt.close()
+
+    plt.figure()
+    plt.title("Electron position-z resolution")
+    plt.xlabel(r"$e^{Pred}_{z}$ - $e^{True}_{z}$")
+    plt.ylabel("counts")
+    plt.hist(y_pred[:, 2] - y_true[:, 2], bins=bins_err_z, histtype=u"step", color="blue")
+    plt.plot(ary_z, gaussian(ary_z, *popt2), color="orange",
+             label=r"$\mu$ = {:.2f}""\n"r"$\sigma$={:.2f}".format(popt2[0], popt2[1]))
+    plt.legend()
+    plt.tight_layout()
+    plt.savefig(figure_name + "_electron_z.png")
+    plt.close()
+
+    plt.figure()
+    plt.title("Error position-z Electron")
+    plt.xlabel("$e^{True}_{z}$ [mm]")
+    plt.ylabel(r"$e^{Pred}_{z}$ - $e^{True}_{z}$")
+    plt.hist2d(x=y_true[:, 2], y=y_pred[:, 2] - y_true[:, 2], bins=[bins_z, bins_err_z], norm=LogNorm())
+    plt.hlines(xmin=min(bins_z), xmax=max(bins_z), y=0, color="red", linestyles="--")
+    plt.colorbar()
+    plt.tight_layout()
+    plt.savefig(figure_name + "_electron_z_relative.png")
+    plt.close()
+
+    # ----------------------------------------------------------
+
+    plt.figure()
+    plt.title("Photon position-x resolution")
+    plt.xlabel(r"$e^{Pred}_{x}$ - $e^{True}_{x}$")
+    plt.ylabel("counts")
+    plt.hist(y_pred[:, 3] - y_true[:, 3], bins=bins_err_x, histtype=u"step", color="blue")
+    plt.plot(ary_x, gaussian(ary_x, *popt3), color="orange",
+             label=r"$\mu$ = {:.2f}""\n"r"$\sigma$={:.2f}".format(popt3[0], popt3[1]))
+    plt.legend()
+    plt.tight_layout()
+    plt.savefig(figure_name + "_photon_x.png")
+    plt.close()
+
+    plt.figure()
+    plt.title("Error position-x Photon")
+    plt.xlabel("$e^{True}_{x}$ [mm]")
+    plt.ylabel(r"$e^{Pred}_{x}$ - $e^{True}_{x}$")
+    plt.hist2d(x=y_true[:, 3], y=y_pred[:, 3] - y_true[:, 3], bins=[bins_x[467:], bins_err_x], norm=LogNorm())
+    plt.xlim(270.0 - 46.8 / 2.0, 270.0 + 46.8 / 2.0)
+    plt.hlines(xmin=270.0 - 46.8 / 2.0, xmax=270.0 + 46.8 / 2.0, y=0, color="red", linestyles="--")
+    plt.colorbar()
+    plt.tight_layout()
+    plt.savefig(figure_name + "_photon_x_relative.png")
+    plt.close()
+
+    plt.figure()
+    plt.title("Photon position-y resolution")
+    plt.xlabel(r"$e^{Pred}_{y}$ - $e^{True}_{y}$")
+    plt.ylabel("counts")
+    plt.hist(y_pred[:, 4] - y_true[:, 4], bins=bins_err_y, histtype=u"step", color="blue")
+    plt.plot(ary_y, gaussian(ary_y, *popt4), color="orange",
+             label=r"$\mu$ = {:.2f}""\n"r"$\sigma$={:.2f}".format(popt4[0], popt4[1]))
+    plt.legend()
+    plt.tight_layout()
+    plt.savefig(figure_name + "_photon_y.png")
+    plt.close()
+
+    plt.figure()
+    plt.title("Error position-y Photon")
+    plt.xlabel("$e^{True}_{y}$ [mm]")
+    plt.ylabel(r"$e^{Pred}_{y}$ - $e^{True}_{y}$")
+    plt.hist2d(x=y_true[:, 4], y=y_pred[:, 4] - y_true[:, 4], bins=[bins_y, bins_err_y], norm=LogNorm())
+    plt.hlines(xmin=min(bins_y), xmax=max(bins_y), y=0, color="red", linestyles="--")
+    plt.colorbar()
+    plt.tight_layout()
+    plt.savefig(figure_name + "_photon_y_relative.png")
+    plt.close()
+
+    plt.figure()
+    plt.title("Photon position-z resolution")
+    plt.xlabel(r"$e^{Pred}_{z}$ - $e^{True}_{z}$")
+    plt.ylabel("counts")
+    plt.hist(y_pred[:, 5] - y_true[:, 5], bins=bins_err_z, histtype=u"step", color="blue")
+    plt.plot(ary_z, gaussian(ary_z, *popt5), color="orange",
+             label=r"$\mu$ = {:.2f}""\n"r"$\sigma$={:.2f}".format(popt5[0], popt5[1]))
+    plt.legend()
+    plt.tight_layout()
+    plt.savefig(figure_name + "_photon_z.png")
+    plt.close()
+
+    plt.figure()
+    plt.title("Error position-z Photon")
+    plt.xlabel("$e^{True}_{z}$ [mm]")
+    plt.ylabel(r"$e^{Pred}_{z}$ - $e^{True}_{z}$")
+    plt.hist2d(x=y_true[:, 5], y=y_pred[:, 5] - y_true[:, 5], bins=[bins_z, bins_err_z], norm=LogNorm())
+    plt.hlines(xmin=min(bins_z), xmax=max(bins_z), y=0, color="red", linestyles="--")
+    plt.colorbar()
+    plt.tight_layout()
+    plt.savefig(figure_name + "_photon_z_relative.png")
+    plt.close()
 
 
 def plot_source_position(ary_sp_pos, ary_sp_tp, ary_sp_tot, figure_name):
@@ -166,6 +347,7 @@ def plot_source_position(ary_sp_pos, ary_sp_tp, ary_sp_tot, figure_name):
     plt.grid()
     plt.tight_layout()
     plt.savefig(figure_name + ".png")
+    plt.close()
 
 
 def plot_primary_energy_dist(ary_pe_pos, ary_pe_tp, ary_pe_tot, figure_name):
@@ -193,6 +375,7 @@ def plot_primary_energy_dist(ary_pe_pos, ary_pe_tp, ary_pe_tot, figure_name):
     plt.grid()
     plt.tight_layout()
     plt.savefig(figure_name + ".png")
+    plt.close()
 
 
 def plot_2dhist_score_sourcepos(ary_score, ary_sp, figure_name):
@@ -213,6 +396,7 @@ def plot_2dhist_score_sourcepos(ary_score, ary_sp, figure_name):
     plt.colorbar()
     plt.tight_layout()
     plt.savefig(figure_name + ".png")
+    plt.close()
 
 
 def plot_2dhist_score_eprimary(ary_score, ary_ep, figure_name):
@@ -233,6 +417,7 @@ def plot_2dhist_score_eprimary(ary_score, ary_ep, figure_name):
     plt.colorbar(h0[3])
     plt.tight_layout()
     plt.savefig(figure_name + ".png")
+    plt.close()
 
 
 def plot_2dhist_score_regE_error(ary_score, ary_regE_err, figure_name):
@@ -249,6 +434,34 @@ def plot_2dhist_score_regE_error(ary_score, ary_regE_err, figure_name):
     plt.colorbar(h0[3])
     plt.tight_layout()
     plt.savefig(figure_name + ".png")
+    plt.close()
+
+
+def plot_angle_dist(list_angles, list_labels, figure_name):
+    bins = np.arange(0.0, 3/4*np.pi, 0.01)
+
+    plt.figure()
+    plt.xlabel(r"$\theta$ [rad]")
+    plt.ylabel("counts (normalized)")
+    for i in range(len(list_angles)):
+        plt.hist(list_angles[i], bins=bins, histtype=u"step", density=True, label=list_labels[i])
+    plt.legend()
+    plt.tight_layout()
+    plt.savefig(figure_name + ".png")
+    plt.close()
+
+def plot_eucldist_dist(list_r, list_labels, figure_name):
+    bins = np.arange(-100.0, 100.0, 1.0)
+
+    plt.figure()
+    plt.xlabel(r"$r_{eucl} \cdot sign(e_z)$ [mm]")
+    plt.ylabel("counts (normalized)")
+    for i in range(len(list_r)):
+        plt.hist(list_r[i], bins=bins, histtype=u"step", density=True, label=list_labels[i])
+    plt.legend()
+    plt.tight_layout()
+    plt.savefig(figure_name + ".png")
+    plt.close()
 
 
 def plot_sourceposition_heatmap(ary_sp_z, ary_sp_y, figure_name):
