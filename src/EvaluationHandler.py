@@ -4,58 +4,12 @@ from src import fastROCAUC
 from src import Plotter
 from src import SaliencyMap
 from src import Metrics
-
-
-def get_metrics(y_scores, y_true, threshold, weighted=False):
-    # pre-define
-    y_pred = np.zeros(shape=(len(y_true, )))
-
-    tp = 0
-    fp = 0
-    tn = 0
-    fn = 0
-
-    for i in range(len(y_pred)):
-        # apply prediction threshold
-        if y_scores[i] >= threshold:
-            y_pred[i] = 1
-        else:
-            y_pred[i] = 0
-
-        if y_pred[i] == 1 and y_true[i] == 1:
-            tp += 1
-        if y_pred[i] == 1 and y_true[i] == 0:
-            fp += 1
-        if y_pred[i] == 0 and y_true[i] == 0:
-            tn += 1
-        if y_pred[i] == 0 and y_true[i] == 1:
-            fn += 1
-
-    if (tp + fn) == 0:
-        efficiency = 0
-    else:
-        efficiency = tp / (tp + fn)
-    if (tp + fp) == 0:
-        purity = 0
-    else:
-        purity = tp / (tp + fp)
-
-    if weighted:
-        # set sample weights to class weights
-        _, counts = np.unique(y_pred, return_counts=True)
-        class_weights = [len(y_pred) / (2 * counts[0]), len(y_pred) / (2 * counts[1])]
-
-        accuracy = ((tp * class_weights[1]) + (tn * class_weights[0])) / (
-                ((tp + fp) * class_weights[1]) + ((tn + fn) * class_weights[0]))
-    else:
-        accuracy = (tp + tn) / (tp + tn + fp + fn)
-
-    return accuracy, efficiency, purity, (tp, fp, tn, fn)
+from src.MLEMBackprojection import calculate_theta
 
 
 def write_metrics_classifier(y_scores, y_true):
-    acc_base, eff_base, pur_base, conf_base = get_metrics(y_scores, y_true, threshold=0.5)
-    acc_weight, _, _, _ = get_metrics(y_scores, y_true, threshold=0.5, weighted=True)
+    acc_base, eff_base, pur_base, conf_base = Metrics.get_classifier_metrics(y_scores, y_true, threshold=0.5)
+    acc_weight, _, _, _ = Metrics.get_classifier_metrics(y_scores, y_true, threshold=0.5, weighted=True)
     print("\nMetrics base threshold: ")
     print("Threshold: {:.3f}".format(0.5))
     print("Baseline accuracy: {:.3f}".format(1 - (np.sum(y_true) / len(y_true))))
@@ -67,8 +21,8 @@ def write_metrics_classifier(y_scores, y_true):
 
     # run ROC curve and AUC score analysis
     auc, theta = fastROCAUC.fastROCAUC(y_scores, y_true, return_score=True)
-    acc_opt, eff_opt, pur_opt, conf_opt = get_metrics(y_scores, y_true, threshold=theta)
-    acc_opt_weight, _, _, _ = get_metrics(y_scores, y_true, threshold=theta, weighted=True)
+    acc_opt, eff_opt, pur_opt, conf_opt = Metrics.get_classifier_metrics(y_scores, y_true, threshold=theta)
+    acc_opt_weight, _, _, _ = Metrics.get_classifier_metrics(y_scores, y_true, threshold=theta, weighted=True)
     print("\nMetrics base threshold: ")
     print("AUC Score: {:.3f}".format(auc))
     print("Threshold: {:.3f}".format(theta))
@@ -104,7 +58,7 @@ def write_metrics_classifier(y_scores, y_true):
 
 ########################################################################################################################
 
-def get_primary_energy(y_scores, y_true, y_primary_energy, theta=0.5):
+def dist_primaryenergy(y_scores, y_true, y_primary_energy, theta, figure_name):
     """
     Grab primary energy arrays of all positive, signal and total events
     """
@@ -115,10 +69,13 @@ def get_primary_energy(y_scores, y_true, y_primary_energy, theta=0.5):
     ary_pe_tp = [y_primary_energy[i] for i in range(len(y_true)) if y_true[i] == 1]
     # total events with condition that primary energy cannot be zero
     ary_pe_tot = [y_primary_energy[i] for i in range(len(y_true)) if y_primary_energy[i] != 0.0]
-    return ary_pe_pos, ary_pe_tp, ary_pe_tot
+    Plotter.plot_primary_energy_dist(ary_pe_pos,
+                                     ary_pe_tp,
+                                     ary_pe_tot,
+                                     figure_name)
 
 
-def get_source_position(y_scores, y_true, y_source_pos, theta=0.5):
+def dist_sourceposition(y_scores, y_true, y_source_pos, theta, figure_name):
     """
     Grab source positions arrays of all positive, signal and total events
     """
@@ -129,17 +86,15 @@ def get_source_position(y_scores, y_true, y_source_pos, theta=0.5):
     ary_sp_tp = [y_source_pos[i] for i in range(len(y_true)) if y_true[i] == 1]
     # total events with condition that source position cannot be zero
     ary_sp_tot = [y_source_pos[i] for i in range(len(y_true)) if y_source_pos[i] != 0.0]
-    return ary_sp_pos, ary_sp_tp, ary_sp_tot
+    Plotter.plot_source_position(ary_sp_pos,
+                                 ary_sp_tp,
+                                 ary_sp_tot,
+                                 figure_name)
 
 
-def eval_classifier(NeuralNetwork, data_cluster, theta=0.5):
+def evaluate_classifier(NeuralNetwork, data_cluster, theta=0.5):
     """
     Standard evaluation script for neural network classifier.
-
-    Args:
-
-    return:
-
     """
 
     # grab neural network predictions for test dataset
@@ -155,42 +110,20 @@ def eval_classifier(NeuralNetwork, data_cluster, theta=0.5):
     _, theta_opt = fastROCAUC.fastROCAUC(y_scores, y_true, return_score=True)
 
     # evaluate source position spectrum for baseline and optimal threshold
-    ary_sp_pos, ary_sp_tp, ary_sp_tot = get_source_position(y_scores,
-                                                            y_true,
-                                                            data_cluster.meta[data_cluster.idx_test(), 2],
-                                                            0.5)
-    Plotter.plot_source_position(ary_sp_pos,
-                                 ary_sp_tp,
-                                 ary_sp_tot,
-                                 "dist_sourcep_theta" + str(0.5))
-    ary_sp_pos, ary_sp_tp, ary_sp_tot = get_source_position(y_scores,
-                                                            y_true,
-                                                            data_cluster.meta[data_cluster.idx_test(), 2],
-                                                            theta_opt)
-    Plotter.plot_source_position(ary_sp_pos,
-                                 ary_sp_tp,
-                                 ary_sp_tot,
-                                 "dist_sourcep_thetaOPT")
-    ary_sp_pos, ary_sp_tp, ary_sp_tot = get_source_position(y_scores,
-                                                            y_true,
-                                                            data_cluster.meta[data_cluster.idx_test(), 2],
-                                                            0.3)
-    Plotter.plot_source_position(ary_sp_pos,
-                                 ary_sp_tp,
-                                 ary_sp_tot,
-                                 "dist_sourcep_theta" + str(0.3))
+    dist_sourceposition(y_scores, y_true, data_cluster.meta[data_cluster.idx_test(), 2], 0.3,
+                        "dist_sourceposition_theta03")
+    dist_sourceposition(y_scores, y_true, data_cluster.meta[data_cluster.idx_test(), 2], 0.5,
+                        "dist_sourceposition_theta05")
+    dist_sourceposition(y_scores, y_true, data_cluster.meta[data_cluster.idx_test(), 2], theta_opt,
+                        "dist_sourceposition_thetaOPT")
 
     # evaluate primary energy spectrum
-    ary_pe_pos, ary_pe_tp, ary_pe_tot = get_primary_energy(y_scores,
-                                                           y_true,
-                                                           data_cluster.meta[data_cluster.idx_test(), 1],
-                                                           0.5)
-    Plotter.plot_primary_energy_dist(ary_pe_pos, ary_pe_tp, ary_pe_tot, "dist_primE_theta" + str(0.5))
-    ary_pe_pos, ary_pe_tp, ary_pe_tot = get_primary_energy(y_scores,
-                                                           y_true,
-                                                           data_cluster.meta[data_cluster.idx_test(), 1],
-                                                           theta_opt)
-    Plotter.plot_primary_energy_dist(ary_pe_pos, ary_pe_tp, ary_pe_tot, "dist_primE_thetaOPT")
+    dist_primaryenergy(y_scores, y_true, data_cluster.meta[data_cluster.idx_test(), 1], 0.3,
+                       "dist_primaryenergy_theta03")
+    dist_primaryenergy(y_scores, y_true, data_cluster.meta[data_cluster.idx_test(), 1], 0.5,
+                       "dist_primaryenergy_theta05")
+    dist_primaryenergy(y_scores, y_true, data_cluster.meta[data_cluster.idx_test(), 1], theta_opt,
+                       "dist_primaryenergy_thetaOPT")
 
     # score distributions as 2d-historgrams
     y_scores_pos = y_scores[y_true == 1]
@@ -225,7 +158,7 @@ def eval_regression_energy(NeuralNetwork, DataCluster):
     y_pred = NeuralNetwork.predict(DataCluster.x_test())
     y_true = DataCluster.y_test()
 
-    Plotter.plot_regression_energy_error(y_pred, y_true, "error_regression_energy")
+    Plotter.plot_energy_error(y_pred, y_true, "error_regression_energy")
 
 
 def eval_regression_position(NeuralNetwork, DataCluster):
@@ -236,7 +169,7 @@ def eval_regression_position(NeuralNetwork, DataCluster):
     y_pred = NeuralNetwork.predict(DataCluster.x_test())
     y_true = DataCluster.y_test()
 
-    Plotter.plot_regression_position_error(y_pred, y_true, "error_regression_position")
+    Plotter.plot_position_error(y_pred, y_true, "error_regression_position")
 
 
 def eval_full(NeuralNetwork_clas,
@@ -247,7 +180,8 @@ def eval_full(NeuralNetwork_clas,
               theta=0.5):
     # grab all positive identified events by the neural network
     y_scores = NeuralNetwork_clas.predict(DataCluster.features)
-    idx_clas_p = [float(y_scores[i]) > theta for i in range(len(y_scores))]
+    # This is done this way cause y_scores gets a really dumb shape from tensorflow
+    idx_clas_pos = [float(y_scores[i]) > theta for i in range(len(y_scores))]
 
     # predict energy and position of all positive events
     y_pred_energy = NeuralNetwork_regE.predict(DataCluster.features)
@@ -267,6 +201,51 @@ def eval_full(NeuralNetwork_clas,
                                          y_pred_energy[idx_clas_tp, 1] - DataCluster.targets_reg1[idx_clas_tp, 1],
                                          "hist2d_score_error_energy_p")
 
+    # plot angle distribution for different subsets
+    list_angle_pos = []
+    list_angle_inpeak = []
+    list_angle_offpeak = []
+    list_angle_ic = []
+    list_angle_tot = []
+    for i in range(len(y_scores)):
+        if DataCluster.targets_clas[i] == 1:
+            list_angle_ic.append(calculate_theta(*y_pred_energy[i, :]))
+        if y_scores[i] < 0.5:
+            continue
+        list_angle_pos.append(calculate_theta(*y_pred_energy[i, :]))
+        if -8.0 < DataCluster.meta[i, 2] < 2.0:
+            list_angle_inpeak.append(calculate_theta(*y_pred_energy[i, :]))
+        if -20.0 < DataCluster.meta[i, 2] < -8.0:
+            list_angle_offpeak.append(calculate_theta(*y_pred_energy[i, :]))
+
+    Plotter.plot_angle_dist([list_angle_pos, list_angle_inpeak, list_angle_offpeak, list_angle_ic],
+                            ["Positives", "Bragg Peak", "Tail", "IdealCompton"],
+                            "dist_angle")
+
+    # plot scattering cluster distance distribution for different subsets
+    list_r_pos = []
+    list_r_inpeak = []
+    list_r_offpeak = []
+    list_r_ic = []
+    for i in range(len(y_scores)):
+        r = np.sqrt(
+            (y_pred_position[i, 1] - y_pred_position[i, 4]) ** 2 + (y_pred_position[i, 2] - y_pred_position[i, 5]) ** 2)
+        r *= np.sign(y_pred_position[i, 2])
+        if DataCluster.targets_clas[i] == 1:
+            list_r_ic.append(r)
+        if y_scores[i] < 0.3:
+            continue
+        list_r_pos.append(r)
+        if -8.0 < DataCluster.meta[i, 2] < 2.0:
+            list_r_inpeak.append(r)
+        if -20.0 < DataCluster.meta[i, 2] < -8.0:
+            list_r_offpeak.append(r)
+
+    Plotter.plot_eucldist_dist([list_r_pos, list_r_inpeak, list_r_offpeak, list_r_ic],
+                               ["Positives", "Bragg Peak", "Tail", "IdealCompton"],
+                               "eucldist_angle")
+
+    """
     # source position plot heatmap
     list_sp_z = []
     list_sp_y = []
@@ -283,14 +262,15 @@ def eval_full(NeuralNetwork_clas,
             list_sp_y.append(0)
             list_sp_z.append(DataCluster.meta[i, 2])
     Plotter.plot_sourceposition_heatmap(list_sp_z, list_sp_y, "heatmap_sourcepos")
+    """
 
     # collect full prediction and true values of test dataset
-    y_pred_class = (y_scores[idx_clas_p] > theta) * 1
-    y_true_clas = DataCluster.targets_clas[idx_clas_p]
-    y_true_energy = DataCluster.targets_reg1[idx_clas_p, :]
-    y_true_position = DataCluster.targets_reg2[idx_clas_p, :]
-    y_pred_energy = y_pred_energy[idx_clas_p, :]
-    y_pred_position = y_pred_position[idx_clas_p, :]
+    y_pred_class = (y_scores[idx_clas_pos] > theta) * 1
+    y_true_clas = DataCluster.targets_clas[idx_clas_pos]
+    y_true_energy = DataCluster.targets_reg1[idx_clas_pos, :]
+    y_true_position = DataCluster.targets_reg2[idx_clas_pos, :]
+    y_pred_energy = y_pred_energy[idx_clas_pos, :]
+    y_pred_position = y_pred_position[idx_clas_pos, :]
 
     efficiency, purity = Metrics.get_global_effpur(np.sum(DataCluster.targets_clas),
                                                    y_pred_class,
