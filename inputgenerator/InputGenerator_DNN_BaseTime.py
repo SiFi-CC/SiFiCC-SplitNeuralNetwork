@@ -126,7 +126,7 @@ def gen_input(RootParser):
 
             # fill final feature array with scatterer and absorber features
             ary_features[idx_pos, :10 * n_cluster_scatterer] = ary_feat_scatterer
-            ary_features[idx_pos, 10 * n_cluster_scatterer:9 * n_cluster] = ary_feat_absorber
+            ary_features[idx_pos, 10 * n_cluster_scatterer:10 * n_cluster] = ary_feat_absorber
 
             # target: ideal compton events tag
             ary_targets[idx_pos] = event.is_ideal_compton * 1
