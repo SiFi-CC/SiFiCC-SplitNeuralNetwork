@@ -51,7 +51,7 @@ def gen_input(RootParser):
                     counter_absorber += 1
 
             # filter condition
-            if counter_scatterer > 0 and counter_absorber > 0 and ary_identified[j] != 0.0:
+            if counter_scatterer > 0 and counter_absorber > 0:
                 n_events += 1
         print(n_events, "valid events found")
         list_entries.append(n_events)
