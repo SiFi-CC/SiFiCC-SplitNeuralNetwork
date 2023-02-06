@@ -99,34 +99,34 @@ def gen_input(RootParser):
             for j, idx in enumerate(idx_scatterer):
                 if j >= n_cluster_scatterer:
                     break
-                ary_feat_scatterer[j * 9: (j * 9) + 9] = [event.RecoClusterEntries[idx],
-                                                          event.RecoClusterTimestamps_relative[idx],
-                                                          event.RecoClusterEnergies_values[idx],
-                                                          event.RecoClusterPosition[idx].x,
-                                                          event.RecoClusterPosition[idx].y,
-                                                          event.RecoClusterPosition[idx].z,
-                                                          event.RecoClusterEnergies_uncertainty[idx],
-                                                          event.RecoClusterPosition_uncertainty[idx].x,
-                                                          event.RecoClusterPosition_uncertainty[idx].y,
-                                                          event.RecoClusterPosition_uncertainty[idx].z]
+                ary_feat_scatterer[j * 10: (j * 10) + 10] = [event.RecoClusterEntries[idx],
+                                                             event.RecoClusterTimestamps_relative[idx],
+                                                             event.RecoClusterEnergies_values[idx],
+                                                             event.RecoClusterPosition[idx].x,
+                                                             event.RecoClusterPosition[idx].y,
+                                                             event.RecoClusterPosition[idx].z,
+                                                             event.RecoClusterEnergies_uncertainty[idx],
+                                                             event.RecoClusterPosition_uncertainty[idx].x,
+                                                             event.RecoClusterPosition_uncertainty[idx].y,
+                                                             event.RecoClusterPosition_uncertainty[idx].z]
 
             for j, idx in enumerate(idx_absorber):
                 if j >= n_cluster_absorber:
                     break
-                ary_feat_absorber[j * 9: (j * 9) + 9] = [event.RecoClusterEntries[idx],
-                                                         event.RecoClusterTimestamps_relative[idx],
-                                                         event.RecoClusterEnergies_values[idx],
-                                                         event.RecoClusterPosition[idx].x,
-                                                         event.RecoClusterPosition[idx].y,
-                                                         event.RecoClusterPosition[idx].z,
-                                                         event.RecoClusterEnergies_uncertainty[idx],
-                                                         event.RecoClusterPosition_uncertainty[idx].x,
-                                                         event.RecoClusterPosition_uncertainty[idx].y,
-                                                         event.RecoClusterPosition_uncertainty[idx].z]
+                ary_feat_absorber[j * 10: (j * 10) + 10] = [event.RecoClusterEntries[idx],
+                                                            event.RecoClusterTimestamps_relative[idx],
+                                                            event.RecoClusterEnergies_values[idx],
+                                                            event.RecoClusterPosition[idx].x,
+                                                            event.RecoClusterPosition[idx].y,
+                                                            event.RecoClusterPosition[idx].z,
+                                                            event.RecoClusterEnergies_uncertainty[idx],
+                                                            event.RecoClusterPosition_uncertainty[idx].x,
+                                                            event.RecoClusterPosition_uncertainty[idx].y,
+                                                            event.RecoClusterPosition_uncertainty[idx].z]
 
             # fill final feature array with scatterer and absorber features
-            ary_features[idx_pos, :9 * n_cluster_scatterer] = ary_feat_scatterer
-            ary_features[idx_pos, 9 * n_cluster_scatterer:9 * n_cluster] = ary_feat_absorber
+            ary_features[idx_pos, :10 * n_cluster_scatterer] = ary_feat_scatterer
+            ary_features[idx_pos, 10 * n_cluster_scatterer:9 * n_cluster] = ary_feat_absorber
 
             # target: ideal compton events tag
             ary_targets[idx_pos] = event.is_ideal_compton * 1
