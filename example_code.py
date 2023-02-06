@@ -21,10 +21,10 @@ root1 = RootParser(dir_main + root_files.OptimisedGeometry_BP0mm_2e10protons_off
 root2 = RootParser(dir_main + root_files.OptimisedGeometry_BP5mm_4e9protons_offline)
 # root2.export_npz(dir_npz + "OptimisedGeometry_BP5mm_4e9protons.npz")
 
+from inputgenerator.InputGenerator_DNN_BaseTime import gen_input
 
-from scripts import script_flipset
-
-script_flipset.random_flip(dir_npz + "OptimisedGeometry_BP5mm_4e9protons_DNN_Base.npz")
+gen_input(root1)
+gen_input(root2)
 
 
 def backrpojection():

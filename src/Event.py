@@ -98,7 +98,7 @@ class Event:
         self.RecoClusterTimestamps = RecoClusterTimestamps
         # get position sorted indices
         idx_position = self.sort_clusters_position()
-        self.RecoClusterTimestamps_relative = RecoClusterTimestamps - RecoClusterTimestamps[idx_position[0]]
+        self.RecoClusterTimestamps_relative = RecoClusterTimestamps - min(RecoClusterTimestamps)
 
         self.scatterer = scatterer
         self.absorber = absorber
