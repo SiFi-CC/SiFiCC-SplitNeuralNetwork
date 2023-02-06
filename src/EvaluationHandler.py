@@ -151,6 +151,7 @@ def evaluate_classifier(NeuralNetwork, data_cluster, theta=0.5):
         SaliencyMap.smap_plot(smap, x_feat, str_title, "SMAP_sample_" + str(i))
     """
 
+
 def eval_regression_energy(NeuralNetwork, DataCluster):
     # set regression
     DataCluster.update_targets_energy()
@@ -178,7 +179,7 @@ def eval_full(NeuralNetwork_clas,
               NeuralNetwork_regP,
               DataCluster,
               file_name="",
-              theta=0.5):
+              theta=0.25):
     # grab all positive identified events by the neural network
     y_scores = NeuralNetwork_clas.predict(DataCluster.features)
     # This is done this way cause y_scores gets a really dumb shape from tensorflow
@@ -211,7 +212,7 @@ def eval_full(NeuralNetwork_clas,
     for i in range(len(y_scores)):
         if DataCluster.targets_clas[i] == 1:
             list_angle_ic.append(calculate_theta(*y_pred_energy[i, :]))
-        if y_scores[i] < 0.5:
+        if y_scores[i] < 0.3:
             continue
         list_angle_pos.append(calculate_theta(*y_pred_energy[i, :]))
         if -8.0 < DataCluster.meta[i, 2] < 2.0:
@@ -285,7 +286,6 @@ def eval_full(NeuralNetwork_clas,
     print("Efficiency: {:.1f}".format(efficiency * 100))
     print("Purity: {:.1f}".format(purity * 100))
 
-    """
     from src import MLEMExport
     MLEMExport.export_mlem(ary_e=y_pred_energy[:, 0],
                            ary_p=y_pred_energy[:, 1],
@@ -297,7 +297,6 @@ def eval_full(NeuralNetwork_clas,
                            ary_pz=y_pred_position[:, 5],
                            filename=file_name,
                            verbose=1)
-    """
 
 
 def export_mlem_simpleregression(nn_classifier, npz_file, file_name=""):

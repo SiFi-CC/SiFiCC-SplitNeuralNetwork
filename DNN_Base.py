@@ -152,4 +152,5 @@ for i in range(len(NPZ_FILE_EVAL)):
                                 neuralnetwork_regE,
                                 neuralnetwork_regP,
                                 DataCluster=data_cluster,
-                                theta=0.5)
+                                theta=0.5,
+                                file_name=NPZ_FILE_EVAL[i][:-4])
