@@ -70,7 +70,7 @@ def gen_input(RootParser):
 
     # Meta entries are defined per event:
     # [EventNumber, MCEnergyPrimary, MCSourcePositionZ, RecoEnergyE, RecoEnergyP]
-    ary_meta = np.zeros(shape=(n_events, 5), dtype=np.float32)
+    ary_meta = np.zeros(shape=(n_events, 6), dtype=np.float32)
 
     # legacy targets
     ary_targets = np.zeros(shape=(n_events,), dtype=np.float32)
