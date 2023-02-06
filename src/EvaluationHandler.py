@@ -135,6 +135,7 @@ def evaluate_classifier(NeuralNetwork, data_cluster, theta=0.5):
     Plotter.plot_2dhist_score_eprimary(y_scores_pos, y_eprimary, "hist2d_score_eprimary")
 
     # saliency maps for the first 10 entries of the data sample
+    """
     # TODO: prob needs an update
     for i in range(10):
         x_feat = np.array([data_cluster.features[i], ])
@@ -148,7 +149,7 @@ def evaluate_classifier(NeuralNetwork, data_cluster, theta=0.5):
         str_title = "Event ID: {}\nTrue class: {:.1f}\nPred class: {:.2f}".format(data_cluster.meta[i, 0], score_true,
                                                                                   score_pred)
         SaliencyMap.smap_plot(smap, x_feat, str_title, "SMAP_sample_" + str(i))
-
+    """
 
 def eval_regression_energy(NeuralNetwork, DataCluster):
     # set regression
