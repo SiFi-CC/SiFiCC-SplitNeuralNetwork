@@ -3,7 +3,7 @@ import math
 import os
 import matplotlib.pyplot as plt
 
-plt.rcParams.update({'font.size': 12})
+plt.rcParams.update({'font.size': 14})
 
 
 def generate_npz_file():
@@ -81,8 +81,9 @@ def generate_npz_file():
 
     # load npz file
     npz_features = DataCluster.features
+    y_pred = neuralnetwork_clas.predict(npz_features)
 
-    ary_nn_pred[:, 0] = neuralnetwork_clas.predict(npz_features)
+    ary_nn_pred[:, 0] = np.reshape(y_pred, newshape=(len(y_pred),))
     ary_nn_pred[:, 1:3] = neuralnetwork_regE.predict(npz_features)
     ary_nn_pred[:, 3:9] = neuralnetwork_regP.predict(npz_features)
 
@@ -95,77 +96,111 @@ def generate_npz_file():
         np.savez_compressed(f_output,
                             identified=ary_root_identified,
                             nn_pred=ary_nn_pred,
+                            cb_pred=ary_cb_pred,
+                            mc_truth=ary_mc_true,
                             source_position=ary_root_source_position)
 
-generate_npz_file()
-"""
+
 # ----------------------------------------------------------------------------------------------------------------------
 # Analysis script
 
 # Grab all information from the target file
 npz_data = np.load("OptimisedGeometry_BP0mm_statistics.npz")
 ary_identified = npz_data["identified"]
-ary_pred_score = npz_data["pred_score"]
-ary_true_score = npz_data["true_score"]
-ary_pred_energy = npz_data["pred_energy"]
-ary_true_energy = npz_data["true_energy"]
-ary_pred_position = npz_data["pred_position"]
-ary_true_position = npz_data["true_position"]
-ary_source_position = npz_data["source_position"]
+ary_nn_pred = npz_data["nn_pred"]
+ary_cb_pred = npz_data["cb_pred"]
+ary_mc_truth = npz_data["mc_truth"]
+ary_sp = npz_data["source_position"]
 
-# grab all indices of all ideal compton events
-idx_ic = [float(ary_true_score[i]) > 0.5 for i in range(len(ary_true_score))]
-
-# ---------------------------------------------------------------------------
-# angle error
+# ----------------------------------------------------------------------------------------------------------------------
+# distribution of scattering angle
 from src import MLEMBackprojection
 
-counter = 0
-for k in range(len(ary_true_score)):
-    if ary_true_score[k] == 0:
+"""
+list_theta_err_cb = []
+list_theta_err_cb_peak = []
+list_theta_err_nn = []
+list_theta_err_nn_peak = []
+
+for i in range(ary_mc_truth.shape[0]):
+    if ary_mc_truth[i, 0] == 1.0:
+        theta_cb = MLEMBackprojection.calculate_theta(ary_cb_pred[i, 1], ary_cb_pred[i, 2])
+        theta_nn = MLEMBackprojection.calculate_theta(ary_nn_pred[i, 1], ary_nn_pred[i, 2])
+        theta_mc = MLEMBackprojection.calculate_theta(ary_mc_truth[i, 1], ary_mc_truth[i, 2])
+
+        if math.isnan(theta_cb):
+            list_theta_err_cb.append(-np.pi)
+        else:
+            list_theta_err_cb.append(theta_cb - theta_mc)
+
+        if math.isnan(theta_nn):
+            list_theta_err_nn.append(-np.pi)
+        else:
+            list_theta_err_nn.append(theta_nn - theta_mc)
+
+        if -8.0 < ary_sp[i] < 2.0:
+            if math.isnan(theta_cb):
+                list_theta_err_cb_peak.append(-np.pi)
+            else:
+                list_theta_err_cb_peak.append(theta_cb - theta_mc)
+
+            if math.isnan(theta_nn):
+                list_theta_err_nn_peak.append(-np.pi)
+            else:
+                list_theta_err_nn_peak.append(theta_nn - theta_mc)
+
+
+    else:
         continue
 
-    angle_pred = MLEMBackprojection.calculate_theta(ary_pred_energy[k, 0], ary_pred_energy[k, 1])
-    if ary_pred_energy[k, 0] == 0.0 or ary_pred_energy[k, 1] == 0.0:
-        print("Invalid energy: {:.2f} {:.2f} | {:.2f} {:.2f}".format(ary_pred_energy[k, 0],
-                                                                     ary_pred_energy[k, 1],
-                                                                     ary_true_energy[k, 0],
-                                                                     ary_true_energy[k, 1]))
-
-    if math.isnan(angle_pred):
-        print("Invalid arccos:  {} | {:.2f} {:.2f} | {:.2f} {:.2f}".format(ary_identified[k],
-                                                                           ary_pred_energy[k, 0],
-                                                                           ary_pred_energy[k, 1],
-                                                                           ary_true_energy[k, 0],
-                                                                           ary_true_energy[k, 1]))
-
-bins_sp = np.arange(-40.0, 10.0, 1.0)
-list_angle_mean = []
-list_angle_std = []
-
-for i in range(len(bins_sp[:-1])):
-    list_angle_err_temp = []
-    print(bins_sp[i], bins_sp[i + 1])
-
-    for k in range(len(ary_true_score)):
-        if ary_true_score[k] == 0:
-            continue
-        if bins_sp[i] < ary_source_position[k] < bins_sp[i + 1]:
-            if ary_pred_energy[k, 0] == 0.0 or ary_pred_energy[k, 1] == 0.0:
-                list_angle_err_temp.append(-np.pi)
-            else:
-                angle_pred = MLEMBackprojection.calculate_theta(ary_pred_energy[k, 0], ary_pred_energy[k, 1])
-                angle_true = MLEMBackprojection.calculate_theta(ary_true_energy[k, 0], ary_true_energy[k, 1])
-                list_angle_err_temp.append(angle_pred - angle_true)
-    print(np.mean(list_angle_err_temp), np.std(list_angle_err_temp))
-    list_angle_mean.append(np.mean(list_angle_err_temp))
-    list_angle_std.append(np.std(list_angle_err_temp))
-
-plt.figure()
-bins = np.arange(-np.pi, np.pi, 0.05)
-plt.xlabel("MCSource_Position.z [mm]")
-plt.ylabel(r"E[$\theta^{pred}-\theta^{true}$] [rad]")
-plt.errorbar(bins_sp[:-1] + 0.5, list_angle_mean, list_angle_std, color="blue")
+fig, axs = plt.subplots(1, 2, figsize=(10, 6))
+bins = np.arange(-np.pi / 2, np.pi / 2, 0.01)
+axs[0].set_xlabel(r"$\theta^{pred}-\theta^{true}$ [rad]")
+axs[0].set_ylabel("Counts")
+axs[0].set_title("Ideal Compton events")
+axs[0].hist(list_theta_err_cb, bins=bins, histtype=u"step", color="black")
+axs[0].hist(list_theta_err_nn, bins=bins, histtype=u"step", color="blue")
+axs[1].set_xlabel(r"$\theta^{pred}-\theta^{true}$ [rad]")
+axs[1].set_ylabel("Counts")
+axs[1].set_title("Ideal Compton\n Bragg peak events")
+axs[1].hist(list_theta_err_cb_peak, bins=bins, histtype=u"step", color="black")
+axs[1].hist(list_theta_err_nn_peak, bins=bins, histtype=u"step", color="blue")
 plt.tight_layout()
 plt.show()
 """
+# ----------------------------------------------------------------------------------------------------------------------
+# Back-projections
+
+idx_ic = ary_mc_truth[:, 0] == 1
+ary_mc_truth = ary_mc_truth[idx_ic, :]
+
+n= -1
+image = MLEMBackprojection.reconstruct_image(ary_mc_truth[:n, 1],
+                                             ary_mc_truth[:n, 2],
+                                             ary_mc_truth[:n, 3],
+                                             ary_mc_truth[:n, 4],
+                                             ary_mc_truth[:n, 5],
+                                             ary_mc_truth[:n, 6],
+                                             ary_mc_truth[:n, 7],
+                                             ary_mc_truth[:n, 8])
+MLEMBackprojection.plot_backprojection(image, "MLEM_backproj_MCTRUTH")
+
+image = MLEMBackprojection.reconstruct_image(ary_nn_pred[:n, 1],
+                                             ary_nn_pred[:n, 2],
+                                             ary_nn_pred[:n, 3],
+                                             ary_nn_pred[:n, 4],
+                                             ary_nn_pred[:n, 5],
+                                             ary_nn_pred[:n, 6],
+                                             ary_nn_pred[:n, 7],
+                                             ary_nn_pred[:n, 8])
+MLEMBackprojection.plot_backprojection(image, "MLEM_backproj_NNPRED")
+
+image = MLEMBackprojection.reconstruct_image(ary_cb_pred[:n, 1],
+                                             ary_cb_pred[:n, 2],
+                                             ary_cb_pred[:n, 3],
+                                             ary_cb_pred[:n, 4],
+                                             ary_cb_pred[:n, 5],
+                                             ary_cb_pred[:n, 6],
+                                             ary_cb_pred[:n, 7],
+                                             ary_cb_pred[:n, 8])
+MLEMBackprojection.plot_backprojection(image, "MLEM_backproj_CBPRED")

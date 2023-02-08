@@ -493,10 +493,3 @@ def plot_sourceposition_heatmap(ary_sp_z, ary_sp_y, figure_name):
 
     plt.tight_layout()
     plt.savefig(figure_name + ".png")
-
-
-def plot_backprojection(image, figure_name):
-    plt.figure()
-    plt.imshow(image)
-    # plt.savefig(figure_name + ".png")
-    plt.show()
