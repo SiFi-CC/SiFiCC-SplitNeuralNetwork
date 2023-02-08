@@ -61,7 +61,7 @@ def generate_npz_file():
     n_entries = root_parser.events_entries
     ary_cb_pred = np.zeros(shape=(n_entries, 9))
     ary_nn_pred = np.zeros(shape=(n_entries, 9))
-    ary_mc_true = np.erzos(shape=(n_entries, 9))
+    ary_mc_true = np.zeros(shape=(n_entries, 9))
 
     # grab identified tag from  root file
     ary_root_eventnumber = root_parser.events["EventNumber"].array()
