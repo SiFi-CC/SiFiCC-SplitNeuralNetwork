@@ -111,7 +111,7 @@ ary_nn_pred = npz_data["nn_pred"]
 ary_cb_pred = npz_data["cb_pred"]
 ary_mc_truth = npz_data["mc_truth"]
 ary_sp = npz_data["source_position"]
-
+"""
 # ----------------------------------------------------------------------------------------------------------------------
 # distribution of scattering angle
 from src import MLEMBackprojection
@@ -263,11 +263,15 @@ plt.show()
 """
 # ----------------------------------------------------------------------------------------------------------------------
 # Back-projections
+from src import MLEMBackprojection
 
 idx_ic = ary_mc_truth[:, 0] == 1
 ary_mc_truth = ary_mc_truth[idx_ic, :]
+ary_nn_pred = ary_nn_pred[idx_ic, :]
+ary_cb_pred = ary_cb_pred[idx_ic, :]
 
-n= -1
+n = 100000
+"""
 image = MLEMBackprojection.reconstruct_image(ary_mc_truth[:n, 1],
                                              ary_mc_truth[:n, 2],
                                              ary_mc_truth[:n, 3],
@@ -298,3 +302,33 @@ image = MLEMBackprojection.reconstruct_image(ary_cb_pred[:n, 1],
                                              ary_cb_pred[:n, 8])
 MLEMBackprojection.plot_backprojection(image, "MLEM_backproj_CBPRED")
 """
+
+image = MLEMBackprojection.reconstruct_image(ary_nn_pred[:n, 1],
+                                             ary_nn_pred[:n, 2],
+                                             ary_mc_truth[:n, 3],
+                                             ary_mc_truth[:n, 4],
+                                             ary_mc_truth[:n, 5],
+                                             ary_mc_truth[:n, 6],
+                                             ary_mc_truth[:n, 7],
+                                             ary_mc_truth[:n, 8])
+MLEMBackprojection.plot_backprojection(image, "MLEM_backproj_NNPRED_positioncorrect")
+
+image = MLEMBackprojection.reconstruct_image(ary_mc_truth[:n, 1],
+                                             ary_mc_truth[:n, 2],
+                                             ary_nn_pred[:n, 3],
+                                             ary_nn_pred[:n, 4],
+                                             ary_nn_pred[:n, 5],
+                                             ary_nn_pred[:n, 6],
+                                             ary_nn_pred[:n, 7],
+                                             ary_nn_pred[:n, 8])
+MLEMBackprojection.plot_backprojection(image, "MLEM_backproj_NNPRED_energycorrect")
+
+image = MLEMBackprojection.reconstruct_image(ary_cb_pred[:n, 1],
+                                             ary_cb_pred[:n, 2],
+                                             ary_cb_pred[:n, 3],
+                                             ary_nn_pred[:n, 4],
+                                             ary_cb_pred[:n, 5],
+                                             ary_cb_pred[:n, 6],
+                                             ary_nn_pred[:n, 7],
+                                             ary_cb_pred[:n, 8])
+MLEMBackprojection.plot_backprojection(image, "MLEM_backproj_NNPRED_optimal")
