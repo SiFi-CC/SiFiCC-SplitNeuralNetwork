@@ -421,3 +421,20 @@ def montecarlo_regression(NeuralNetwork_regE,
                            ary_pz=y_pred_p[:, 5],
                            filename=file_name,
                            verbose=1)
+
+
+def eval_full_mod(NeuralNetwork_clas,
+                  NeuralNetwork_regE,
+                  NeuralNetwork_regP,
+                  DataCluster,
+                  file_name="",
+                  theta=0.5):
+    # grab all positive identified events by the neural network
+    y_scores = NeuralNetwork_clas.predict(DataCluster.features)
+    # This is done this way cause y_scores gets a really dumb shape from tensorflow
+    idx_clas_pos = [float(y_scores[i]) > theta for i in range(len(y_scores))]
+
+    # predict energy and position of all positive events
+    y_pred_energy = NeuralNetwork_regE.predict(DataCluster.features)
+    y_pred_position = NeuralNetwork_regP.predict(DataCluster.features)
+
