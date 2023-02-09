@@ -189,6 +189,16 @@ def eval_full(NeuralNetwork_clas,
     y_pred_energy = NeuralNetwork_regE.predict(DataCluster.features)
     y_pred_position = NeuralNetwork_regP.predict(DataCluster.features)
 
+    # update energy prediction:
+    # - neural network is not allowed to predict higher energies
+    #   than the Cut-Based approach
+    for i in range(y_pred_energy.shape[0]):
+        if y_pred_energy[i, 0] > DataCluster.meta[i, 4]:
+            y_pred_energy[i, 0] = DataCluster.meta[i, 4]
+
+        if y_pred_energy[i, 1] > DataCluster.meta[i, 5]:
+            y_pred_energy[i, 1] = DataCluster.meta[i, 5]
+
     # plotting score distribution vs neural network error
     idx_clas_tp = []
     for i in range(len(y_scores)):
@@ -202,7 +212,7 @@ def eval_full(NeuralNetwork_clas,
     Plotter.plot_2dhist_score_regE_error(y_scores[idx_clas_tp],
                                          y_pred_energy[idx_clas_tp, 1] - DataCluster.targets_reg1[idx_clas_tp, 1],
                                          "hist2d_score_error_energy_p")
-
+    """
     # plot angle distribution for different subsets
     list_angle_pos = []
     list_angle_inpeak = []
@@ -247,7 +257,6 @@ def eval_full(NeuralNetwork_clas,
                                ["Positives", "Bragg Peak", "Tail", "IdealCompton"],
                                "eucldist_angle")
 
-    """
     # source position plot heatmap
     list_sp_z = []
     list_sp_y = []

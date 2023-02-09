@@ -38,14 +38,14 @@ NPZ_FILE_EVAL = ["OptimisedGeometry_BP0mm_2e10protons_withTimestamps_DNN_BaseTim
 
 # GLOBAL SETTINGS
 RUN_NAME = "DNN_BaseTime"
-RUN_TAG = "Baseline"
+RUN_TAG = "modE"
 
 epochs = 10
 
 train_clas = False
 train_regE = False
 train_regP = False
-mlemexport = False
+# mlemexport = False
 
 # define directory paths
 dir_main = os.getcwd()
@@ -133,7 +133,7 @@ else:
 for i in range(len(NPZ_FILE_EVAL)):
     os.chdir(dir_results + RUN_NAME + "_" + RUN_TAG + "/" + NPZ_FILE_EVAL[i][:-4] + "/")
     # npz wrapper
-
+    """
     data_cluster = NPZParser.wrapper(dir_npz + NPZ_FILE_EVAL[i],
                                      set_testall=False,
                                      standardize=True)
@@ -144,7 +144,7 @@ for i in range(len(NPZ_FILE_EVAL)):
     EvaluationHandler.eval_regression_energy(neuralnetwork_regE, DataCluster=data_cluster)
 
     EvaluationHandler.eval_regression_position(neuralnetwork_regP, DataCluster=data_cluster)
-
+    """
     data_cluster = NPZParser.wrapper(dir_npz + NPZ_FILE_EVAL[i],
                                      set_testall=False,
                                      standardize=True)
@@ -153,4 +153,5 @@ for i in range(len(NPZ_FILE_EVAL)):
                                 neuralnetwork_regE,
                                 neuralnetwork_regP,
                                 DataCluster=data_cluster,
-                                theta=0.5)
+                                theta=0.5,
+                                file_name=NPZ_FILE_EVAL[i][:-4])

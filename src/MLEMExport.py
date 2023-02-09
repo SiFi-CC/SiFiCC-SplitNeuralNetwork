@@ -1,3 +1,5 @@
+import os
+
 import numpy as np
 import uproot
 
@@ -108,6 +110,7 @@ def export_mlem(ary_e, ary_p, ary_ex, ary_ey, ary_ez, ary_px, ary_py, ary_pz,
     file = uproot.recreate(file_name, compression=None)
 
     print(len(arc), "events exported")
+    print("file created at: ", os.getcwd() + file_name)
 
     # defining the branch
     branch = {

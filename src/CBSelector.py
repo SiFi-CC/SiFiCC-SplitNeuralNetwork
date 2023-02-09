@@ -1,3 +1,7 @@
+# ------------------------------------------------------------------------------
+# General script which aim to imitate the classical cut-based approach
+# event selection for SiFi-CC event identification developed in Jonas PhD thesis.
+
 import numpy as np
 import os
 from uproot_methods import TVector3
@@ -7,14 +11,24 @@ from src import root_files
 
 
 def tmath_acos(x):
-    if (x < -1):
+    """
+    Alternative version to np.arccos, as it is unclear how it handles
+    parameter outside the defined arccos range. This definition is equivalent
+    to the root tmath version
+    """
+    if x < -1:
         return np.pi
-    if (x > 1):
+    if x > 1:
         return 0
     return np.arccos(x)
 
 
 def check_valid_prediction(e, p, p_ex, p_ey, p_ez, p_px, p_py, p_pz):
+    """
+    Check if regressed event topology of a compton event makes physical sense.
+    -> Energies are positive and non-zero
+    -> Position are inside the detector dimensions
+    """
     if e == 0.0 or p == 0.0:
         return False
     # TODO: check if position prediction inside detector dimension
@@ -23,6 +37,9 @@ def check_valid_prediction(e, p, p_ex, p_ey, p_ez, p_px, p_py, p_pz):
 
 
 def check_compton_arc(e, p):
+    """
+    Check if compton scattering angle is in the valid parameter range
+    """
     ELECTRON_MASS = 0.511
 
     arc_base = np.abs(1 - ELECTRON_MASS * (1 / p - 1 / (e + p)))
@@ -50,6 +67,10 @@ def check_compton_kinematics(e, p, ee=0.0, ep=0.0, compton=True):
 
 
 def beam_origin(e, p, p_ex, p_ey, p_ez, p_px, p_py, p_pz, beam_diff, inverse):
+    #
+    #
+    #
+
     ELECTRON_MASS = 0.511
 
     # pseudo-wrapper
