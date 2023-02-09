@@ -44,7 +44,7 @@ epochs = 10
 
 train_clas = False
 train_regE = False
-train_regP = True
+train_regP = False
 mlemexport = False
 
 # define directory paths
@@ -145,7 +145,6 @@ for i in range(len(NPZ_FILE_EVAL)):
 
     EvaluationHandler.eval_regression_position(neuralnetwork_regP, DataCluster=data_cluster)
 
-    """
     data_cluster = NPZParser.wrapper(dir_npz + NPZ_FILE_EVAL[i],
                                      set_testall=False,
                                      standardize=True)
@@ -155,4 +154,3 @@ for i in range(len(NPZ_FILE_EVAL)):
                                 neuralnetwork_regP,
                                 DataCluster=data_cluster,
                                 theta=0.5)
-    """

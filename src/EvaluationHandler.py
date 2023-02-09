@@ -179,7 +179,7 @@ def eval_full(NeuralNetwork_clas,
               NeuralNetwork_regP,
               DataCluster,
               file_name="",
-              theta=0.25):
+              theta=0.5):
     # grab all positive identified events by the neural network
     y_scores = NeuralNetwork_clas.predict(DataCluster.features)
     # This is done this way cause y_scores gets a really dumb shape from tensorflow
@@ -212,7 +212,7 @@ def eval_full(NeuralNetwork_clas,
     for i in range(len(y_scores)):
         if DataCluster.targets_clas[i] == 1:
             list_angle_ic.append(calculate_theta(*y_pred_energy[i, :]))
-        if y_scores[i] < 0.3:
+        if y_scores[i] < 0.5:
             continue
         list_angle_pos.append(calculate_theta(*y_pred_energy[i, :]))
         if -8.0 < DataCluster.meta[i, 2] < 2.0:
@@ -235,7 +235,7 @@ def eval_full(NeuralNetwork_clas,
         r *= np.sign(y_pred_position[i, 2])
         if DataCluster.targets_clas[i] == 1:
             list_r_ic.append(r)
-        if y_scores[i] < 0.3:
+        if y_scores[i] < 0.5:
             continue
         list_r_pos.append(r)
         if -8.0 < DataCluster.meta[i, 2] < 2.0:
