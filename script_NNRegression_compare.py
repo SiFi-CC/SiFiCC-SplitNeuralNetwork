@@ -116,14 +116,13 @@ ary_sp = npz_data["source_position"]
 # distribution of scattering angle
 from src import MLEMBackprojection
 
-"""
 list_theta_err_cb = []
 list_theta_err_cb_peak = []
 list_theta_err_nn = []
 list_theta_err_nn_peak = []
 
 for i in range(ary_mc_truth.shape[0]):
-    if ary_mc_truth[i, 0] == 1.0:
+    if ary_mc_truth[i, 0] in [1.0]:
         theta_cb = MLEMBackprojection.calculate_theta(ary_cb_pred[i, 1], ary_cb_pred[i, 2])
         theta_nn = MLEMBackprojection.calculate_theta(ary_nn_pred[i, 1], ary_nn_pred[i, 2])
         theta_mc = MLEMBackprojection.calculate_theta(ary_mc_truth[i, 1], ary_mc_truth[i, 2])
@@ -157,14 +156,108 @@ fig, axs = plt.subplots(1, 2, figsize=(10, 6))
 bins = np.arange(-np.pi / 2, np.pi / 2, 0.01)
 axs[0].set_xlabel(r"$\theta^{pred}-\theta^{true}$ [rad]")
 axs[0].set_ylabel("Counts")
-axs[0].set_title("Ideal Compton events")
-axs[0].hist(list_theta_err_cb, bins=bins, histtype=u"step", color="black")
-axs[0].hist(list_theta_err_nn, bins=bins, histtype=u"step", color="blue")
-axs[1].set_xlabel(r"$\theta^{pred}-\theta^{true}$ [rad]")
-axs[1].set_ylabel("Counts")
-axs[1].set_title("Ideal Compton\n Bragg peak events")
-axs[1].hist(list_theta_err_cb_peak, bins=bins, histtype=u"step", color="black")
-axs[1].hist(list_theta_err_nn_peak, bins=bins, histtype=u"step", color="blue")
+axs[0].set_title("Error scattering angle")
+axs[0].hist(list_theta_err_cb, bins=bins, histtype=u"step", color="black", label="Cut-Based")
+axs[0].hist(list_theta_err_nn, bins=bins, histtype=u"step", color="blue", label="NeuralNetwork")
+axs[0].legend()
+plt.tight_layout()
+plt.show()
+
+# ----------------------------------------------------------------------------------------------------------------------
+# Position resolutions
+# - cone apex
+# - cone axis
+
+list_apex_x_err_nn = []
+list_apex_y_err_nn = []
+list_apex_z_err_nn = []
+
+list_apex_x_err_cb = []
+list_apex_y_err_cb = []
+list_apex_z_err_cb = []
+
+list_axis_x_err_nn = []
+list_axis_y_err_nn = []
+list_axis_z_err_nn = []
+
+list_axis_x_err_cb = []
+list_axis_y_err_cb = []
+list_axis_z_err_cb = []
+
+for i in range(ary_mc_truth.shape[0]):
+    if ary_mc_truth[i, 0] in [1.0]:
+        list_apex_x_err_nn.append(ary_nn_pred[i, 3] - ary_mc_truth[i, 3])
+        list_apex_y_err_nn.append(ary_nn_pred[i, 4] - ary_mc_truth[i, 4])
+        list_apex_z_err_nn.append(ary_nn_pred[i, 5] - ary_mc_truth[i, 5])
+
+        list_apex_x_err_cb.append(ary_cb_pred[i, 3] - ary_mc_truth[i, 3])
+        list_apex_y_err_cb.append(ary_cb_pred[i, 4] - ary_mc_truth[i, 4])
+        list_apex_z_err_cb.append(ary_cb_pred[i, 5] - ary_mc_truth[i, 5])
+
+        list_axis_x_err_nn.append(ary_nn_pred[i, 6] - ary_mc_truth[i, 6])
+        list_axis_y_err_nn.append(ary_nn_pred[i, 7] - ary_mc_truth[i, 7])
+        list_axis_z_err_nn.append(ary_nn_pred[i, 8] - ary_mc_truth[i, 8])
+
+        list_axis_x_err_cb.append(ary_cb_pred[i, 6] - ary_mc_truth[i, 6])
+        list_axis_y_err_cb.append(ary_cb_pred[i, 7] - ary_mc_truth[i, 7])
+        list_axis_z_err_cb.append(ary_cb_pred[i, 8] - ary_mc_truth[i, 8])
+
+fig, axs = plt.subplots(1, 3, figsize=(12, 6))
+bins_x = np.arange(-10.0, 10.0, 0.1)
+bins_y = np.arange(-40.0, 40.0, 0.1)
+bins_z = np.arange(-10.0, 10.0, 0.1)
+
+axs[0].set_title("Error coneapex.x")
+axs[0].set_xlabel(r"$x^{pred}-x^{true}$")
+axs[0].set_ylabel("counts")
+axs[0].hist(list_apex_x_err_nn, bins=bins_x, histtype=u"step", color="blue", label="NeuralNetwork")
+axs[0].hist(list_apex_x_err_cb, bins=bins_x, histtype=u"step", color="black", label="Cut-Based")
+# axs[0].legend()
+
+axs[1].set_title("Error coneapex.y")
+axs[1].set_xlabel(r"$y^{pred}-y^{true}$")
+axs[1].set_ylabel("counts")
+axs[1].hist(list_apex_y_err_nn, bins=bins_y, histtype=u"step", color="blue", label="NeuralNetwork")
+axs[1].hist(list_apex_y_err_cb, bins=bins_y, histtype=u"step", color="black", label="Cut-Based")
+axs[1].legend()
+
+axs[2].set_title("Error coneapex.z")
+axs[2].set_xlabel(r"$z^{pred}-z^{true}$")
+axs[2].set_ylabel("counts")
+axs[2].hist(list_apex_z_err_nn, bins=bins_z, histtype=u"step", color="blue", label="NeuralNetwork")
+axs[2].hist(list_apex_z_err_cb, bins=bins_z, histtype=u"step", color="black", label="Cut-Based")
+# axs[2].legend()
+
+plt.tight_layout()
+plt.show()
+
+
+fig, axs = plt.subplots(1, 3, figsize=(12, 6))
+bins_x = np.arange(-10.0, 10.0, 0.1)
+bins_y = np.arange(-40.0, 40.0, 0.1)
+bins_z = np.arange(-10.0, 10.0, 0.1)
+
+axs[0].set_title("Error coneaxis.x")
+axs[0].set_xlabel(r"$x^{pred}-x^{true}$")
+axs[0].set_ylabel("counts")
+axs[0].hist(list_axis_x_err_nn, bins=bins_x, histtype=u"step", color="blue", label="NeuralNetwork")
+axs[0].hist(list_axis_x_err_cb, bins=bins_x, histtype=u"step", color="black", label="Cut-Based")
+# axs[0].legend()
+
+axs[1].set_title("Error coneaxis.y")
+axs[1].set_xlabel(r"$y^{pred}-y^{true}$")
+axs[1].set_ylabel("counts")
+axs[1].hist(list_axis_y_err_nn, bins=bins_y, histtype=u"step", color="blue", label="NeuralNetwork")
+axs[1].hist(list_axis_y_err_cb, bins=bins_y, histtype=u"step", color="black", label="Cut-Based")
+axs[1].legend()
+
+axs[2].set_title("Error coneaxis.z")
+axs[2].set_xlabel(r"$z^{pred}-z^{true}$")
+axs[2].set_ylabel("counts")
+axs[2].hist(list_axis_z_err_nn, bins=bins_z, histtype=u"step", color="blue", label="NeuralNetwork")
+axs[2].hist(list_axis_z_err_cb, bins=bins_z, histtype=u"step", color="black", label="Cut-Based")
+# axs[2].legend()
+
 plt.tight_layout()
 plt.show()
 """
@@ -204,3 +297,4 @@ image = MLEMBackprojection.reconstruct_image(ary_cb_pred[:n, 1],
                                              ary_cb_pred[:n, 7],
                                              ary_cb_pred[:n, 8])
 MLEMBackprojection.plot_backprojection(image, "MLEM_backproj_CBPRED")
+"""
