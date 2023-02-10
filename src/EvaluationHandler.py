@@ -189,6 +189,7 @@ def eval_full(NeuralNetwork_clas,
     y_pred_energy = NeuralNetwork_regE.predict(DataCluster.features)
     y_pred_position = NeuralNetwork_regP.predict(DataCluster.features)
 
+    """
     # update energy prediction:
     # - neural network is not allowed to predict higher energies
     #   than the Cut-Based approach
@@ -198,6 +199,7 @@ def eval_full(NeuralNetwork_clas,
 
         if y_pred_energy[i, 1] > DataCluster.meta[i, 5]:
             y_pred_energy[i, 1] = DataCluster.meta[i, 5]
+    """
 
     # plotting score distribution vs neural network error
     idx_clas_tp = []

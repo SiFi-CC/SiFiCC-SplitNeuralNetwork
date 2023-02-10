@@ -23,5 +23,5 @@ def return_model(input_dim):
     model.add(tf.keras.layers.Dense(32, activation="relu"))
     model.add(tf.keras.layers.Dropout(0.1))
     model.add(tf.keras.layers.Dense(2, activation="relu"))
-    model.compile(loss="mean_absolute_error", optimizer="SGD", metrics=["mean_absolute_error"])
+    model.compile(loss=tf.keras.losses.log_cosh, optimizer="SGD", metrics=["mean_absolute_error"])
     return model
