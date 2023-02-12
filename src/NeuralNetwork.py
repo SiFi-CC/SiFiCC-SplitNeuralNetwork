@@ -1,5 +1,13 @@
-import os
 import pickle as pkl
+
+import keras.callbacks
+
+
+def lr_scheduler(epoch):
+    if epoch < 200:
+        return 1e-3
+    if epoch < 300:
+        return 1e-4
 
 
 class NeuralNetwork:
@@ -18,11 +26,14 @@ class NeuralNetwork:
 
     def train(self, x_train, y_train, x_weights, x_valid, y_valid):
         # train model
+        l_callbacks = [keras.callbacks.LearningRateScheduler(lr_scheduler), ]
+
         history = self.model.fit(x_train, y_train, validation_data=(x_valid, y_valid),
                                  sample_weight=x_weights,
                                  verbose=self.verbose,
                                  epochs=self.epochs,
-                                 batch_size=self.batch_size)
+                                 batch_size=self.batch_size,
+                                 callbacks=[l_callbacks])
         # update history
         self.append_history(history.history)
 
