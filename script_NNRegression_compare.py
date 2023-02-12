@@ -29,7 +29,7 @@ def generate_npz_file():
 
     # loading neural network models
     RUN_NAME = "DNN_BaseTime"
-    RUN_TAG = "Baseline"
+    RUN_TAG = "emod"
     os.chdir(dir_results + RUN_NAME + "_" + RUN_TAG + "/")
 
     from src import NeuralNetwork
@@ -91,7 +91,7 @@ def generate_npz_file():
     ary_mc_true[:, 1:3] = DataCluster.targets_reg1
     ary_mc_true[:, 3:9] = DataCluster.targets_reg2
 
-    str_savefile = "OptimisedGeometry_BP0mm_statistics.npz"
+    str_savefile = "OptimisedGeometry_BP0mm_statistics_emod.npz"
     with open(str_savefile, 'wb') as f_output:
         np.savez_compressed(f_output,
                             identified=ary_root_identified,
@@ -100,12 +100,11 @@ def generate_npz_file():
                             mc_truth=ary_mc_true,
                             source_position=ary_root_source_position)
 
-
 # ----------------------------------------------------------------------------------------------------------------------
 # Analysis script
 
 # Grab all information from the target file
-npz_data = np.load("OptimisedGeometry_BP0mm_statistics.npz")
+npz_data = np.load("OptimisedGeometry_BP0mm_statistics_emod.npz")
 ary_identified = npz_data["identified"]
 ary_nn_pred = npz_data["nn_pred"]
 ary_cb_pred = npz_data["cb_pred"]
@@ -152,14 +151,14 @@ for i in range(ary_mc_truth.shape[0]):
     else:
         continue
 
-fig, axs = plt.subplots(1, 2, figsize=(10, 6))
+plt.figure()
 bins = np.arange(-np.pi / 2, np.pi / 2, 0.01)
-axs[0].set_xlabel(r"$\theta^{pred}-\theta^{true}$ [rad]")
-axs[0].set_ylabel("Counts")
-axs[0].set_title("Error scattering angle")
-axs[0].hist(list_theta_err_cb, bins=bins, histtype=u"step", color="black", label="Cut-Based")
-axs[0].hist(list_theta_err_nn, bins=bins, histtype=u"step", color="blue", label="NeuralNetwork")
-axs[0].legend()
+plt.xlabel(r"$\theta^{pred}-\theta^{true}$ [rad]")
+plt.ylabel("Counts")
+plt.title("Error scattering angle")
+plt.hist(list_theta_err_cb, bins=bins, histtype=u"step", color="black", label="Cut-Based")
+plt.hist(list_theta_err_nn, bins=bins, histtype=u"step", color="blue", label="NeuralNetwork")
+plt.legend()
 plt.tight_layout()
 plt.show()
 
@@ -231,7 +230,6 @@ axs[2].hist(list_apex_z_err_cb, bins=bins_z, histtype=u"step", color="black", la
 plt.tight_layout()
 plt.show()
 
-
 fig, axs = plt.subplots(1, 3, figsize=(12, 6))
 bins_x = np.arange(-10.0, 10.0, 0.1)
 bins_y = np.arange(-40.0, 40.0, 0.1)
@@ -261,26 +259,18 @@ axs[2].hist(list_axis_z_err_cb, bins=bins_z, histtype=u"step", color="black", la
 plt.tight_layout()
 plt.show()
 """
+"""
 # ----------------------------------------------------------------------------------------------------------------------
 # Back-projections
 from src import MLEMBackprojection
 
+idx_id = ary_cb_pred[:, 0] != 0
 idx_ic = ary_mc_truth[:, 0] == 1
-ary_mc_truth = ary_mc_truth[idx_ic, :]
+ary_cb_pred = ary_cb_pred[idx_id, :]
 ary_nn_pred = ary_nn_pred[idx_ic, :]
-ary_cb_pred = ary_cb_pred[idx_ic, :]
+ary_mc_truth = ary_mc_truth[idx_ic, :]
 
 n = 100000
-"""
-image = MLEMBackprojection.reconstruct_image(ary_mc_truth[:n, 1],
-                                             ary_mc_truth[:n, 2],
-                                             ary_mc_truth[:n, 3],
-                                             ary_mc_truth[:n, 4],
-                                             ary_mc_truth[:n, 5],
-                                             ary_mc_truth[:n, 6],
-                                             ary_mc_truth[:n, 7],
-                                             ary_mc_truth[:n, 8])
-MLEMBackprojection.plot_backprojection(image, "MLEM_backproj_MCTRUTH")
 
 image = MLEMBackprojection.reconstruct_image(ary_nn_pred[:n, 1],
                                              ary_nn_pred[:n, 2],
@@ -290,7 +280,19 @@ image = MLEMBackprojection.reconstruct_image(ary_nn_pred[:n, 1],
                                              ary_nn_pred[:n, 6],
                                              ary_nn_pred[:n, 7],
                                              ary_nn_pred[:n, 8])
-MLEMBackprojection.plot_backprojection(image, "MLEM_backproj_NNPRED")
+MLEMBackprojection.plot_backprojection(image, "Backprojection NN prediction", "MLEM_backproj_NNPRED_emod")
+
+
+image = MLEMBackprojection.reconstruct_image(ary_mc_truth[:n, 1],
+                                             ary_mc_truth[:n, 2],
+                                             ary_mc_truth[:n, 3],
+                                             ary_mc_truth[:n, 4],
+                                             ary_mc_truth[:n, 5],
+                                             ary_mc_truth[:n, 6],
+                                             ary_mc_truth[:n, 7],
+                                             ary_mc_truth[:n, 8])
+MLEMBackprojection.plot_backprojection(image, "Backprojection MC Truth (Ideal Compton)", "MLEM_backproj_MCTRUTH")
+
 
 image = MLEMBackprojection.reconstruct_image(ary_cb_pred[:n, 1],
                                              ary_cb_pred[:n, 2],
@@ -300,8 +302,18 @@ image = MLEMBackprojection.reconstruct_image(ary_cb_pred[:n, 1],
                                              ary_cb_pred[:n, 6],
                                              ary_cb_pred[:n, 7],
                                              ary_cb_pred[:n, 8])
-MLEMBackprojection.plot_backprojection(image, "MLEM_backproj_CBPRED")
-"""
+MLEMBackprojection.plot_backprojection(image, "Backprojection CB identified", "MLEM_backproj_CBiden")
+
+image = MLEMBackprojection.reconstruct_image(ary_mc_truth[:n, 1],
+                                             ary_mc_truth[:n, 2],
+                                             ary_nn_pred[:n, 3],
+                                             ary_nn_pred[:n, 4],
+                                             ary_nn_pred[:n, 5],
+                                             ary_nn_pred[:n, 6],
+                                             ary_nn_pred[:n, 7],
+                                             ary_nn_pred[:n, 8])
+MLEMBackprojection.plot_backprojection(image, "Backprojection NN energy corrected", "MLEM_backproj_NNPRED_energycorrect")
+
 
 image = MLEMBackprojection.reconstruct_image(ary_nn_pred[:n, 1],
                                              ary_nn_pred[:n, 2],
@@ -313,15 +325,18 @@ image = MLEMBackprojection.reconstruct_image(ary_nn_pred[:n, 1],
                                              ary_mc_truth[:n, 8])
 MLEMBackprojection.plot_backprojection(image, "MLEM_backproj_NNPRED_positioncorrect")
 
-image = MLEMBackprojection.reconstruct_image(ary_mc_truth[:n, 1],
-                                             ary_mc_truth[:n, 2],
-                                             ary_nn_pred[:n, 3],
-                                             ary_nn_pred[:n, 4],
-                                             ary_nn_pred[:n, 5],
-                                             ary_nn_pred[:n, 6],
-                                             ary_nn_pred[:n, 7],
-                                             ary_nn_pred[:n, 8])
-MLEMBackprojection.plot_backprojection(image, "MLEM_backproj_NNPRED_energycorrect")
+
+image = MLEMBackprojection.reconstruct_image(ary_nn_pred[:n, 1],
+                                             ary_nn_pred[:n, 2],
+                                             ary_mc_truth[:n, 3],
+                                             ary_mc_truth[:n, 4],
+                                             ary_mc_truth[:n, 5],
+                                             ary_mc_truth[:n, 6],
+                                             ary_mc_truth[:n, 7],
+                                             ary_mc_truth[:n, 8])
+MLEMBackprojection.plot_backprojection(image, "MLEM_backproj_NNPRED_positioncorrect")
+
+
 
 image = MLEMBackprojection.reconstruct_image(ary_cb_pred[:n, 1],
                                              ary_cb_pred[:n, 2],
@@ -332,3 +347,4 @@ image = MLEMBackprojection.reconstruct_image(ary_cb_pred[:n, 1],
                                              ary_nn_pred[:n, 7],
                                              ary_cb_pred[:n, 8])
 MLEMBackprojection.plot_backprojection(image, "MLEM_backproj_NNPRED_optimal")
+"""
