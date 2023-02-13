@@ -100,6 +100,9 @@ class Event:
         idx_position = self.sort_clusters_position()
         self.RecoClusterTimestamps_relative = RecoClusterTimestamps - min(RecoClusterTimestamps)
 
+        # scattering angle
+        self.theta = self.calculate_theta(self.MCEnergy_e, self.MCEnergy_p)
+
         self.scatterer = scatterer
         self.absorber = absorber
 
@@ -182,6 +185,26 @@ class Event:
             self.is_pe = False
 
     ####################################################################################################################
+
+    def calculate_theta(self, e1, e2):
+        """
+        Calculate scattering angle theta in radiants.
+
+        Args:
+             e1 (double): Initial gamma energy
+             e2 (double): Gamma energy after compton scattering
+        """
+        if e1 == 0.0 or e2 == 0.0:
+            return 0.0
+
+        kMe = 0.510999  # MeV/c^2
+        costheta = 1.0 - kMe * (1.0 / e2 - 1.0 / (e1 + e2))
+
+        if abs(costheta) > 1:
+            return 0.0
+        else:
+            theta = np.arccos(costheta)  # rad
+            return theta
 
     def get_electron_energy(self):
         idx_scatterer, _ = self.sort_clusters_by_module(use_energy=True)
