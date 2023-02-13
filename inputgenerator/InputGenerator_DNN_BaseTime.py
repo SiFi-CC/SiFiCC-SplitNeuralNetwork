@@ -24,14 +24,14 @@ def gen_input(RootParser):
     dir_npz = dir_main + "/npz_files/"
 
     # global settings for easier on the fly changes
-    NAME_TAG = "DNN_BaseTime"
+    NAME_TAG = "DNN_Base"
     n_cluster_scatterer = 2
     n_cluster_absorber = 6
 
     n_features = 10 * (n_cluster_scatterer + n_cluster_absorber)
     n_cluster = n_cluster_scatterer + n_cluster_absorber
 
-    # get the number of valid S1AX events per root file
+    # get the number of valid events per root file
     list_entries = []
 
     for i in range(len(list_rootparser)):
@@ -54,6 +54,7 @@ def gen_input(RootParser):
             if counter_scatterer > 0 and counter_absorber > 0:
                 n_events += 1
         print(n_events, "valid events found")
+        print(root_parser.events_entries , "total events in the given root file")
         list_entries.append(n_events)
 
     n_events = np.sum(list_entries)
@@ -71,6 +72,7 @@ def gen_input(RootParser):
     # Meta entries are defined per event:
     # [EventNumber, MCEnergyPrimary, MCSourcePositionZ, RecoEnergyE, RecoEnergyP]
     ary_meta = np.zeros(shape=(n_events, 6), dtype=np.float32)
+    ary_theta = np.zeros(shape=(n_events,), dtype=np.float32)
 
     # legacy targets
     ary_targets = np.zeros(shape=(n_events,), dtype=np.float32)
@@ -143,6 +145,8 @@ def gen_input(RootParser):
             # write weighting
             ary_w[idx_pos] = np.sum(list_entries) / len(list_entries) / list_entries[k]
 
+            ary_theta[idx_pos] = event.theta
+
             # write meta data
             ary_meta[idx_pos, :] = [event.EventNumber,
                                     event.MCEnergy_Primary,
@@ -156,13 +160,14 @@ def gen_input(RootParser):
     # save final output file
     str_savefile = ""
     if type(RootParser) is list:
-        str_savefile = dir_npz + "OptimizedGeometry_BP05_" + NAME_TAG + ".npz"
+        str_savefile = dir_npz + "OptimizedGeometry_Mixed_" + NAME_TAG + ".npz"
     else:
         str_savefile = dir_npz + RootParser.file_name + "_" + NAME_TAG + ".npz"
 
     with open(str_savefile, 'wb') as f_output:
         np.savez_compressed(f_output,
                             features=ary_features,
+                            theta=ary_theta,
                             targets_clas=ary_targets_clas,
                             targets_reg1=ary_targets_reg1,
                             targets_reg2=ary_targets_reg2,
