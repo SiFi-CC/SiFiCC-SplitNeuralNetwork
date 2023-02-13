@@ -168,7 +168,7 @@ class RootParser:
         ary_meta = np.zeros(shape=(self.events_entries, 4))
         ary_mc = np.zeros(shape=(self.events_entries, 9))
         ary_cb = np.zeros(shape=(self.events_entries, 9))
-        
+
         # Fill Meta-data, Monte-Carlo data and Cluster data into empty arrays
         # Cut-based reco data is not iterable since uproot can't handle the reco data stored in branches
         for i, event in enumerate(self.iterate_events(n=n)):
