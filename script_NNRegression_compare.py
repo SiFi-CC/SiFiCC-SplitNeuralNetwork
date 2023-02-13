@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 plt.rcParams.update({'font.size': 14})
 
 
-def generate_npz_file():
+def generate_export():
     # --------------------------------------------
     # General input for data generation:
     # - root file
@@ -16,27 +16,45 @@ def generate_npz_file():
     from src import root_files
     from src import NPZParser
 
-    dir_main = os.getcwd()
-    dir_root = dir_main + "/root_files/"
-    dir_npz = dir_main + "/npz_files/"
-    dir_results = dir_main + "/results/"
-
-    root_parser = RootParser(dir_main + root_files.OptimisedGeometry_BP0mm_2e10protons_withTimestamps_offline)
-    DataCluster = NPZParser.wrapper(dir_npz + "OptimisedGeometry_BP0mm_2e10protons_withTimestamps_DNN_BaseTime.npz",
-                                    standardize=True,
-                                    set_classweights=False,
-                                    set_peakweights=False)
-
-    # loading neural network models
-    RUN_NAME = "DNN_BaseTime"
-    RUN_TAG = "emod"
-    os.chdir(dir_results + RUN_NAME + "_" + RUN_TAG + "/")
-
     from src import NeuralNetwork
     from models import DNN_base_classifier
     from models import DNN_base_regression_energy
     from models import DNN_base_regression_position
 
+    # ---------------------------------------------
+    # definition of directory paths
+    dir_main = os.getcwd()
+    dir_root = dir_main + "/root_files/"
+    dir_npz = dir_main + "/npz_files/"
+    dir_results = dir_main + "/results/"
+
+    # ---------------------------------------------
+    # loading neural network models
+    RUN_NAME = "DNN_BaseTime"
+    RUN_TAG = "emod"
+    LOOKUP_NAME_BP0mm = "OptimisedGeometry_BP0mm_2e10protons_withTimestamps_lookup.npz"
+    LOOKUP_NAME_BP5mm = "OptimisedGeometry_BP5mm_4e9protons_withTimestamps_lookup.npz"
+
+    SAMPLE_NAME_BP0mm = "OptimisedGeometry_BP0mm_2e10protons_withTimestamps_DNN_BaseTime.npz"
+    SAMPLE_NAME_BP5mm = "OptimisedGeometry_BP5mm_4e9protons_withTimestamps_DNN_BaseTime.npz"
+
+    # ----------------------------------------------
+    # load up all required datasets
+    # - Lookup file for MC-Truth and CB-Reco
+    # - NN predictions
+
+    # Lookup datasets
+    npz_lookup_bp0mm = np.load(dir_npz + LOOKUP_NAME_BP0mm)
+    npz_lookup_bp5mm = np.load(dir_npz + LOOKUP_NAME_BP5mm)
+
+    ary_mc_truth_bp0mm = npz_lookup_bp0mm["MC_TRUTH"]
+    ary_mc_truth_bp5mm = npz_lookup_bp5mm["MC_TRUTH"]
+
+    ary_cb_reco_bp0mm = npz_lookup_bp0mm["CB_RECO"]
+    ary_cb_reco_bp5mm = npz_lookup_bp5mm["CB_RECO"]
+
+    # get neural network predictions
+    os.chdir(dir_results + RUN_NAME + "_" + RUN_TAG + "/")
     tfmodel_clas = DNN_base_classifier.return_model(80)
     tfmodel_regE = DNN_base_regression_energy.return_model(80)
     tfmodel_regP = DNN_base_regression_position.return_model(80)
@@ -57,59 +75,145 @@ def generate_npz_file():
     neuralnetwork_regP.load()
     os.chdir(dir_main)
 
-    # prepare final arrays
-    n_entries = root_parser.events_entries
-    ary_cb_pred = np.zeros(shape=(n_entries, 9))
-    ary_nn_pred = np.zeros(shape=(n_entries, 9))
-    ary_mc_true = np.zeros(shape=(n_entries, 9))
+    DataCluster_BP0mm = NPZParser.wrapper(dir_npz + SAMPLE_NAME_BP0mm,
+                                          standardize=True,
+                                          set_classweights=False,
+                                          set_peakweights=False)
+    DataCluster_BP5mm = NPZParser.wrapper(dir_npz + SAMPLE_NAME_BP5mm,
+                                          standardize=True,
+                                          set_classweights=False,
+                                          set_peakweights=False)
 
-    # grab identified tag from  root file
-    ary_root_eventnumber = root_parser.events["EventNumber"].array()
-    ary_root_identified = root_parser.events["Identified"].array()
-    ary_root_source_position = root_parser.events["MCPosition_source"].array().z
+    ary_nn_pred_bp0mm = np.zeros(shape=(DataCluster_BP0mm.entries, 9))
+    ary_nn_pred_bp5mm = np.zeros(shape=(DataCluster_BP5mm.entries, 9))
 
-    for i, event in enumerate(root_parser.iterate_events(n=None)):
-        if event.Identified == 0:
-            continue
+    # get neural network predictions
+    y_pred_bp0mm = neuralnetwork_clas.predict(DataCluster_BP0mm.features)
+    ary_nn_pred_bp0mm[:, 0] = np.reshape(y_pred_bp0mm, newshape=(len(y_pred_bp0mm),))
+    ary_nn_pred_bp0mm[:, 1:3] = neuralnetwork_regE.predict(DataCluster_BP0mm.features)
+    ary_nn_pred_bp0mm[:, 3:9] = neuralnetwork_regP.predict(DataCluster_BP0mm.features)
 
-        e_e, _ = event.get_electron_energy()
-        e_p, _ = event.get_electron_position()
-        p_e, _ = event.get_photon_energy()
-        p_p, _ = event.get_photon_position()
+    y_pred_bp5mm = neuralnetwork_clas.predict(DataCluster_BP5mm.features)
+    ary_nn_pred_bp5mm[:, 0] = np.reshape(y_pred_bp5mm, newshape=(len(y_pred_bp5mm),))
+    ary_nn_pred_bp5mm[:, 1:3] = neuralnetwork_regE.predict(DataCluster_BP5mm.features)
+    ary_nn_pred_bp5mm[:, 3:9] = neuralnetwork_regP.predict(DataCluster_BP5mm.features)
 
-        ary_cb_pred[i, :] = [ary_root_identified[i], e_e, p_e, e_p.x, e_p.y, e_p.z, p_p.x, p_p.y, p_p.z]
-
-    # load npz file
-    npz_features = DataCluster.features
-    y_pred = neuralnetwork_clas.predict(npz_features)
-
-    ary_nn_pred[:, 0] = np.reshape(y_pred, newshape=(len(y_pred),))
-    ary_nn_pred[:, 1:3] = neuralnetwork_regE.predict(npz_features)
-    ary_nn_pred[:, 3:9] = neuralnetwork_regP.predict(npz_features)
-
-    ary_mc_true[:, 0] = DataCluster.targets_clas
-    ary_mc_true[:, 1:3] = DataCluster.targets_reg1
-    ary_mc_true[:, 3:9] = DataCluster.targets_reg2
-
-    str_savefile = "OptimisedGeometry_BP0mm_statistics_emod.npz"
+    str_savefile = "BaseTime_emod.npz"
     with open(str_savefile, 'wb') as f_output:
         np.savez_compressed(f_output,
-                            identified=ary_root_identified,
-                            nn_pred=ary_nn_pred,
-                            cb_pred=ary_cb_pred,
-                            mc_truth=ary_mc_true,
-                            source_position=ary_root_source_position)
+                            mc_truth_0mm=ary_mc_truth_bp0mm,
+                            mc_truth_5mm=ary_mc_truth_bp5mm,
+                            cb_reco_0mm=ary_cb_reco_bp0mm,
+                            cb_reco_5mm=ary_cb_reco_bp5mm,
+                            nn_pred_0mm=ary_nn_pred_bp0mm,
+                            nn_pred_5mm=ary_nn_pred_bp5mm)
+
 
 # ----------------------------------------------------------------------------------------------------------------------
 # Analysis script
 
-# Grab all information from the target file
-npz_data = np.load("OptimisedGeometry_BP0mm_statistics_emod.npz")
-ary_identified = npz_data["identified"]
-ary_nn_pred = npz_data["nn_pred"]
-ary_cb_pred = npz_data["cb_pred"]
-ary_mc_truth = npz_data["mc_truth"]
-ary_sp = npz_data["source_position"]
+npz_data = np.load("BaseTime_emod.npz")
+ary_mc_truth_bp0mm = npz_data["mc_truth_0mm"]
+ary_mc_truth_bp5mm = npz_data["mc_truth_5mm"]
+ary_cb_reco_bp0mm = npz_data["cb_reco_0mm"]
+ary_cb_reco_bp5mm = npz_data["cb_reco_5mm"]
+ary_nn_pred_bp0mm = npz_data["nn_pred_0mm"]
+ary_nn_pred_bp5mm = npz_data["nn_pred_5mm"]
+
+npz_lookup_0mm = np.load(os.getcwd() + "/npz_files/" + "OptimisedGeometry_BP0mm_2e10protons_withTimestamps_lookup.npz")
+npz_lookup_5mm = np.load(os.getcwd() + "/npz_files/" + "OptimisedGeometry_BP5mm_4e9protons_withTimestamps_lookup.npz")
+ary_meta_0mm = npz_lookup_0mm["META"]
+ary_meta_5mm = npz_lookup_5mm["META"]
+
+# ----------------------------------------------------------------------------------------------------------------------
+# Backprojection plots
+from src import MLEMBackprojection
+
+n = 50000
+
+idx_pos_0mm = ary_nn_pred_bp0mm[:, 0] > 0.2
+idx_pos_5mm = ary_nn_pred_bp5mm[:, 0] > 0.2
+
+ary_nn_pred_bp0mm = ary_nn_pred_bp0mm[idx_pos_0mm, :]
+ary_nn_pred_bp5mm = ary_nn_pred_bp5mm[idx_pos_5mm, :]
+
+image_0mm = MLEMBackprojection.reconstruct_image(ary_nn_pred_bp0mm[:n, 1],
+                                                 ary_nn_pred_bp0mm[:n, 2],
+                                                 ary_nn_pred_bp0mm[:n, 3],
+                                                 ary_nn_pred_bp0mm[:n, 4],
+                                                 ary_nn_pred_bp0mm[:n, 5],
+                                                 ary_nn_pred_bp0mm[:n, 6],
+                                                 ary_nn_pred_bp0mm[:n, 7],
+                                                 ary_nn_pred_bp0mm[:n, 8])
+
+image_5mm = MLEMBackprojection.reconstruct_image(ary_nn_pred_bp5mm[:n, 1],
+                                                 ary_nn_pred_bp5mm[:n, 2],
+                                                 ary_nn_pred_bp5mm[:n, 3],
+                                                 ary_nn_pred_bp5mm[:n, 4],
+                                                 ary_nn_pred_bp5mm[:n, 5],
+                                                 ary_nn_pred_bp5mm[:n, 6],
+                                                 ary_nn_pred_bp5mm[:n, 7],
+                                                 ary_nn_pred_bp5mm[:n, 8])
+MLEMBackprojection.plot_backprojection_stacked(image_0mm, image_5mm, "Backprojection NN prediction",
+                                               "MLEM_backproj_NNPRED_emod_theta02")
+
+"""
+idx_id_0mm = ary_meta_0mm[:, 3] != 0
+idx_id_5mm = ary_meta_5mm[:, 3] != 0
+
+ary_cb_reco_bp0mm = ary_cb_reco_bp0mm[idx_id_0mm, :]
+ary_cb_reco_bp5mm = ary_cb_reco_bp5mm[idx_id_5mm, :]
+image_0mm = MLEMBackprojection.reconstruct_image(ary_cb_reco_bp0mm[:n, 0],
+                                                 ary_cb_reco_bp0mm[:n, 1],
+                                                 ary_cb_reco_bp0mm[:n, 2],
+                                                 ary_cb_reco_bp0mm[:n, 3],
+                                                 ary_cb_reco_bp0mm[:n, 4],
+                                                 ary_cb_reco_bp0mm[:n, 5],
+                                                 ary_cb_reco_bp0mm[:n, 6],
+                                                 ary_cb_reco_bp0mm[:n, 7])
+
+image_5mm = MLEMBackprojection.reconstruct_image(ary_cb_reco_bp5mm[:n, 0],
+                                                 ary_cb_reco_bp5mm[:n, 1],
+                                                 ary_cb_reco_bp5mm[:n, 2],
+                                                 ary_cb_reco_bp5mm[:n, 3],
+                                                 ary_cb_reco_bp5mm[:n, 4],
+                                                 ary_cb_reco_bp5mm[:n, 5],
+                                                 ary_cb_reco_bp5mm[:n, 6],
+                                                 ary_cb_reco_bp5mm[:n, 7])
+MLEMBackprojection.plot_backprojection_stacked(image_0mm, image_5mm,
+                                               "Backprojection CB identified", "MLEM_backproj_CBreco")
+
+"""
+
+"""
+idx_ic_0mm = ary_meta_0mm[:, 2] == 1
+idx_ic_5mm = ary_meta_5mm[:, 2] == 1
+
+ary_mc_truth_bp0mm = ary_mc_truth_bp0mm[idx_ic_0mm, :]
+ary_mc_truth_bp5mm = ary_mc_truth_bp5mm[idx_ic_5mm, :]
+
+image_0mm = MLEMBackprojection.reconstruct_image(ary_mc_truth_bp0mm[:n, 0],
+                                                 ary_mc_truth_bp0mm[:n, 1],
+                                                 ary_mc_truth_bp0mm[:n, 2],
+                                                 ary_mc_truth_bp0mm[:n, 3],
+                                                 ary_mc_truth_bp0mm[:n, 4],
+                                                 ary_mc_truth_bp0mm[:n, 5],
+                                                 ary_mc_truth_bp0mm[:n, 6],
+                                                 ary_mc_truth_bp0mm[:n, 7])
+
+image_5mm = MLEMBackprojection.reconstruct_image(ary_mc_truth_bp5mm[:n, 0],
+                                                 ary_mc_truth_bp5mm[:n, 1],
+                                                 ary_mc_truth_bp5mm[:n, 2],
+                                                 ary_mc_truth_bp5mm[:n, 3],
+                                                 ary_mc_truth_bp5mm[:n, 4],
+                                                 ary_mc_truth_bp5mm[:n, 5],
+                                                 ary_mc_truth_bp5mm[:n, 6],
+                                                 ary_mc_truth_bp5mm[:n, 7])
+
+MLEMBackprojection.plot_backprojection_stacked(image_0mm, image_5mm,
+                                               "Backprojection MC Truth (Ideal Compton)", "MLEM_backproj_MCTRUTH")
+"""
+
 """
 # ----------------------------------------------------------------------------------------------------------------------
 # distribution of scattering angle
