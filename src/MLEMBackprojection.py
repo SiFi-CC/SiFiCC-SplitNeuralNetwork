@@ -109,7 +109,7 @@ def reconstruct_image(ary_e1, ary_e2, ary_x1, ary_y1, ary_z1, ary_x2, ary_y2, ar
 
 
 def plot_backprojection(image, figure_title, figure_name):
-    # rotate origional image by 90 degrees
+    # rotate original image by 90 degrees
     image = np.rot90(image)
     proj = np.sum(image, axis=0)
 
@@ -138,3 +138,40 @@ def plot_backprojection(image, figure_title, figure_name):
 
     plt.tight_layout()
     plt.savefig(figure_name + ".png")
+
+def plot_backprojection_stacked(image_0mm, image_5mm, figure_title, figure_name):
+    # rotate original image by 90 degrees
+    image_0mm = np.rot90(image_0mm)
+    proj_0mm = np.sum(image_0mm, axis=0)
+
+    image_5mm = np.rot90(image_5mm)
+    proj_5mm = np.sum(image_5mm, axis=0)
+
+    xticks = np.arange(0, image_0mm.shape[1] + 10.0, 10.0)
+    xlabels = xticks - image_0mm.shape[1] / 2
+    yticks = np.arange(0, image_0mm.shape[0] + 5.0, 5.0)
+    ylabels = yticks - image_0mm.shape[0] / 2
+
+    fig = plt.figure()
+    gs = fig.add_gridspec(2, hspace=0)
+    axs = gs.subplots(sharex=True)
+
+    axs[0].set_title(figure_title)
+    axs[0].imshow(image_0mm)
+    axs[0].set_aspect('auto')
+    axs[0].set_yticks(yticks, ylabels)
+    # axs[0].set(xlim=(0, image.shape[1]), ylim=(0, image.shape[0]))
+    plt.tick_params('x', labelbottom=False)
+
+    axs[1].xaxis.set_tick_params(which='both', labelbottom=True)
+    axs[1].set_aspect('auto')
+    # axs[1].set(xlim=(0 , image.shape[1]), ylim=(0, max(proj)))
+    axs[1].set_xlabel("z-position [mm]")
+    axs[1].set_xticks(xticks, xlabels)
+    axs[1].plot(proj_0mm, color="black", label="0mm")
+    axs[1].plot(proj_5mm, color="red", label="5mm")
+    axs[1].legend()
+
+    plt.tight_layout()
+    plt.savefig(figure_name + ".png")
+
