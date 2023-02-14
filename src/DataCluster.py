@@ -3,14 +3,15 @@ import numpy as np
 
 class DataCluster:
 
-    def __init__(self, ary_meta, ary_features, ary_targets_clas, ary_targets_reg1, ary_targets_reg2, ary_weights):
+    def __init__(self, ary_meta, ary_features, ary_targets_clas, ary_targets_reg1, ary_targets_reg2, ary_weights,
+                 ary_theta):
         self.meta = ary_meta
         self.features = ary_features
         self.weights = ary_weights
         self.targets_clas = ary_targets_clas
         self.targets_reg1 = ary_targets_reg1
         self.targets_reg2 = ary_targets_reg2
-
+        self.theta = ary_theta
         # legacy feature
         # can still be used as final targets for whatever
         self.targets = ary_targets_clas
@@ -125,6 +126,10 @@ class DataCluster:
     def update_targets_position(self):
         # set legacy targets to be module energies
         self.targets = self.targets_reg2
+
+    def update_targets_theta(self):
+        # set legacy targets to be module energies
+        self.targets = self.theta
 
     def get_classweights(self):
         # set sample weights to class weights

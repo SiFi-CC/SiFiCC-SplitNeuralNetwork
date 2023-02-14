@@ -322,6 +322,43 @@ def plot_position_error(y_pred, y_true, figure_name):
     plt.savefig(figure_name + "_photon_z_relative.png")
     plt.close()
 
+def plot_theta_error(y_pred, y_true, figure_name):
+    y_pred = np.reshape(y_pred, newshape=(len(y_pred), ))
+    y_true = np.reshape(y_true, newshape=(len(y_true), ))
+
+    width = 0.01
+    bins_err = np.arange(-np.pi, np.pi, width)
+    bins_theta = np.arange(0.0, np.pi, width)
+
+    bins_err_center = bins_err[:-1] + (width / 2)
+    hist0, _ = np.histogram(y_pred - y_true, bins=bins_err)
+
+    # fitting energy resolution
+    popt0, pcov0 = curve_fit(gaussian, bins_err_center, hist0, p0=[0.0, 1.0, np.sum(hist0) * width])
+    ary_x = np.linspace(min(bins_err), max(bins_err), 1000)
+
+    plt.figure()
+    plt.title("Error scattering angle")
+    plt.xlabel(r"$\theta_{Pred}$ - $\theta_{True}$ [rad]")
+    plt.ylabel("counts")
+    plt.hist(y_pred - y_true, bins=bins_err, histtype=u"step", color="blue")
+    plt.plot(ary_x, gaussian(ary_x, *popt0), color="orange",
+             label=r"$\mu$ = {:.2f}""\n"r"$\sigma$={:.2f}".format(popt0[0], popt0[1]))
+    plt.legend()
+    plt.tight_layout()
+    plt.savefig(figure_name + ".png")
+    plt.close()
+
+    plt.figure()
+    plt.title("Error scattering angle")
+    plt.xlabel(r"$\theta_{True}$ [rad]")
+    plt.ylabel(r"$\theta_{Pred}$ - $\theta_{True}$")
+    plt.hist2d(x=y_true, y=y_pred - y_true, bins=[bins_theta, bins_err], norm=LogNorm(vmin=1.0, vmax=800))
+    plt.colorbar()
+    plt.tight_layout()
+    plt.savefig(figure_name + "_relative.png")
+    plt.close()
+
 
 def plot_source_position(ary_sp_pos, ary_sp_tp, ary_sp_tot, figure_name):
     # plot MC Source Position z-direction

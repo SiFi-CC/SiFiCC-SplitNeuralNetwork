@@ -173,6 +173,15 @@ def eval_regression_position(NeuralNetwork, DataCluster):
 
     Plotter.plot_position_error(y_pred, y_true, "error_regression_position")
 
+def eval_regression_theta(NeuralNetwork, DataCluster):
+    # set regression
+    DataCluster.update_targets_theta()
+    DataCluster.update_indexing_positives()
+
+    y_pred = NeuralNetwork.predict(DataCluster.x_test())
+    y_true = DataCluster.y_test()
+
+    Plotter.plot_theta_error(y_pred, y_true, "error_regression_theta")
 
 def eval_full(NeuralNetwork_clas,
               NeuralNetwork_regE,
