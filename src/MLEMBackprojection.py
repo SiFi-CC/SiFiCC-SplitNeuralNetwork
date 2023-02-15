@@ -3,15 +3,24 @@ import matplotlib.pyplot as plt
 from uproot_methods import TVector3
 
 
+def tmath_acos(x):
+    """
+    Alternative version to np.arccos, as it is unclear how it handles
+    parameter outside the defined arccos range. This definition is equivalent
+    to the root tmath version
+    """
+    if x < -1:
+        return np.pi
+    if x > 1:
+        return 0
+    return np.arccos(x)
+
+
 class ComptonCone:
     def __init__(self, e1, e2, x1, y1, z1, x2, y2, z2):
         self.theta = calculate_theta(e1, e2)
         self.axis = connect_points(TVector3(x1, y1, z1), TVector3(x2, y2, z2))
         self.apex = TVector3(x1, y1, z1)
-
-    # TODO: energy check
-    # TODO: angle check
-    # TODO: axis check
 
 
 def connect_points(vec1, vec2):
@@ -33,7 +42,7 @@ def connect_points(vec1, vec2):
 
 def calculate_theta(e1, e2):
     """
-    Calculate scattering angle theta in radiants.
+    Calculate scattering angle theta in radiant.
 
     Args:
          e1 (double): Initial gamma energy
@@ -42,8 +51,16 @@ def calculate_theta(e1, e2):
     kMe = 0.510999  # MeV/c^2
     costheta = 1.0 - kMe * (1.0 / e2 - 1.0 / (e1 + e2))
 
-    # TODO: reformat python numpy arcos function
-    theta = np.arccos(costheta)  # rad
+    # define physical exceptions
+    if e1 == 0.0 or e2 == 0.0:
+        return 0.0
+
+    if abs(costheta) > 1:
+        return 0.0
+
+    # theta returned wia root tmath::acos argument
+    theta = tmath_acos(costheta)  # rad
+
     return theta
 
 
@@ -55,16 +72,28 @@ def reconstruct_image(ary_e1, ary_e2, ary_x1, ary_y1, ary_z1, ary_x2, ary_y2, ar
 
     Summary of the algorithm:
     Source: https://bragg.if.uj.edu.pl/gccbwiki//images/0/0e/KR_20170222_CCandCarbonLine.pdf
-    Author: Katarzyna Rusiecka
 
     Vector of image pixel center ad cone apex will be calculated. If angle between vector
     and cone axis is equal to scattering angle theta, then pixel value will be increased. Else continue.
     Repeated for all pixels
+
+    Args:
+        ary_e1 (numpy array): energy electron
+        ary_e2 (numpy array): energy photon
+        ary_x1 (numpy array): x position of electron
+        ary_y1 (numpy array): y position of electron
+        ary_z1 (numpy array): z position of electron
+        ary_x2 (numpy array): x position of photon
+        ary_y2 (numpy array): y position of photon
+        ary_z2 (numpy array): z position of photon
+
+    Return:
+        ary_image: (nbinsy, nbinsz) dimensional array
     """
-    entries = len(ary_e1)
 
     # histogram settings (in this case a 2d-array)
     # detector dimensions are hardcoded at the moment!
+    entries = len(ary_e1)
     scatz = 60.0
     scaty = 30.0
     nbinsz = int(scatz)
@@ -74,6 +103,7 @@ def reconstruct_image(ary_e1, ary_e2, ary_x1, ary_y1, ary_z1, ary_x2, ary_y2, ar
     widthz = zlimit * 2 / nbinsz
     widthy = ylimit * 2 / nbinsy
 
+    # Quantities defining scatterer plane
     A = 1
     D = 150
 
@@ -81,9 +111,6 @@ def reconstruct_image(ary_e1, ary_e2, ary_x1, ary_y1, ary_z1, ary_x2, ary_y2, ar
     ary_image = np.zeros(shape=(nbinsz, nbinsy))
 
     for i in range(entries):
-        if ary_e1[i] == 0.0 or ary_e2[i] == 0.0:
-            continue
-
         # print("processing event " + str(i))
         cone = ComptonCone(ary_e1[i],
                            ary_e2[i],
@@ -93,6 +120,10 @@ def reconstruct_image(ary_e1, ary_e2, ary_x1, ary_y1, ary_z1, ary_x2, ary_y2, ar
                            ary_x2[i],
                            ary_y2[i],
                            ary_z2[i])
+
+        # grab exceptions from scattering angle
+        if cone.theta == 0.0:
+            continue
 
         for z in range(nbinsz):
             for y in range(nbinsy):
@@ -139,6 +170,7 @@ def plot_backprojection(image, figure_title, figure_name):
     plt.tight_layout()
     plt.savefig(figure_name + ".png")
 
+
 def plot_backprojection_stacked(image_0mm, image_5mm, figure_title, figure_name):
     # rotate original image by 90 degrees
     image_0mm = np.rot90(image_0mm)
@@ -174,4 +206,3 @@ def plot_backprojection_stacked(image_0mm, image_5mm, figure_title, figure_name)
 
     plt.tight_layout()
     plt.savefig(figure_name + ".png")
-
