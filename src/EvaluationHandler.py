@@ -153,6 +153,7 @@ def evaluate_classifier(NeuralNetwork, data_cluster, theta=0.5):
 
 
 def eval_regression_energy(NeuralNetwork, DataCluster):
+    from src import MLEMBackprojection
     # set regression
     DataCluster.update_targets_energy()
     DataCluster.update_indexing_positives()
@@ -161,6 +162,13 @@ def eval_regression_energy(NeuralNetwork, DataCluster):
     y_true = DataCluster.y_test()
 
     Plotter.plot_energy_error(y_pred, y_true, "error_regression_energy")
+
+    # predicting theta
+    y_true_theta = DataCluster.theta[DataCluster.idx_test()]
+    y_pred_theta = [MLEMBackprojection.calculate_theta(y_pred[i, 0], y_pred[i, 1]) for i in range(len(y_pred))]
+    y_pred_theta = np.array(y_pred_theta)
+
+    Plotter.plot_theta_error(y_pred_theta, y_true_theta, "error_regression_energy_theta")
 
 
 def eval_regression_position(NeuralNetwork, DataCluster):
@@ -173,6 +181,7 @@ def eval_regression_position(NeuralNetwork, DataCluster):
 
     Plotter.plot_position_error(y_pred, y_true, "error_regression_position")
 
+
 def eval_regression_theta(NeuralNetwork, DataCluster):
     # set regression
     DataCluster.update_targets_theta()
@@ -182,6 +191,7 @@ def eval_regression_theta(NeuralNetwork, DataCluster):
     y_true = DataCluster.y_test()
 
     Plotter.plot_theta_error(y_pred, y_true, "error_regression_theta")
+
 
 def eval_full(NeuralNetwork_clas,
               NeuralNetwork_regE,
@@ -448,4 +458,3 @@ def eval_full_mod(NeuralNetwork_clas,
     # predict energy and position of all positive events
     y_pred_energy = NeuralNetwork_regE.predict(DataCluster.features)
     y_pred_position = NeuralNetwork_regP.predict(DataCluster.features)
-
