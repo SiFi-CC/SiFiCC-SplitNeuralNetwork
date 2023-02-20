@@ -150,7 +150,7 @@ class RootParser:
 
     ####################################################################################################################
 
-    def export_npz_lookup(self, npz_filename, n=None):
+    def export_npz_lookup(self, npz_filename, n=None, is_s1ax=False):
         """generates compressed npz file containing MC-Truth data and Cut-based reco data.
 
         Args:
@@ -171,35 +171,51 @@ class RootParser:
 
         # Fill Meta-data, Monte-Carlo data and Cluster data into empty arrays
         # Cut-based reco data is not iterable since uproot can't handle the reco data stored in branches
+        counter = 0
         for i, event in enumerate(self.iterate_events(n=n)):
-            ary_meta[i, :] = [event.EventNumber,
-                              event.MCSimulatedEventType,
-                              event.is_ideal_compton * 1,
-                              event.Identified]
+            if is_s1ax:
+                idx_scatterer, idx_absorber = event.sort_clusters_by_module(use_energy=True)
+                if not len(idx_scatterer) == 1:
+                    continue
 
-            ary_mc[i, :] = [event.MCEnergy_e,
-                            event.MCEnergy_p,
-                            event.MCPosition_e_first.x,
-                            event.MCPosition_e_first.y,
-                            event.MCPosition_e_first.z,
-                            event.MCPosition_p_first.x,
-                            event.MCPosition_p_first.y,
-                            event.MCPosition_p_first.z,
-                            event.calculate_theta(event.MCEnergy_e, event.MCEnergy_p)]
+                if not len(idx_absorber) > 0:
+                    continue
+
+            ary_meta[counter, :] = [event.EventNumber,
+                                    event.MCSimulatedEventType,
+                                    event.is_ideal_compton * 1,
+                                    event.Identified]
+
+            ary_mc[counter, :] = [event.MCEnergy_e,
+                                  event.MCEnergy_p,
+                                  event.MCPosition_e_first.x,
+                                  event.MCPosition_e_first.y,
+                                  event.MCPosition_e_first.z,
+                                  event.MCPosition_p_first.x,
+                                  event.MCPosition_p_first.y,
+                                  event.MCPosition_p_first.z,
+                                  event.calculate_theta(event.MCEnergy_e, event.MCEnergy_p)]
 
             e1, _ = event.get_electron_energy()
             e2, _ = event.get_photon_energy()
             p1, _ = event.get_electron_position()
             p2, _ = event.get_photon_position()
-            ary_cb[i, :] = [e1,
-                            e2,
-                            p1.x,
-                            p1.y,
-                            p1.z,
-                            p2.x,
-                            p2.y,
-                            p2.z,
-                            event.calculate_theta(e1, e2)]
+            ary_cb[counter, :] = [e1,
+                                  e2,
+                                  p1.x,
+                                  p1.y,
+                                  p1.z,
+                                  p2.x,
+                                  p2.y,
+                                  p2.z,
+                                  event.calculate_theta(e1, e2)]
+
+            counter += 1
+
+        # resize arrays
+        ary_meta = ary_meta[:counter, :]
+        ary_mc = ary_mc[:counter, :]
+        ary_cb = ary_cb[:counter, :]
 
         # export dataframe to compressed .npz
         with open(npz_filename, 'wb') as file:
