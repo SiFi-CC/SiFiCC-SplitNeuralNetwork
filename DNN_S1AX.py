@@ -27,25 +27,25 @@ from src import EvaluationHandler
 
 # define file settings
 # Root files are purely optimal and are left as legacy settings
-ROOT_FILE_BP0mm = "OptimisedGeometry_BP0mm_2e10protons_withTimestamps.root"
-ROOT_FILE_BP5mm = "OptimisedGeometry_BP5mm_4e9protons_withTimestamps.root"
+ROOT_FILE_BP0mm = "OptimisedGeometry_BP0mm_2e10protons.root"
+ROOT_FILE_BP5mm = "OptimisedGeometry_BP5mm_4e9protons.root"
 # Training file
-NPZ_FILE_TRAIN = "OptimizedGeometry_Mixed_DNN_Base.npz"
+NPZ_FILE_TRAIN = "OptimizedGeometry_Mixed_DNN_S1AX.npz"
 # NPZ_FILE_TRAIN = "OptimisedGeometry_BP0mm_2e10protons_DNN_S1AX.npz"
 # Evaluation file (can be list)
-NPZ_FILE_EVAL = ["OptimisedGeometry_BP0mm_2e10protons_withTimestamps_DNN_Base.npz",
-                 "OptimisedGeometry_BP5mm_4e9protons_withTimestamps_DNN_Base.npz"]
+NPZ_FILE_EVAL = ["OptimisedGeometry_BP0mm_2e10protons_withTimestamps_DNN_S1AX.npz",
+                 "OptimisedGeometry_BP5mm_4e9protons_withTimestamps_DNN_S1AX.npz"]
 
 # GLOBAL SETTINGS
-RUN_NAME = "DNN_Base"
-RUN_TAG = "Baseline"
+RUN_NAME = "DNN_S1AX"
+RUN_TAG = "emod"
 
 epochs = 200
 
 train_clas = False
-train_regE = True
+train_regE = False
 train_regP = False
-# mlemexport = False
+mlemexport = False
 
 # define directory paths
 dir_main = os.getcwd()
@@ -135,24 +135,22 @@ for i in range(len(NPZ_FILE_EVAL)):
     # npz wrapper
 
     data_cluster = NPZParser.wrapper(dir_npz + NPZ_FILE_EVAL[i],
-                                     set_testall=True,
+                                     set_testall=False,
                                      standardize=True)
-    """
+
     EvaluationHandler.evaluate_classifier(neuralnetwork_clas,
                                           data_cluster=data_cluster)
-    """
-    EvaluationHandler.eval_regression_energy(neuralnetwork_regE, DataCluster=data_cluster)
 
-    # EvaluationHandler.eval_regression_position(neuralnetwork_regP, DataCluster=data_cluster)
+    EvaluationHandler.eval_regression_energy(neuralnetwork_regE, DataCluster=data_cluster)
+    EvaluationHandler.eval_regression_position(neuralnetwork_regP, DataCluster=data_cluster)
 
     data_cluster = NPZParser.wrapper(dir_npz + NPZ_FILE_EVAL[i],
                                      set_testall=False,
                                      standardize=True)
-    """
+    
     EvaluationHandler.eval_full(neuralnetwork_clas,
                                 neuralnetwork_regE,
                                 neuralnetwork_regP,
                                 DataCluster=data_cluster,
-                                theta=0.5,
+                                theta=0.3,
                                 file_name=NPZ_FILE_EVAL[i][:-4])
-    """
