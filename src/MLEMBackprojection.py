@@ -17,10 +17,15 @@ def tmath_acos(x):
 
 
 class ComptonCone:
-    def __init__(self, e1, e2, x1, y1, z1, x2, y2, z2):
-        self.theta = calculate_theta(e1, e2)
+    def __init__(self, e1, e2, x1, y1, z1, x2, y2, z2, theta=None):
+        # constructing cone positions
         self.axis = connect_points(TVector3(x1, y1, z1), TVector3(x2, y2, z2))
         self.apex = TVector3(x1, y1, z1)
+        # constructing cone angle
+        if theta is None:
+            self.theta = calculate_theta(e1, e2)
+        else:
+            self.theta = theta
 
 
 def connect_points(vec1, vec2):
@@ -64,7 +69,7 @@ def calculate_theta(e1, e2):
     return theta
 
 
-def reconstruct_image(ary_e1, ary_e2, ary_x1, ary_y1, ary_z1, ary_x2, ary_y2, ary_z2):
+def reconstruct_image(ary_e1, ary_e2, ary_x1, ary_y1, ary_z1, ary_x2, ary_y2, ary_z2, ary_theta=None):
     """
     Method for image reconstruction. 2D histogram will be set as final image.
     Reconstructed image cone will be checked for intersection with image pixels
@@ -78,15 +83,16 @@ def reconstruct_image(ary_e1, ary_e2, ary_x1, ary_y1, ary_z1, ary_x2, ary_y2, ar
     Repeated for all pixels
 
     Args:
-        ary_e1 (numpy array): energy electron
-        ary_e2 (numpy array): energy photon
-        ary_x1 (numpy array): x position of electron
-        ary_y1 (numpy array): y position of electron
-        ary_z1 (numpy array): z position of electron
-        ary_x2 (numpy array): x position of photon
-        ary_y2 (numpy array): y position of photon
-        ary_z2 (numpy array): z position of photon
-
+        ary_e1      (numpy array): energy electron
+        ary_e2      (numpy array): energy photon
+        ary_x1      (numpy array): x position of electron
+        ary_y1      (numpy array): y position of electron
+        ary_z1      (numpy array): z position of electron
+        ary_x2      (numpy array): x position of photon
+        ary_y2      (numpy array): y position of photon
+        ary_z2      (numpy array): z position of photon
+        ary_theta   (numpy array): theta angle of compton scattering. If given, overrides energy ary parameters
+                                   for cone class
     Return:
         ary_image: (nbinsy, nbinsz) dimensional array
     """
@@ -111,15 +117,17 @@ def reconstruct_image(ary_e1, ary_e2, ary_x1, ary_y1, ary_z1, ary_x2, ary_y2, ar
     ary_image = np.zeros(shape=(nbinsz, nbinsy))
 
     for i in range(entries):
-        # print("processing event " + str(i))
-        cone = ComptonCone(ary_e1[i],
-                           ary_e2[i],
-                           ary_x1[i],
-                           ary_y1[i],
-                           ary_z1[i],
-                           ary_x2[i],
-                           ary_y2[i],
-                           ary_z2[i])
+        # crete cone object based on theta parameter
+        if ary_theta is None:
+            cone = ComptonCone(ary_e1[i], ary_e2[i],
+                               ary_x1[i], ary_y1[i], ary_z1[i],
+                               ary_x2[i], ary_y2[i], ary_z2[i],
+                               theta=None)
+        else:
+            cone = ComptonCone(ary_e1[i], ary_e2[i],
+                               ary_x1[i], ary_y1[i], ary_z1[i],
+                               ary_x2[i], ary_y2[i], ary_z2[i],
+                               theta=ary_theta[i])
 
         # grab exceptions from scattering angle
         if cone.theta == 0.0:
@@ -139,6 +147,7 @@ def reconstruct_image(ary_e1, ary_e2, ary_x1, ary_y1, ary_z1, ary_x2, ary_y2, ar
     return ary_image
 
 
+# TODO: Summarize this and stacked plot
 def plot_backprojection(image, figure_title, figure_name):
     # rotate original image by 90 degrees
     image = np.rot90(image)

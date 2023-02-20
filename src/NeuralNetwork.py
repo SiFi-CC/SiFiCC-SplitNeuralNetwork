@@ -2,6 +2,7 @@ import pickle as pkl
 from tensorflow import keras
 import keras.callbacks
 
+
 def lr_scheduler(epoch):
     if epoch < 100:
         return 1e-3
