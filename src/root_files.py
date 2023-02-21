@@ -9,3 +9,4 @@ OptimisedGeometry_BP0mm_2e10protons_offline = "/root_files/OptimisedGeometry_BP0
 OptimisedGeometry_BP5mm_4e9protons_offline = "/root_files/OptimisedGeometry_BP5mm_4e9protons.root"
 OptimisedGeometry_BP0mm_2e10protons_withTimestamps_offline = "/root_files/OptimisedGeometry_BP0mm_2e10protons_withTimestamps.root"
 OptimisedGeometry_BP5mm_4e9protons_withTimestamps_offline = "/root_files/OptimisedGeometry_BP5mm_4e9protons_withTimestamps.root"
+OptimisedGeometry_Continuous_2e10protons_withTimestamps_offline = "/root_files/OptimisedGeometry_Continuous_2e10protons.root"
