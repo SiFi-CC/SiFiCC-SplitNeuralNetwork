@@ -152,7 +152,7 @@ def evaluate_classifier(NeuralNetwork, data_cluster, theta=0.5):
     """
 
 
-def eval_regression_energy(NeuralNetwork, DataCluster):
+def eval_regression_energy(NeuralNetwork, DataCluster, lookup_file):
     from src import MLEMBackprojection
     # set regression
     DataCluster.update_targets_energy()
@@ -161,15 +161,19 @@ def eval_regression_energy(NeuralNetwork, DataCluster):
     y_pred = NeuralNetwork.predict(DataCluster.x_test())
     y_true = DataCluster.y_test()
 
+    # energy regression
     Plotter.plot_energy_error(y_pred, y_true, "error_regression_energy")
 
     # predicting theta
     y_true_theta = DataCluster.theta[DataCluster.idx_test()]
     y_pred_theta = [MLEMBackprojection.calculate_theta(y_pred[i, 0], y_pred[i, 1]) for i in range(len(y_pred))]
     y_pred_theta = np.array(y_pred_theta)
-
     Plotter.plot_theta_error(y_pred_theta, y_true_theta, "error_regression_energy_theta")
 
+    # compare neural network results with cut-based approach
+    npz_lookup = np.load(lookup_file)
+    ary_cb_reco = npz_lookup["CB_RECO"]
+    idx_pos = DataCluster.targets_clas
 
 def eval_regression_position(NeuralNetwork, DataCluster):
     # set regression
