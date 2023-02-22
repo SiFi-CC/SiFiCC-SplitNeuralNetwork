@@ -45,8 +45,8 @@ def plot_history_classifier(nn_classifier, figure_name):
 
     eff = nn_classifier.history["precision"]
     val_eff = nn_classifier.history["val_precision"]
-    pur = nn_classifier.history["purity"]
-    val_pur = nn_classifier.history["val_purity"]
+    pur = nn_classifier.history["recall"]
+    val_pur = nn_classifier.history["val_recall"]
 
     fig = plt.figure()
     ax1 = fig.add_subplot(211)

@@ -1,6 +1,5 @@
 import pickle as pkl
 from tensorflow import keras
-import keras.callbacks
 
 
 def lr_scheduler(epoch):
