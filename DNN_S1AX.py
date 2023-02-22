@@ -30,7 +30,7 @@ from src import EvaluationHandler
 ROOT_FILE_BP0mm = "OptimisedGeometry_BP0mm_2e10protons.root"
 ROOT_FILE_BP5mm = "OptimisedGeometry_BP5mm_4e9protons.root"
 # Training file
-NPZ_FILE_TRAIN = "OptimizedGeometry_Mixed_DNN_S1AX.npz"
+NPZ_FILE_TRAIN = "OptimizedGeometry_Continuous_DNN_S1AX.npz"
 # NPZ_FILE_TRAIN = "OptimisedGeometry_BP0mm_2e10protons_DNN_S1AX.npz"
 # Evaluation file (can be list)
 NPZ_FILE_EVAL = ["OptimisedGeometry_BP0mm_2e10protons_withTimestamps_DNN_S1AX.npz",
@@ -38,11 +38,11 @@ NPZ_FILE_EVAL = ["OptimisedGeometry_BP0mm_2e10protons_withTimestamps_DNN_S1AX.np
 
 # GLOBAL SETTINGS
 RUN_NAME = "DNN_S1AX"
-RUN_TAG = "emod"
+RUN_TAG = "continuous"
 
-epochs = 200
+epochs = 10
 
-train_clas = False
+train_clas = True
 train_regE = False
 train_regP = False
 mlemexport = False
@@ -103,7 +103,7 @@ if train_clas:
                                epochs=epochs)
 else:
     neuralnetwork_clas.load()
-
+"""
 # generate DataCluster object from npz file
 data_cluster = NPZParser.wrapper(dir_npz + NPZ_FILE_TRAIN,
                                  standardize=True,
@@ -125,7 +125,7 @@ if train_regP:
                                epochs=epochs)
 else:
     neuralnetwork_regP.load()
-
+"""
 ########################################################################################################################
 # Evaluation schedule
 ########################################################################################################################
@@ -140,7 +140,7 @@ for i in range(len(NPZ_FILE_EVAL)):
 
     EvaluationHandler.evaluate_classifier(neuralnetwork_clas,
                                           data_cluster=data_cluster)
-
+    """
     EvaluationHandler.eval_regression_energy(neuralnetwork_regE, DataCluster=data_cluster)
     EvaluationHandler.eval_regression_position(neuralnetwork_regP, DataCluster=data_cluster)
 
@@ -154,3 +154,4 @@ for i in range(len(NPZ_FILE_EVAL)):
                                 DataCluster=data_cluster,
                                 theta=0.3,
                                 file_name=NPZ_FILE_EVAL[i][:-4])
+    """
