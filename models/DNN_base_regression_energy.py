@@ -48,5 +48,5 @@ def return_model(input_dim):
     model.add(tf.keras.layers.Dense(32, activation="relu"))
     model.add(tf.keras.layers.Dropout(0.1))
     model.add(tf.keras.layers.Dense(2, activation="linear"))
-    model.compile(loss=loss_energy_asym, optimizer="Adam", metrics=["mean_absolute_error"])
+    model.compile(loss="mean_absolute_error", optimizer="Adam", metrics=["mean_absolute_error"])
     return model
