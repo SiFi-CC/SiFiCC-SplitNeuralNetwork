@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from uproot_methods import TVector3
+from src import CBSelector
 
 
 def tmath_acos(x):
@@ -69,7 +70,9 @@ def calculate_theta(e1, e2):
     return theta
 
 
-def reconstruct_image(ary_e1, ary_e2, ary_x1, ary_y1, ary_z1, ary_x2, ary_y2, ary_z2, ary_theta=None):
+def reconstruct_image(ary_e1, ary_e2, ary_x1, ary_y1, ary_z1, ary_x2, ary_y2, ary_z2,
+                      ary_theta=None,
+                      apply_filter=False):
     """
     Method for image reconstruction. 2D histogram will be set as final image.
     Reconstructed image cone will be checked for intersection with image pixels
@@ -93,6 +96,7 @@ def reconstruct_image(ary_e1, ary_e2, ary_x1, ary_y1, ary_z1, ary_x2, ary_y2, ar
         ary_z2      (numpy array): z position of photon
         ary_theta   (numpy array): theta angle of compton scattering. If given, overrides energy ary parameters
                                    for cone class
+        apply_filter    (Boolean): If true, events are filtered by compton kinematics and DAC filter
     Return:
         ary_image: (nbinsy, nbinsz) dimensional array
     """
@@ -117,7 +121,16 @@ def reconstruct_image(ary_e1, ary_e2, ary_x1, ary_y1, ary_z1, ary_x2, ary_y2, ar
     ary_image = np.zeros(shape=(nbinsz, nbinsy))
 
     for i in range(entries):
-        # crete cone object based on theta parameter
+        if apply_filter:
+            if not CBSelector.check_compton_arc(ary_e1[i], ary_e2[i]):
+                continue
+            if not CBSelector.check_compton_kinematics(ary_e1[i], ary_e2[i]):
+                continue
+            if not CBSelector.beam_origin(ary_e1[i], ary_e2[i], ary_x1[i], ary_y1[i], ary_z1[i], ary_x2[i], ary_y2[i],
+                                          ary_z2[i], beam_diff=20, inverse=False):
+                continue
+
+        # create cone object based on theta parameter
         if ary_theta is None:
             cone = ComptonCone(ary_e1[i], ary_e2[i],
                                ary_x1[i], ary_y1[i], ary_z1[i],
