@@ -31,10 +31,12 @@ ROOT_FILE_BP0mm = "OptimisedGeometry_BP0mm_2e10protons.root"
 ROOT_FILE_BP5mm = "OptimisedGeometry_BP5mm_4e9protons.root"
 # Training file
 NPZ_FILE_TRAIN = "OptimizedGeometry_Continuous_DNN_S1AX.npz"
-# NPZ_FILE_TRAIN = "OptimisedGeometry_BP0mm_2e10protons_DNN_S1AX.npz"
 # Evaluation file (can be list)
-NPZ_FILE_EVAL = ["OptimisedGeometry_BP0mm_2e10protons_withTimestamps_DNN_S1AX.npz",
-                 "OptimisedGeometry_BP5mm_4e9protons_withTimestamps_DNN_S1AX.npz"]
+NPZ_FILE_EVAL_0MM = "OptimisedGeometry_BP0mm_2e10protons_withTimestamps_DNN_S1AX.npz"
+NPZ_FILE_EVAL_5MM = "OptimisedGeometry_BP5mm_4e9protons_withTimestamps_DNN_S1AX.npz"
+
+NPZ_LOOKUP_0MM = "OptimisedGeometry_BP0mm_2e10protons_withTimestamps_S1AX_lookup.npz"
+NPZ_LOOKUP_5MM = "OptimisedGeometry_BP5mm_4e9protons_withTimestamps_S1AX_lookup.npz"
 
 # GLOBAL SETTINGS
 RUN_NAME = "DNN_S1AX"
@@ -42,9 +44,13 @@ RUN_TAG = "continuous"
 
 epochs = 10
 
-train_clas = True
-train_regE = False
-train_regP = False
+train_clas = False
+train_regE = True
+train_regP = True
+eval_clas = False
+eval_regE = False
+eval_regP = False
+
 mlemexport = False
 
 # define directory paths
@@ -57,9 +63,9 @@ dir_results = dir_main + "/results/"
 if not os.path.isdir(dir_results + RUN_NAME + "_" + RUN_TAG + "/"):
     os.mkdir(dir_results + RUN_NAME + "_" + RUN_TAG + "/")
 
-for i in range(len(NPZ_FILE_EVAL)):
-    if not os.path.isdir(dir_results + RUN_NAME + "_" + RUN_TAG + "/" + NPZ_FILE_EVAL[i][:-4] + "/"):
-        os.mkdir(dir_results + RUN_NAME + "_" + RUN_TAG + "/" + NPZ_FILE_EVAL[i][:-4] + "/")
+for file in [NPZ_FILE_EVAL_0MM, NPZ_FILE_EVAL_5MM]:
+    if not os.path.isdir(dir_results + RUN_NAME + "_" + RUN_TAG + "/" + file[:-4] + "/"):
+        os.mkdir(dir_results + RUN_NAME + "_" + RUN_TAG + "/" + file[:-4] + "/")
 
 ########################################################################################################################
 # Training schedule
@@ -101,9 +107,9 @@ if train_clas:
                                data_cluster,
                                verbose=1,
                                epochs=epochs)
-else:
+if eval_clas:
     neuralnetwork_clas.load()
-"""
+
 # generate DataCluster object from npz file
 data_cluster = NPZParser.wrapper(dir_npz + NPZ_FILE_TRAIN,
                                  standardize=True,
@@ -115,7 +121,7 @@ if train_regE:
                                data_cluster,
                                verbose=1,
                                epochs=epochs)
-else:
+if eval_regE:
     neuralnetwork_regE.load()
 
 if train_regP:
@@ -123,31 +129,39 @@ if train_regP:
                                data_cluster,
                                verbose=1,
                                epochs=epochs)
-else:
+if eval_regP:
     neuralnetwork_regP.load()
-"""
+
 ########################################################################################################################
 # Evaluation schedule
 ########################################################################################################################
 
-for i in range(len(NPZ_FILE_EVAL)):
-    os.chdir(dir_results + RUN_NAME + "_" + RUN_TAG + "/" + NPZ_FILE_EVAL[i][:-4] + "/")
+for file in [NPZ_FILE_EVAL_0MM, NPZ_FILE_EVAL_5MM]:
+    os.chdir(dir_results + RUN_NAME + "_" + RUN_TAG + "/" + file[:-4] + "/")
     # npz wrapper
 
-    data_cluster = NPZParser.wrapper(dir_npz + NPZ_FILE_EVAL[i],
-                                     set_testall=False,
-                                     standardize=True)
+    if train_clas or eval_clas:
+        data_cluster = NPZParser.wrapper(dir_npz + file,
+                                         set_testall=False,
+                                         standardize=True)
+        EvaluationHandler.evaluate_classifier(neuralnetwork_clas,
+                                              data_cluster=data_cluster)
+    if train_regE or eval_regE:
+        data_cluster = NPZParser.wrapper(dir_npz + file,
+                                         set_testall=False,
+                                         standardize=True)
+        EvaluationHandler.eval_regression_energy(neuralnetwork_regE, DataCluster=data_cluster)
 
-    EvaluationHandler.evaluate_classifier(neuralnetwork_clas,
-                                          data_cluster=data_cluster)
+    if train_regP or eval_regP:
+        data_cluster = NPZParser.wrapper(dir_npz + file,
+                                         set_testall=False,
+                                         standardize=True)
+        EvaluationHandler.eval_regression_position(neuralnetwork_regP, DataCluster=data_cluster)
     """
-    EvaluationHandler.eval_regression_energy(neuralnetwork_regE, DataCluster=data_cluster)
-    EvaluationHandler.eval_regression_position(neuralnetwork_regP, DataCluster=data_cluster)
-
-    data_cluster = NPZParser.wrapper(dir_npz + NPZ_FILE_EVAL[i],
+    data_cluster = NPZParser.wrapper(dir_npz + file,
                                      set_testall=False,
                                      standardize=True)
-    
+
     EvaluationHandler.eval_full(neuralnetwork_clas,
                                 neuralnetwork_regE,
                                 neuralnetwork_regP,
