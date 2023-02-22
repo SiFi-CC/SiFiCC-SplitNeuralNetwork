@@ -25,6 +25,6 @@ def return_model(input_dim):
     model.add(tf.keras.layers.Dropout(0.1))
     model.add(tf.keras.layers.Dense(1, activation="sigmoid"))
     # compile model with loss function, optimizer and accuracy
-    model.compile(loss="binary_crossentropy", optimizer="SGD", metrics=["accuracy"])
+    model.compile(loss="binary_crossentropy", optimizer="SGD", metrics=["precision", "recall"])
     # return model
     return model

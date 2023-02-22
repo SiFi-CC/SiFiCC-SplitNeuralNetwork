@@ -40,21 +40,28 @@ def plot_history_classifier(nn_classifier, figure_name):
     # plot model performance
     loss = nn_classifier.history['loss']
     val_loss = nn_classifier.history['val_loss']
-    mse = nn_classifier.history["accuracy"]
-    val_mse = nn_classifier.history["val_accuracy"]
+    # mse = nn_classifier.history["accuracy"]
+    # val_mse = nn_classifier.history["val_accuracy"]
+
+    eff = nn_classifier.history["precision"]
+    val_eff = nn_classifier.history["val_precision"]
+    pur = nn_classifier.history["purity"]
+    val_pur = nn_classifier.history["val_purity"]
 
     fig = plt.figure()
     ax1 = fig.add_subplot(211)
     ax2 = fig.add_subplot(212)
 
-    ax1.plot(mse, label="Training", linestyle='--', color="blue")
-    ax1.plot(val_mse, label="Validation", linestyle='-', color="red")
-    ax1.set_ylabel("Accuracy")
+    ax1.plot(eff, label="Efficiency", linestyle='-', color="red")
+    ax1.plot(val_eff, label="Validation", linestyle='--', color="red")
+    ax1.plot(pur, label="Purity", linestyle="-", color="green")
+    ax1.plot(val_pur, label="Validation", linestyle="--", color="green")
+    ax1.set_ylabel("%")
     ax1.legend()
     ax1.grid()
 
-    ax2.plot(loss, label="Training", linestyle='--', color="blue")
-    ax2.plot(val_loss, label="Validation", linestyle='-', color="red")
+    ax2.plot(loss, label="Training", linestyle='-', color="blue")
+    ax2.plot(val_loss, label="Validation", linestyle='--', color="orange")
     ax2.set_xlabel("epoch")
     ax2.set_ylabel("loss")
     ax2.legend()
