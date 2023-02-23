@@ -610,13 +610,13 @@ def plot_reg_nn_vs_cb_position(ary_p_nn,
             bins_p = np.arange(150.0 - 20.8 / 2.0, 150.0 + 20.8 / 2.0, 0.1)
         if particle == "photon":
             bins_p = np.arange(270.0 - 46.8 / 2.0, 270.0 + 46.8 / 2.0, 0.1)
-        bins_err = np.arange(-2.0, 2.0, 0.1)
+        bins_err = np.arange(-2.0, 2.0, 0.01)
     if axis == "y":
         bins_p = np.arange(-50.0, 50.0, 0.1)
-        bins_err = np.arange(-60.0, 60.0, 0.5)
+        bins_err = np.arange(-60.0, 60.0, 0.05)
     if axis == "z":
         bins_p = np.arange(-50.0, 50.0, 0.1)
-        bins_err = np.arange(-2.0, 2.0, 0.1)
+        bins_err = np.arange(-2.0, 2.0, 0.01)
 
     fig, axs = plt.subplots(1, 2, figsize=(10, 6))
     axs[0].set_title("Distribution {} position {}".format(particle, axis))
