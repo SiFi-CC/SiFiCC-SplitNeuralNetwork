@@ -544,7 +544,17 @@ def plot_sourceposition_heatmap(ary_sp_z, ary_sp_y, figure_name):
 # ----------------------------------------------------------------------------------------------------------------------
 # Regression and Cut-Based approach comparison plots
 
-def plot_reg_vs_cb_energy(ary_e_nn, ary_e_cb, ary_e_mc, ary_e_nn_err, ary_e_cb_err, figure_name):
+def plot_reg_vs_cb_energy(ary_e_nn,
+                          ary_e_cb,
+                          ary_e_mc,
+                          ary_p_nn,
+                          ary_p_cb,
+                          ary_p_mc,
+                          ary_e_nn_err,
+                          ary_e_cb_err,
+                          ary_p_nn_err,
+                          ary_p_cb_err,
+                          figure_name):
     # electron energy plot
     bins_err = np.arange(-2.0, 2.0, 0.01)
     bins_e = np.arange(0.0, 6.0, 0.01)
@@ -553,15 +563,15 @@ def plot_reg_vs_cb_energy(ary_e_nn, ary_e_cb, ary_e_mc, ary_e_nn_err, ary_e_cb_e
     axs[0].set_title("Distribution electron energy")
     axs[0].set_xlabel("Electron Energy [MeV]")
     axs[0].set_ylabel("Counts ")
-    axs[0].hist(ary_e_nn[:, 0], bins=bins_e, histtype=u"step", color="blue", label="NeuralNetwork")
-    axs[0].hist(ary_e_cb[:, 0], bins=bins_e, histtype=u"step", color="black", label="Cut-Based")
-    axs[0].hist(ary_e_mc[:, 0], bins=bins_e, histtype=u"step", linestyle="--", color="red", label="Monte Carlo")
+    axs[0].hist(ary_e_nn, bins=bins_e, histtype=u"step", color="blue", label="NeuralNetwork")
+    axs[0].hist(ary_e_cb, bins=bins_e, histtype=u"step", color="black", label="Cut-Based")
+    axs[0].hist(ary_e_mc, bins=bins_e, histtype=u"step", linestyle="--", color="red", label="Monte Carlo")
     axs[0].legend()
     axs[1].set_title("Error energy electron")
     axs[1].set_xlabel(r"$E^{pred}-E^{true}$")
     axs[1].set_ylabel("counts")
-    axs[1].hist(ary_e_nn_err[:, 0], bins=bins_err, histtype=u"step", color="blue", label="NeuralNetwork")
-    axs[1].hist(ary_e_cb_err[:, 0], bins=bins_err, histtype=u"step", color="black", label="Cut-Based")
+    axs[1].hist(ary_e_nn_err, bins=bins_err, histtype=u"step", color="blue", label="NeuralNetwork")
+    axs[1].hist(ary_e_cb_err, bins=bins_err, histtype=u"step", color="black", label="Cut-Based")
     axs[1].legend()
     plt.tight_layout()
     plt.savefig(figure_name + "_electron.png")
@@ -571,15 +581,15 @@ def plot_reg_vs_cb_energy(ary_e_nn, ary_e_cb, ary_e_mc, ary_e_nn_err, ary_e_cb_e
     axs[0].set_title("Distribution photon energy")
     axs[0].set_xlabel("Photon Energy [MeV]")
     axs[0].set_ylabel("Counts ")
-    axs[0].hist(ary_e_nn[:, 1], bins=bins_e, histtype=u"step", color="blue", label="NeuralNetwork")
-    axs[0].hist(ary_e_cb[:, 1], bins=bins_e, histtype=u"step", color="black", label="Cut-Based")
-    axs[0].hist(ary_e_mc[:, 1], bins=bins_e, histtype=u"step", linestyle="--", color="red", label="Monte Carlo")
+    axs[0].hist(ary_p_nn, bins=bins_e, histtype=u"step", color="blue", label="NeuralNetwork")
+    axs[0].hist(ary_p_cb, bins=bins_e, histtype=u"step", color="black", label="Cut-Based")
+    axs[0].hist(ary_p_mc, bins=bins_e, histtype=u"step", linestyle="--", color="red", label="Monte Carlo")
     axs[0].legend()
     axs[1].set_title("Error energy photon")
     axs[1].set_xlabel(r"$E^{pred}-E^{true}$")
     axs[1].set_ylabel("counts")
-    axs[1].hist(ary_e_nn_err[:, 1], bins=bins_err, histtype=u"step", color="blue", label="NeuralNetwork")
-    axs[1].hist(ary_e_cb_err[:, 1], bins=bins_err, histtype=u"step", color="black", label="Cut-Based")
+    axs[1].hist(ary_p_nn_err, bins=bins_err, histtype=u"step", color="blue", label="NeuralNetwork")
+    axs[1].hist(ary_p_cb_err, bins=bins_err, histtype=u"step", color="black", label="Cut-Based")
     axs[1].legend()
     plt.tight_layout()
     plt.savefig(figure_name + "_photon.png")
