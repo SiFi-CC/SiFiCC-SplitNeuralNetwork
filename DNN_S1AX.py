@@ -46,8 +46,8 @@ RUN_TAG = "continuous"
 epochs = 10
 
 train_clas = False
-train_regE = True
-train_regP = True
+train_regE = False
+train_regP = False
 eval_clas = False
 eval_regE = False
 eval_regP = False
