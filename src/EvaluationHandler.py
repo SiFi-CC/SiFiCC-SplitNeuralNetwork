@@ -4,6 +4,7 @@ from src import fastROCAUC
 from src import Plotter
 from src import SaliencyMap
 from src import Metrics
+from src import NNAnalysis
 from src.MLEMBackprojection import calculate_theta
 
 
@@ -170,10 +171,6 @@ def eval_regression_energy(NeuralNetwork, DataCluster, lookup_file):
     y_pred_theta = np.array(y_pred_theta)
     Plotter.plot_theta_error(y_pred_theta, y_true_theta, "error_regression_energy_theta")
 
-    # compare neural network results with cut-based approach
-    npz_lookup = np.load(lookup_file)
-    ary_cb_reco = npz_lookup["CB_RECO"]
-    idx_pos = DataCluster.targets_clas
 
 def eval_regression_position(NeuralNetwork, DataCluster):
     # set regression
@@ -201,29 +198,31 @@ def eval_full(NeuralNetwork_clas,
               NeuralNetwork_regE,
               NeuralNetwork_regP,
               DataCluster,
+              lookup_file,
               file_name="",
+              mlem_export=False,
               theta=0.5):
+    # load lookup file for monte carlo truth and cut-based reconstruction
+    npz_lookup = np.load(lookup_file)
+    ary_mc_truth = npz_lookup["MC_TRUTH"]
+    ary_cb_reco = npz_lookup["CB_RECO"]
+    ary_meta = npz_lookup["META"]
+
     # grab all positive identified events by the neural network
     y_scores = NeuralNetwork_clas.predict(DataCluster.features)
     # This is done this way cause y_scores gets a really dumb shape from tensorflow
     idx_clas_pos = [float(y_scores[i]) > theta for i in range(len(y_scores))]
 
-    # predict energy and position of all positive events
-    y_pred_energy = NeuralNetwork_regE.predict(DataCluster.features)
-    y_pred_position = NeuralNetwork_regP.predict(DataCluster.features)
+    # create an array containing full neural network prediction
+    ary_nn_pred = np.zeros(shape=(DataCluster.entries, 9))
+    ary_nn_pred[:, 0] = np.reshape(y_scores, newshape=(len(y_scores), 1))
+    ary_nn_pred[:, 1:3] = NeuralNetwork_regE.predict(DataCluster.features)
+    ary_nn_pred[:, 3:] = NeuralNetwork_regP.predict(DataCluster.features)
+
+    # plot regression neural network vs cut-based approach
+    NNAnalysis.regression_nn_vs_cb(ary_nn_pred, ary_cb_reco, ary_mc_truth, ary_meta)
 
     """
-    # update energy prediction:
-    # - neural network is not allowed to predict higher energies
-    #   than the Cut-Based approach
-    for i in range(y_pred_energy.shape[0]):
-        if y_pred_energy[i, 0] > DataCluster.meta[i, 4]:
-            y_pred_energy[i, 0] = DataCluster.meta[i, 4]
-
-        if y_pred_energy[i, 1] > DataCluster.meta[i, 5]:
-            y_pred_energy[i, 1] = DataCluster.meta[i, 5]
-    """
-
     # plotting score distribution vs neural network error
     idx_clas_tp = []
     for i in range(len(y_scores)):
@@ -237,7 +236,7 @@ def eval_full(NeuralNetwork_clas,
     Plotter.plot_2dhist_score_regE_error(y_scores[idx_clas_tp],
                                          y_pred_energy[idx_clas_tp, 1] - DataCluster.targets_reg1[idx_clas_tp, 1],
                                          "hist2d_score_error_energy_p")
-    """
+    
     # plot angle distribution for different subsets
     list_angle_pos = []
     list_angle_inpeak = []
@@ -298,7 +297,7 @@ def eval_full(NeuralNetwork_clas,
             list_sp_y.append(0)
             list_sp_z.append(DataCluster.meta[i, 2])
     Plotter.plot_sourceposition_heatmap(list_sp_z, list_sp_y, "heatmap_sourcepos")
-    """
+    
 
     # collect full prediction and true values of test dataset
     y_pred_class = (y_scores[idx_clas_pos] > theta) * 1
@@ -315,23 +314,25 @@ def eval_full(NeuralNetwork_clas,
                                                    y_true_clas,
                                                    y_true_energy,
                                                    y_true_position)
-
+    
     print("# Full evaluation statistics: ")
     print("Efficiency: {:.1f}".format(efficiency * 100))
     print("Purity: {:.1f}".format(purity * 100))
+    
 
-    from src import MLEMExport
-    MLEMExport.export_mlem(ary_e=y_pred_energy[:, 0],
-                           ary_p=y_pred_energy[:, 1],
-                           ary_ex=y_pred_position[:, 0],
-                           ary_ey=y_pred_position[:, 1],
-                           ary_ez=y_pred_position[:, 2],
-                           ary_px=y_pred_position[:, 3],
-                           ary_py=y_pred_position[:, 4],
-                           ary_pz=y_pred_position[:, 5],
-                           filename=file_name,
-                           verbose=1)
-
+    if mlem_export:
+        from src import MLEMExport
+        MLEMExport.export_mlem(ary_e=y_pred_energy[:, 0],
+                               ary_p=y_pred_energy[:, 1],
+                               ary_ex=y_pred_position[:, 0],
+                               ary_ey=y_pred_position[:, 1],
+                               ary_ez=y_pred_position[:, 2],
+                               ary_px=y_pred_position[:, 3],
+                               ary_py=y_pred_position[:, 4],
+                               ary_pz=y_pred_position[:, 5],
+                               filename=file_name,
+                               verbose=1)
+    """
 
 def export_mlem_simpleregression(nn_classifier, npz_file, file_name=""):
     # set classification threshold
