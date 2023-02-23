@@ -153,7 +153,7 @@ def evaluate_classifier(NeuralNetwork, data_cluster, theta=0.5):
     """
 
 
-def eval_regression_energy(NeuralNetwork, DataCluster, lookup_file):
+def eval_regression_energy(NeuralNetwork, DataCluster):
     from src import MLEMBackprojection
     # set regression
     DataCluster.update_targets_energy()
@@ -218,9 +218,9 @@ def eval_full(NeuralNetwork_clas,
 
     # create an array containing full neural network prediction
     ary_nn_pred = np.zeros(shape=(DataCluster.entries, 9))
-    ary_nn_pred[:, 0] = np.reshape(y_scores, newshape=(len(y_scores), ))
-    ary_nn_pred[:, 1:3] = y_pred_energy
-    ary_nn_pred[:, 3:] = y_pred_position
+    ary_nn_pred[:, 0] = np.reshape(y_scores, newshape=(len(y_scores),))
+    ary_nn_pred[:, 1:3] = np.reshape(y_pred_energy, newshape=(y_pred_energy.shape[0], y_pred_energy.shape[1]))
+    ary_nn_pred[:, 3:] = np.reshape(y_pred_position, newshape=(y_pred_position.shape[0], y_pred_position.shape[1]))
 
     # plot regression neural network vs cut-based approach
     NNAnalysis.regression_nn_vs_cb(ary_nn_pred, ary_cb_reco, ary_mc_truth, ary_meta)
@@ -336,6 +336,7 @@ def eval_full(NeuralNetwork_clas,
                                filename=file_name,
                                verbose=1)
     """
+
 
 def export_mlem_simpleregression(nn_classifier, npz_file, file_name=""):
     # set classification threshold
