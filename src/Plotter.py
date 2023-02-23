@@ -98,6 +98,32 @@ def plot_history_regression(nn_regression, figure_name):
     plt.close()
 
 
+def plot_efficiency_sourceposition(ary_sp_true, ary_sp_pred, figure_name):
+    bins = np.arange(-100.0, 100.0, 1.0)
+
+    ary_eff = np.zeros(shape=(len(bins) - 1,))
+    hist0, _ = np.histogram(ary_sp_true, bins=bins)
+    hist1, _ = np.histogram(ary_sp_pred, bins=bins)
+    for i in range(len(ary_eff)):
+        if hist1[i] == 0:
+            continue
+        else:
+            ary_eff[i] = hist1[i] / hist0[i]
+
+    fig, axs = plt.subplots(1, 2)
+    axs[0].set_title("Source position efficiency")
+    axs[0].set_ylabel("Counts")
+    axs[0].hist(ary_sp_true, bins=bins, histtype=u"step", color="black", label="True")
+    axs[0].hist(ary_sp_true, bins=bins, histtype=u"step", color="red", linestyle="--", label="Pred")
+    axs[0].legend()
+    axs[1].set_xlabel("Source Position z-axis [mm]")
+    axs[1].set_ylabel("Efficiency")
+    axs[1].plot(bins[:-1] + 0.5, ary_eff, color="blue")
+    plt.tight_layout()
+    plt.savefig(figure_name + ".png")
+    plt.close()
+
+
 def plot_energy_error(y_pred, y_true, figure_name):
     width = 0.01
     bins_err = np.arange(-2.0, 2.0, width)
@@ -604,7 +630,6 @@ def plot_reg_nn_vs_cb_position(ary_p_nn,
                                figure_name,
                                axis="",
                                particle=""):
-
     if axis == "x":
         if particle == "electron":
             bins_p = np.arange(150.0 - 20.8 / 2.0, 150.0 + 20.8 / 2.0, 0.1)
