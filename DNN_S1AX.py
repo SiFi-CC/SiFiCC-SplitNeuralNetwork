@@ -137,7 +137,7 @@ if eval_regP:
 # Evaluation schedule
 ########################################################################################################################
 
-for i,file in enumerate([NPZ_FILE_EVAL_0MM, NPZ_FILE_EVAL_5MM]):
+for i, file in enumerate([NPZ_FILE_EVAL_0MM, NPZ_FILE_EVAL_5MM]):
     os.chdir(dir_results + RUN_NAME + "_" + RUN_TAG + "/" + file[:-4] + "/")
     # npz wrapper
 
@@ -167,7 +167,6 @@ for i,file in enumerate([NPZ_FILE_EVAL_0MM, NPZ_FILE_EVAL_5MM]):
                                 neuralnetwork_regE,
                                 neuralnetwork_regP,
                                 DataCluster=data_cluster,
-                                lookup_file= dir_npz + LOOK_UP_FILES[i],
+                                lookup_file=dir_npz + LOOK_UP_FILES[i],
                                 theta=0.3,
                                 file_name=file[:-4])
-

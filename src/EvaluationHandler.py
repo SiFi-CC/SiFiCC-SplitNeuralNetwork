@@ -215,7 +215,7 @@ def eval_full(NeuralNetwork_clas,
 
     # create an array containing full neural network prediction
     ary_nn_pred = np.zeros(shape=(DataCluster.entries, 9))
-    ary_nn_pred[:, 0] = np.reshape(y_scores, newshape=(len(y_scores), 1))
+    ary_nn_pred[:, 0] = np.reshape(y_scores, newshape=(len(y_scores), ))
     ary_nn_pred[:, 1:3] = NeuralNetwork_regE.predict(DataCluster.features)
     ary_nn_pred[:, 3:] = NeuralNetwork_regP.predict(DataCluster.features)
 
