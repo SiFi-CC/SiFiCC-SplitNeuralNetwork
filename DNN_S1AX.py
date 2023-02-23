@@ -48,8 +48,8 @@ epochs = 10
 train_clas = False
 train_regE = False
 train_regP = False
-eval_clas = False
-eval_regE = False
+eval_clas = True
+eval_regE = True
 eval_regP = False
 
 mlemexport = False

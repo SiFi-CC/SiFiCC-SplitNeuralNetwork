@@ -210,14 +210,17 @@ def eval_full(NeuralNetwork_clas,
 
     # grab all positive identified events by the neural network
     y_scores = NeuralNetwork_clas.predict(DataCluster.features)
+    y_pred_energy = NeuralNetwork_regE.predict(DataCluster.features)
+    y_pred_position = NeuralNetwork_regP.predict(DataCluster.features)
+
     # This is done this way cause y_scores gets a really dumb shape from tensorflow
     idx_clas_pos = [float(y_scores[i]) > theta for i in range(len(y_scores))]
 
     # create an array containing full neural network prediction
     ary_nn_pred = np.zeros(shape=(DataCluster.entries, 9))
     ary_nn_pred[:, 0] = np.reshape(y_scores, newshape=(len(y_scores), ))
-    ary_nn_pred[:, 1:3] = NeuralNetwork_regE.predict(DataCluster.features)
-    ary_nn_pred[:, 3:] = NeuralNetwork_regP.predict(DataCluster.features)
+    ary_nn_pred[:, 1:3] = y_pred_energy
+    ary_nn_pred[:, 3:] = y_pred_position
 
     # plot regression neural network vs cut-based approach
     NNAnalysis.regression_nn_vs_cb(ary_nn_pred, ary_cb_reco, ary_mc_truth, ary_meta)
