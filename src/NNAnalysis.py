@@ -22,3 +22,28 @@ def regression_nn_vs_cb(ary_nn_pred, ary_cb_reco, ary_mc_truth, ary_meta, theta=
                                   ary_nn_pred[idx_pos, 2] - ary_mc_truth[idx_pos, 1],
                                   ary_cb_reco[idx_idenified, 1] - ary_mc_truth[idx_idenified, 1],
                                   "energy_nn_vs_cb")
+
+    Plotter.plot_reg_nn_vs_cb_position(ary_nn_pred[idx_pos, 3],
+                                       ary_cb_reco[idx_idenified, 2],
+                                       ary_mc_truth[idx_ic, 2],
+                                       ary_nn_pred[idx_pos, 3] - ary_mc_truth[idx_pos, 2],
+                                       ary_cb_reco[idx_idenified, 2] - ary_mc_truth[idx_idenified, 2],
+                                       "electron",
+                                       "x",
+                                       "position_nn_vs_cb")
+    Plotter.plot_reg_nn_vs_cb_position(ary_nn_pred[idx_pos, 4],
+                                       ary_cb_reco[idx_idenified, 3],
+                                       ary_mc_truth[idx_ic, 3],
+                                       ary_nn_pred[idx_pos, 4] - ary_mc_truth[idx_pos, 3],
+                                       ary_cb_reco[idx_idenified, 3] - ary_mc_truth[idx_idenified, 3],
+                                       "electron",
+                                       "y",
+                                       "position_nn_vs_cb")
+    Plotter.plot_reg_nn_vs_cb_position(ary_nn_pred[idx_pos, 5],
+                                       ary_cb_reco[idx_idenified, 4],
+                                       ary_mc_truth[idx_ic, 4],
+                                       ary_nn_pred[idx_pos, 5] - ary_mc_truth[idx_pos, 4],
+                                       ary_cb_reco[idx_idenified, 4] - ary_mc_truth[idx_idenified, 4],
+                                       "electron",
+                                       "z",
+                                       "position_nn_vs_cb")

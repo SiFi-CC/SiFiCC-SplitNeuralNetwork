@@ -594,3 +594,44 @@ def plot_reg_vs_cb_energy(ary_e_nn,
     plt.tight_layout()
     plt.savefig(figure_name + "_photon.png")
     plt.close()
+
+
+def plot_reg_nn_vs_cb_position(ary_p_nn,
+                               ary_p_cb,
+                               ary_p_mc,
+                               ary_p_nn_err,
+                               ary_p_cb_err,
+                               figure_name,
+                               axis="",
+                               particle=""):
+
+    if axis == "x":
+        if particle == "electron":
+            bins_p = np.arange(150.0 - 20.8 / 2.0, 150.0 + 20.8 / 2.0, 0.1)
+        if particle == "photon":
+            bins_p = np.arange(270.0 - 46.8 / 2.0, 270.0 + 46.8 / 2.0, 0.1)
+        bins_err = np.arange(-2.0, 2.0, 0.1)
+    if axis == "y":
+        bins_p = np.arange(-50.0, 50.0, 0.1)
+        bins_err = np.arange(-60.0, 60.0, 0.5)
+    if axis == "z":
+        bins_p = np.arange(-50.0, 50.0, 0.1)
+        bins_err = np.arange(-2.0, 2.0, 0.1)
+
+    fig, axs = plt.subplots(1, 2, figsize=(10, 6))
+    axs[0].set_title("Distribution {} position {}".format(particle, axis))
+    axs[0].set_xlabel("Position {}-axis [mm]".format(axis))
+    axs[0].set_ylabel("Counts ")
+    axs[0].hist(ary_p_nn, bins=bins_p, histtype=u"step", density=True, color="blue", label="NeuralNetwork")
+    axs[0].hist(ary_p_cb, bins=bins_p, histtype=u"step", density=True, color="black", label="Cut-Based")
+    axs[0].hist(ary_p_mc, bins=bins_p, histtype=u"step", density=True, linestyle="--", color="red", label="Monte Carlo")
+    axs[0].legend()
+    axs[1].set_title("Error {} position {}".format(particle, axis))
+    axs[1].set_xlabel(r"$position^{pred}-position^{true}$")
+    axs[1].set_ylabel("counts")
+    axs[1].hist(ary_p_nn_err, bins=bins_err, histtype=u"step", color="blue", label="NeuralNetwork")
+    axs[1].hist(ary_p_cb_err, bins=bins_err, histtype=u"step", color="black", label="Cut-Based")
+    axs[1].legend()
+    plt.tight_layout()
+    plt.savefig(figure_name + "_" + particle + "_" + axis + ".png")
+    plt.close()
