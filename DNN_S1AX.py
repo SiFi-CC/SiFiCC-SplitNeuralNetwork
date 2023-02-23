@@ -37,6 +37,7 @@ NPZ_FILE_EVAL_5MM = "OptimisedGeometry_BP5mm_4e9protons_withTimestamps_DNN_S1AX.
 
 NPZ_LOOKUP_0MM = "OptimisedGeometry_BP0mm_2e10protons_withTimestamps_S1AX_lookup.npz"
 NPZ_LOOKUP_5MM = "OptimisedGeometry_BP5mm_4e9protons_withTimestamps_S1AX_lookup.npz"
+LOOK_UP_FILES = [NPZ_LOOKUP_0MM, NPZ_LOOKUP_5MM]
 
 # GLOBAL SETTINGS
 RUN_NAME = "DNN_S1AX"
@@ -136,36 +137,37 @@ if eval_regP:
 # Evaluation schedule
 ########################################################################################################################
 
-for file in [NPZ_FILE_EVAL_0MM, NPZ_FILE_EVAL_5MM]:
+for i,file in enumerate([NPZ_FILE_EVAL_0MM, NPZ_FILE_EVAL_5MM]):
     os.chdir(dir_results + RUN_NAME + "_" + RUN_TAG + "/" + file[:-4] + "/")
     # npz wrapper
 
     if train_clas or eval_clas:
         data_cluster = NPZParser.wrapper(dir_npz + file,
-                                         set_testall=False,
+                                         set_testall=True,
                                          standardize=True)
         EvaluationHandler.evaluate_classifier(neuralnetwork_clas,
                                               data_cluster=data_cluster)
     if train_regE or eval_regE:
         data_cluster = NPZParser.wrapper(dir_npz + file,
-                                         set_testall=False,
+                                         set_testall=True,
                                          standardize=True)
         EvaluationHandler.eval_regression_energy(neuralnetwork_regE, DataCluster=data_cluster)
 
     if train_regP or eval_regP:
         data_cluster = NPZParser.wrapper(dir_npz + file,
-                                         set_testall=False,
+                                         set_testall=True,
                                          standardize=True)
         EvaluationHandler.eval_regression_position(neuralnetwork_regP, DataCluster=data_cluster)
-    """
+
     data_cluster = NPZParser.wrapper(dir_npz + file,
-                                     set_testall=False,
+                                     set_testall=True,
                                      standardize=True)
 
     EvaluationHandler.eval_full(neuralnetwork_clas,
                                 neuralnetwork_regE,
                                 neuralnetwork_regP,
                                 DataCluster=data_cluster,
+                                lookup_file= dir_npz + LOOK_UP_FILES[i],
                                 theta=0.3,
-                                file_name=NPZ_FILE_EVAL[i][:-4])
-    """
+                                file_name=file[:-4])
+
