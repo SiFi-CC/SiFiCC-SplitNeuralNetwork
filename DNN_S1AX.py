@@ -168,5 +168,5 @@ for i, file in enumerate([NPZ_FILE_EVAL_0MM, NPZ_FILE_EVAL_5MM]):
                                 neuralnetwork_regP,
                                 DataCluster=data_cluster,
                                 lookup_file=dir_npz + LOOK_UP_FILES[i],
-                                theta=0.3,
+                                theta=0.5,
                                 file_name=file[:-4])
