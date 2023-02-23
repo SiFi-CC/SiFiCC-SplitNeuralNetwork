@@ -18,9 +18,9 @@ def regression_nn_vs_cb(ary_nn_pred, ary_cb_reco, ary_mc_truth, ary_meta, theta=
     idx_pos = ary_nn_pred[:, 0] > theta
     idx_idenified = ary_meta[:, 3] != 0
 
-    Plotter.plot_reg_vs_cb_energy(ary_nn_pred[:, 1:3],
-                                  ary_cb_reco[:, 2],
-                                  ary_mc_truth[:, 2],
+    Plotter.plot_reg_vs_cb_energy(ary_nn_pred[idx_pos:, 1:3],
+                                  ary_cb_reco[idx_idenified, :2],
+                                  ary_mc_truth[:, :2],
                                   ary_e_nn_err[idx_pos, :],
                                   ary_e_cb_err[idx_idenified, :],
                                   "energy_nn_vs_cb")
