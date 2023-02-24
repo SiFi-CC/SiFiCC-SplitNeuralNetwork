@@ -43,7 +43,7 @@ LOOK_UP_FILES = [NPZ_LOOKUP_0MM, NPZ_LOOKUP_5MM]
 RUN_NAME = "DNN_S1AX"
 RUN_TAG = "continuous"
 
-epochs = 10
+epochs = 200
 
 train_clas = False
 train_regE = False
@@ -130,7 +130,8 @@ if train_regP:
     TrainingHandler.train_regP(neuralnetwork_regP,
                                data_cluster,
                                verbose=1,
-                               epochs=epochs)
+                               epochs=epochs,
+                               batch_size=512)
 if eval_regP:
     neuralnetwork_regP.load()
 

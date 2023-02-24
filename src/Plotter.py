@@ -110,7 +110,7 @@ def plot_efficiency_sourceposition(ary_sp_true, ary_sp_pred, figure_name):
         else:
             ary_eff[i] = hist1[i] / hist0[i]
 
-    fig, axs = plt.subplots(1, 2)
+    fig, axs = plt.subplots(2, 1)
     axs[0].set_title("Source position efficiency")
     axs[0].set_ylabel("Counts")
     axs[0].hist(ary_sp_true, bins=bins, histtype=u"step", color="black", label="True")
