@@ -98,7 +98,7 @@ def plot_history_regression(nn_regression, figure_name):
     plt.close()
 
 
-def plot_efficiency_sourceposition(ary_sp_true, ary_sp_pred, figure_name):
+def plot_efficiency_sourceposition(ary_sp_pred, ary_sp_true, figure_name):
     bins = np.arange(-100.0, 100.0, 1.0)
 
     ary_eff = np.zeros(shape=(len(bins) - 1,))
@@ -114,7 +114,7 @@ def plot_efficiency_sourceposition(ary_sp_true, ary_sp_pred, figure_name):
     axs[0].set_title("Source position efficiency")
     axs[0].set_ylabel("Counts")
     axs[0].hist(ary_sp_true, bins=bins, histtype=u"step", color="black", label="True")
-    axs[0].hist(ary_sp_true, bins=bins, histtype=u"step", color="red", linestyle="--", label="Pred")
+    axs[0].hist(ary_sp_pred, bins=bins, histtype=u"step", color="red", linestyle="--", label="Pred")
     axs[0].legend()
     axs[1].set_xlabel("Source Position z-axis [mm]")
     axs[1].set_ylabel("Efficiency")
@@ -635,13 +635,13 @@ def plot_reg_nn_vs_cb_position(ary_p_nn,
             bins_p = np.arange(150.0 - 20.8 / 2.0, 150.0 + 20.8 / 2.0, 0.1)
         if particle == "photon":
             bins_p = np.arange(270.0 - 46.8 / 2.0, 270.0 + 46.8 / 2.0, 0.1)
-        bins_err = np.arange(-2.0, 2.0, 0.01)
+        bins_err = np.arange(-2.0, 2.0, 0.1)
     if axis == "y":
         bins_p = np.arange(-50.0, 50.0, 0.1)
-        bins_err = np.arange(-60.0, 60.0, 0.05)
+        bins_err = np.arange(-60.0, 60.0, 0.5)
     if axis == "z":
         bins_p = np.arange(-50.0, 50.0, 0.1)
-        bins_err = np.arange(-2.0, 2.0, 0.01)
+        bins_err = np.arange(-2.0, 2.0, 0.1)
 
     fig, axs = plt.subplots(1, 2, figsize=(10, 6))
     axs[0].set_title("Distribution {} position {}".format(particle, axis))
