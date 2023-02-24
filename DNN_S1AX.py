@@ -30,7 +30,8 @@ from src import EvaluationHandler
 ROOT_FILE_BP0mm = "OptimisedGeometry_BP0mm_2e10protons.root"
 ROOT_FILE_BP5mm = "OptimisedGeometry_BP5mm_4e9protons.root"
 # Training file
-NPZ_FILE_TRAIN = "OptimisedGeometry_Continuous_2e10protons_DNN_S1AX.npz"
+# NPZ_FILE_TRAIN = "OptimisedGeometry_Continuous_2e10protons_DNN_S1AX.npz"
+NPZ_FILE_TRAIN = "OptimizedGeometry_Mixed_DNN_S1AX.npz"
 # Evaluation file (can be list)
 NPZ_FILE_EVAL_0MM = "OptimisedGeometry_BP0mm_2e10protons_withTimestamps_DNN_S1AX.npz"
 NPZ_FILE_EVAL_5MM = "OptimisedGeometry_BP5mm_4e9protons_withTimestamps_DNN_S1AX.npz"
@@ -41,18 +42,18 @@ LOOK_UP_FILES = [NPZ_LOOKUP_0MM, NPZ_LOOKUP_5MM]
 
 # GLOBAL SETTINGS
 RUN_NAME = "DNN_S1AX"
-RUN_TAG = "continuous"
+RUN_TAG = "baseline"
 
-epochs = 200
+epochs = 300
 
-train_clas = False
-train_regE = False
+train_clas = True
+train_regE = True
 train_regP = True
-eval_clas = False
-eval_regE = False
+eval_clas = True
+eval_regE = True
 eval_regP = True
 
-sp_efficiency = True
+sp_efficiency = False
 mlemexport = False
 
 # define directory paths
