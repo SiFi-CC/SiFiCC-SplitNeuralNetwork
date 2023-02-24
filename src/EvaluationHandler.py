@@ -135,9 +135,6 @@ def evaluate_classifier(NeuralNetwork, data_cluster, theta=0.5):
     Plotter.plot_2dhist_score_sourcepos(y_scores_pos, y_sourcepos, "hist2d_score_sourcepos")
     Plotter.plot_2dhist_score_eprimary(y_scores_pos, y_eprimary, "hist2d_score_eprimary")
 
-    # efficiency map for source position
-    NNAnalysis.efficiency_map_sourceposition(y_scores, y_true, data_cluster.meta[:,2], theta=theta)
-
     # saliency maps for the first 10 entries of the data sample
     """
     # TODO: prob needs an update
@@ -154,6 +151,15 @@ def evaluate_classifier(NeuralNetwork, data_cluster, theta=0.5):
                                                                                   score_pred)
         SaliencyMap.smap_plot(smap, x_feat, str_title, "SMAP_sample_" + str(i))
     """
+
+
+def eval_sourcepos_efficiency(NeuralNetwork, DataCluster, theta=0.5):
+    # grab neural network predictions for test dataset
+    y_scores = NeuralNetwork.predict(DataCluster.x_test())
+    y_true = DataCluster.y_test()
+
+    # efficiency map for source position
+    NNAnalysis.efficiency_map_sourceposition(y_scores, y_true, DataCluster.meta[DataCluster.idx_test(), 2], theta=theta)
 
 
 def eval_regression_energy(NeuralNetwork, DataCluster):

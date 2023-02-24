@@ -47,11 +47,12 @@ epochs = 10
 
 train_clas = False
 train_regE = False
-train_regP = False
-eval_clas = True
-eval_regE = True
-eval_regP = False
+train_regP = True
+eval_clas = False
+eval_regE = False
+eval_regP = True
 
+sp_efficiency = True
 mlemexport = False
 
 # define directory paths
@@ -137,6 +138,15 @@ if eval_regP:
 # Evaluation schedule
 ########################################################################################################################
 
+if sp_efficiency:
+    # Evaluation of classifier training: efficiency map
+    data_cluster = NPZParser.wrapper(dir_npz + NPZ_FILE_TRAIN,
+                                     set_testall=False,
+                                     standardize=True)
+    EvaluationHandler.eval_sourcepos_efficiency(neuralnetwork_clas,
+                                                DataCluster=data_cluster)
+
+# Evaluation of test dataset
 for i, file in enumerate([NPZ_FILE_EVAL_0MM, NPZ_FILE_EVAL_5MM]):
     os.chdir(dir_results + RUN_NAME + "_" + RUN_TAG + "/" + file[:-4] + "/")
     # npz wrapper

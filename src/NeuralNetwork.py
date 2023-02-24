@@ -3,11 +3,11 @@ from tensorflow import keras
 
 
 def lr_scheduler(epoch):
-    if epoch < 100:
-        return 1e-3
     if epoch < 200:
+        return 1e-3
+    if epoch < 300:
         return 1e-4
-
+    return 1e-4
 
 class NeuralNetwork:
 
