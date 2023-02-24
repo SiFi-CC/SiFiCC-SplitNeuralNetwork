@@ -63,3 +63,28 @@ def regression_nn_vs_cb(ary_nn_pred, ary_cb_reco, ary_mc_truth, ary_meta, theta=
                                        "position_nn_vs_cb",
                                        "z",
                                        "electron", )
+
+    Plotter.plot_reg_nn_vs_cb_position(ary_nn_pred[idx_pos, 6],
+                                       ary_cb_reco[idx_identified, 5],
+                                       ary_mc_truth[idx_ic, 5],
+                                       ary_nn_pred[idx_pos, 6] - ary_mc_truth[idx_pos, 5],
+                                       ary_cb_reco[idx_identified, 5] - ary_mc_truth[idx_identified, 5],
+                                       "position_nn_vs_cb",
+                                       "x",
+                                       "photon", )
+    Plotter.plot_reg_nn_vs_cb_position(ary_nn_pred[idx_pos, 7],
+                                       ary_cb_reco[idx_identified, 6],
+                                       ary_mc_truth[idx_ic, 6],
+                                       ary_nn_pred[idx_pos, 7] - ary_mc_truth[idx_pos, 6],
+                                       ary_cb_reco[idx_identified, 6] - ary_mc_truth[idx_identified, 6],
+                                       "position_nn_vs_cb",
+                                       "y",
+                                       "photon", )
+    Plotter.plot_reg_nn_vs_cb_position(ary_nn_pred[idx_pos, 8],
+                                       ary_cb_reco[idx_identified, 7],
+                                       ary_mc_truth[idx_ic, 7],
+                                       ary_nn_pred[idx_pos, 8] - ary_mc_truth[idx_pos, 7],
+                                       ary_cb_reco[idx_identified, 7] - ary_mc_truth[idx_identified, 7],
+                                       "position_nn_vs_cb",
+                                       "z",
+                                       "photon", )
