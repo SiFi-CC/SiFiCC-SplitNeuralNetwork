@@ -30,8 +30,8 @@ from src import EvaluationHandler
 ROOT_FILE_BP0mm = "OptimisedGeometry_BP0mm_2e10protons.root"
 ROOT_FILE_BP5mm = "OptimisedGeometry_BP5mm_4e9protons.root"
 # Training file
-# NPZ_FILE_TRAIN = "OptimisedGeometry_Continuous_2e10protons_DNN_S1AX.npz"
-NPZ_FILE_TRAIN = "OptimizedGeometry_Mixed_DNN_S1AX.npz"
+NPZ_FILE_TRAIN = "OptimisedGeometry_Continuous_2e10protons_DNN_S1AX.npz"
+# NPZ_FILE_TRAIN = "OptimizedGeometry_Mixed_DNN_S1AX.npz"
 # Evaluation file (can be list)
 NPZ_FILE_EVAL_0MM = "OptimisedGeometry_BP0mm_2e10protons_withTimestamps_DNN_S1AX.npz"
 NPZ_FILE_EVAL_5MM = "OptimisedGeometry_BP5mm_4e9protons_withTimestamps_DNN_S1AX.npz"
@@ -42,18 +42,19 @@ LOOK_UP_FILES = [NPZ_LOOKUP_0MM, NPZ_LOOKUP_5MM]
 
 # GLOBAL SETTINGS
 RUN_NAME = "DNN_S1AX"
-RUN_TAG = "baseline"
+RUN_TAG = "continuous"
 
 epochs = 300
 
-train_clas = True
-train_regE = True
-train_regP = True
-eval_clas = True
-eval_regE = True
-eval_regP = True
+train_clas = False
+train_regE = False
+train_regP = False
+eval_clas = False
+eval_regE = False
+eval_regP = False
+eval_full = False
 
-sp_efficiency = False
+sp_efficiency = True
 mlemexport = False
 
 # define directory paths
@@ -109,7 +110,8 @@ if train_clas:
     TrainingHandler.train_clas(neuralnetwork_clas,
                                data_cluster,
                                verbose=1,
-                               epochs=epochs)
+                               epochs=epochs,
+                               batch_size=128)
 if eval_clas:
     neuralnetwork_clas.load()
 
@@ -123,7 +125,8 @@ if train_regE:
     TrainingHandler.train_regE(neuralnetwork_regE,
                                data_cluster,
                                verbose=1,
-                               epochs=epochs)
+                               epochs=epochs,
+                               batch_size=128)
 if eval_regE:
     neuralnetwork_regE.load()
 
@@ -132,7 +135,7 @@ if train_regP:
                                data_cluster,
                                verbose=1,
                                epochs=epochs,
-                               batch_size=512)
+                               batch_size=128)
 if eval_regP:
     neuralnetwork_regP.load()
 
@@ -141,9 +144,10 @@ if eval_regP:
 ########################################################################################################################
 
 if sp_efficiency:
+    neuralnetwork_clas.load()
     # Evaluation of classifier training: efficiency map
     data_cluster = NPZParser.wrapper(dir_npz + NPZ_FILE_TRAIN,
-                                     set_testall=False,
+                                     set_testall=True,
                                      standardize=True)
     EvaluationHandler.eval_sourcepos_efficiency(neuralnetwork_clas,
                                                 DataCluster=data_cluster)
@@ -171,14 +175,21 @@ for i, file in enumerate([NPZ_FILE_EVAL_0MM, NPZ_FILE_EVAL_5MM]):
                                          standardize=True)
         EvaluationHandler.eval_regression_position(neuralnetwork_regP, DataCluster=data_cluster)
 
-    data_cluster = NPZParser.wrapper(dir_npz + file,
-                                     set_testall=True,
-                                     standardize=True)
+    if eval_full:
+        os.chdir(dir_results + RUN_NAME + "_" + RUN_TAG + "/")
+        neuralnetwork_clas.load()
+        neuralnetwork_regE.load()
+        neuralnetwork_regP.load()
+        os.chdir(dir_results + RUN_NAME + "_" + RUN_TAG + "/" + file[:-4] + "/")
 
-    EvaluationHandler.eval_full(neuralnetwork_clas,
-                                neuralnetwork_regE,
-                                neuralnetwork_regP,
-                                DataCluster=data_cluster,
-                                lookup_file=dir_npz + LOOK_UP_FILES[i],
-                                theta=0.5,
-                                file_name=file[:-4])
+        data_cluster = NPZParser.wrapper(dir_npz + file,
+                                         set_testall=True,
+                                         standardize=True)
+
+        EvaluationHandler.eval_full(neuralnetwork_clas,
+                                    neuralnetwork_regE,
+                                    neuralnetwork_regP,
+                                    DataCluster=data_cluster,
+                                    lookup_file=dir_npz + LOOK_UP_FILES[i],
+                                    theta=0.5,
+                                    file_name=file[:-4])
