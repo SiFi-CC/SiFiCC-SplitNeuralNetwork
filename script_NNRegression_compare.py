@@ -196,8 +196,8 @@ def generate_export_temp():
 
 # ----------------------------------------------------------------------------------------------------------------------
 # Analysis script
-"""
-npz_data = np.load("S1AX_baseline.npz")
+
+npz_data = np.load("S1AX_continuous.npz")
 ary_nn_pred_bp0mm = npz_data["nn_pred_0mm"]
 ary_nn_pred_bp5mm = npz_data["nn_pred_5mm"]
 
@@ -211,7 +211,7 @@ ary_mc_truth_bp0mm = npz_lookup_0mm["MC_TRUTH"]
 ary_mc_truth_bp5mm = npz_lookup_5mm["MC_TRUTH"]
 ary_cb_reco_bp0mm = npz_lookup_0mm["CB_RECO"]
 ary_cb_reco_bp5mm = npz_lookup_5mm["CB_RECO"]
-"""
+
 """
 # ----------------------------------------------------------------------------------------------------------------------
 # Continuous source position backprojection
@@ -278,7 +278,7 @@ print("\nMean absolute error asymmetrical")
 print(NNLoss.loss_energy_mae_asym(ary_nn_pred_bp0mm[:, 1:3], ary_mc_truth_bp0mm[:, 0:2]))
 print(NNLoss.loss_energy_mae_asym(ary_cb_reco_bp0mm[:, 0:2], ary_mc_truth_bp0mm[:, 0:2]))
 """
-"""
+
 # ----------------------------------------------------------------------------------------------------------------------
 # Backprojection plots
 from src import MLEMBackprojection
@@ -294,8 +294,8 @@ ary_mc_truth_bp5mm = ary_mc_truth_bp5mm[:n]
 ary_cb_reco_bp0mm = ary_cb_reco_bp0mm[:n]
 ary_cb_reco_bp5mm = ary_cb_reco_bp5mm[:n]
 
-idx_pos_0mm = ary_nn_pred_bp0mm[:, 0] > 0.3
-idx_pos_5mm = ary_nn_pred_bp5mm[:, 0] > 0.3
+idx_pos_0mm = ary_nn_pred_bp0mm[:, 0] > 0.5
+idx_pos_5mm = ary_nn_pred_bp5mm[:, 0] > 0.5
 
 idx_identified_0mm = ary_meta_0mm[:, 3] != 0
 idx_identified_5mm = ary_meta_5mm[:, 3] != 0
@@ -323,8 +323,8 @@ image_5mm = MLEMBackprojection.reconstruct_image(ary_nn_pred_bp5mm[idx_pos_5mm, 
                                                  ary_nn_pred_bp5mm[idx_pos_5mm, 8],
                                                  apply_filter=True)
 MLEMBackprojection.plot_backprojection_stacked(image_0mm, image_5mm,
-                                               "Backprojection CB identified", "MLEM_backproj_S1AX_theta03")
-
+                                               "Backprojection NN prediction", "MLEM_backproj_S1AX_continuous_theta05")
+"""
 image_0mm = MLEMBackprojection.reconstruct_image(ary_nn_pred_bp0mm[idx_pos_0mm, 1],
                                                  ary_nn_pred_bp0mm[idx_pos_0mm, 2],
                                                  ary_cb_reco_bp0mm[idx_pos_0mm, 2],

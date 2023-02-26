@@ -104,7 +104,7 @@ def reconstruct_image(ary_e1, ary_e2, ary_x1, ary_y1, ary_z1, ary_x2, ary_y2, ar
     # histogram settings (in this case a 2d-array)
     # detector dimensions are hardcoded at the moment!
     entries = len(ary_e1)
-    scatz = 60.0
+    scatz = 100.0
     scaty = 30.0
     nbinsz = int(scatz)
     nbinsy = int(scaty)

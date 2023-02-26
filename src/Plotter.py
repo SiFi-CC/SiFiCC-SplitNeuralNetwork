@@ -99,26 +99,32 @@ def plot_history_regression(nn_regression, figure_name):
 
 
 def plot_efficiency_sourceposition(ary_sp_pred, ary_sp_true, figure_name):
-    bins = np.arange(-100.0, 100.0, 1.0)
+    bins = np.arange(-100.0, 100.0, 2.0)
 
     ary_eff = np.zeros(shape=(len(bins) - 1,))
-    hist0, _ = np.histogram(ary_sp_true, bins=bins)
+    list_eff_err = []
+    ary_bin_err = np.ones(shape=(len(bins) - 1,)) * 0.1
     hist1, _ = np.histogram(ary_sp_pred, bins=bins)
+    hist0, _ = np.histogram(ary_sp_true, bins=bins)
     for i in range(len(ary_eff)):
         if hist1[i] == 0:
+            list_eff_err.append(0)
             continue
         else:
             ary_eff[i] = hist1[i] / hist0[i]
+            list_eff_err.append(np.sqrt((np.sqrt(hist1[i]) / hist0[i]) ** 2 +
+                                        (hist1[i] * np.sqrt(hist0[i]) / hist0[i] ** 2) ** 2))
 
     fig, axs = plt.subplots(2, 1)
     axs[0].set_title("Source position efficiency")
     axs[0].set_ylabel("Counts")
-    axs[0].hist(ary_sp_true, bins=bins, histtype=u"step", color="black", label="True")
-    axs[0].hist(ary_sp_pred, bins=bins, histtype=u"step", color="red", linestyle="--", label="Pred")
-    axs[0].legend()
+    axs[0].hist(ary_sp_true, bins=bins, histtype=u"step", color="black", label="All Ideal Compton")
+    axs[0].hist(ary_sp_pred, bins=bins, histtype=u"step", color="red", linestyle="--", label="True Positives")
+    axs[0].legend(loc="lower center")
     axs[1].set_xlabel("Source Position z-axis [mm]")
     axs[1].set_ylabel("Efficiency")
-    axs[1].plot(bins[:-1] + 0.5, ary_eff, color="blue")
+    axs[1].errorbar(bins[:-1] + 0.1, ary_eff, list_eff_err, ary_bin_err, fmt=".", color="blue")
+    # axs[1].plot(bins[:-1] + 0.5, ary_eff, ".", color="darkblue")
     plt.tight_layout()
     plt.savefig(figure_name + ".png")
     plt.close()
