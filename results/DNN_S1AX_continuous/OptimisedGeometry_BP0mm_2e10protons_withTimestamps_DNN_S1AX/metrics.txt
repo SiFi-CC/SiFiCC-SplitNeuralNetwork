@@ -3,16 +3,16 @@
 Baseline accuracy: 0.715
 Metrics base threshold:
 Threshold: 0.500
-Accuracy: 72.3%
-Accuracy (weighted)%: 71.0
-Efficiency: 83.3%
-Purity: 50.9%
-TP: 397913 | FP: 384330 | TN: 815629 | FN: 79894
+Accuracy: 74.0%
+Accuracy (weighted)%: 72.6
+Efficiency: 86.1%
+Purity: 52.6%
+TP: 411573 | FP: 370598 | TN: 829361 | FN: 66234
 Metrics base threshold
-AUC Score: 0.824
-Threshold: 0.712
-Accuracy: 76.9%
-Accuracy (weighted): 71.5%
-Efficiency: 52.7%
-Purity: 61.0%
-TP: 251642 | FP: 161102 | TN: 1038857 | FN: 226165
+AUC Score: 0.847
+Threshold: 0.729
+Accuracy: 78.4%
+Accuracy (weighted): 73.4%
+Efficiency: 58.1%
+Purity: 63.1%
+TP: 277484 | FP: 162600 | TN: 1037359 | FN: 200323
