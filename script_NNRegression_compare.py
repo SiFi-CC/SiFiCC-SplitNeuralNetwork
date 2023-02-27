@@ -193,9 +193,8 @@ def generate_export_temp():
                             mc_truth=ary_mc_truth_bp0mm,
                             cb_reco=ary_cb_reco_bp0mm,
                             nn_pred=ary_nn_pred_bp0mm)
-        
-generate_export()
-generate_export_temp()
+
+
 # ----------------------------------------------------------------------------------------------------------------------
 # Analysis script
 """
@@ -214,7 +213,7 @@ ary_mc_truth_bp5mm = npz_lookup_5mm["MC_TRUTH"]
 ary_cb_reco_bp0mm = npz_lookup_0mm["CB_RECO"]
 ary_cb_reco_bp5mm = npz_lookup_5mm["CB_RECO"]
 """
-"""
+
 # ----------------------------------------------------------------------------------------------------------------------
 # Continuous source position backprojection
 from src import MLEMBackprojection
@@ -233,7 +232,7 @@ ary_meta = ary_meta[:n]
 ary_mc_truth = ary_mc_truth[:n]
 ary_cb_reco = ary_cb_reco[:n]
 
-idx_pos = ary_nn_pred[:, 0] > 0.3
+idx_pos = ary_nn_pred[:, 0] > 0.5
 idx_identified = ary_meta[:, 3] != 0
 idx_ic = ary_meta[:, 2] == 1
 
@@ -258,7 +257,7 @@ image = MLEMBackprojection.reconstruct_image(ary_nn_pred[idx_pos, 1],
                                              ary_nn_pred[idx_pos, 8],
                                              apply_filter=True)
 MLEMBackprojection.plot_backprojection(image, "Backprojection NN prediction", "MLEM_backproj_S1AX_nnpred_continuous_ecorrected")
-"""
+
 """
 # ----------------------------------------------------------------------------------------------------------------------
 # Loss function estimation
