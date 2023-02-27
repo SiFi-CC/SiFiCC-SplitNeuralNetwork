@@ -193,10 +193,12 @@ def generate_export_temp():
                             mc_truth=ary_mc_truth_bp0mm,
                             cb_reco=ary_cb_reco_bp0mm,
                             nn_pred=ary_nn_pred_bp0mm)
-
+        
+generate_export()
+generate_export_temp()
 # ----------------------------------------------------------------------------------------------------------------------
 # Analysis script
-
+"""
 npz_data = np.load("S1AX_continuous.npz")
 ary_nn_pred_bp0mm = npz_data["nn_pred_0mm"]
 ary_nn_pred_bp5mm = npz_data["nn_pred_5mm"]
@@ -211,7 +213,7 @@ ary_mc_truth_bp0mm = npz_lookup_0mm["MC_TRUTH"]
 ary_mc_truth_bp5mm = npz_lookup_5mm["MC_TRUTH"]
 ary_cb_reco_bp0mm = npz_lookup_0mm["CB_RECO"]
 ary_cb_reco_bp5mm = npz_lookup_5mm["CB_RECO"]
-
+"""
 """
 # ----------------------------------------------------------------------------------------------------------------------
 # Continuous source position backprojection
@@ -278,7 +280,7 @@ print("\nMean absolute error asymmetrical")
 print(NNLoss.loss_energy_mae_asym(ary_nn_pred_bp0mm[:, 1:3], ary_mc_truth_bp0mm[:, 0:2]))
 print(NNLoss.loss_energy_mae_asym(ary_cb_reco_bp0mm[:, 0:2], ary_mc_truth_bp0mm[:, 0:2]))
 """
-
+"""
 # ----------------------------------------------------------------------------------------------------------------------
 # Backprojection plots
 from src import MLEMBackprojection
@@ -324,6 +326,7 @@ image_5mm = MLEMBackprojection.reconstruct_image(ary_nn_pred_bp5mm[idx_pos_5mm, 
                                                  apply_filter=True)
 MLEMBackprojection.plot_backprojection_stacked(image_0mm, image_5mm,
                                                "Backprojection NN prediction", "MLEM_backproj_S1AX_continuous_theta05")
+"""
 """
 image_0mm = MLEMBackprojection.reconstruct_image(ary_nn_pred_bp0mm[idx_pos_0mm, 1],
                                                  ary_nn_pred_bp0mm[idx_pos_0mm, 2],
