@@ -34,7 +34,7 @@ def return_model(input_dim):
     model.add(tf.keras.layers.Dense(128, input_dim=input_dim, activation="relu"))
     model.add(tf.keras.layers.Dense(64, activation="relu"))
     model.add(tf.keras.layers.Dense(32, activation="relu"))
-    model.add(tf.keras.layers.Dense(36, activation="relu"))
+    # model.add(tf.keras.layers.Dense(32, activation="relu"))
     # model.add(tf.keras.layers.Dropout(0.05))
     model.add(tf.keras.layers.Dense(6, activation="linear"))
     model.compile(loss="mean_absolute_error", optimizer="SGD", metrics=["mean_absolute_error"])
