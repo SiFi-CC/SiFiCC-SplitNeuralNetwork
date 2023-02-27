@@ -218,7 +218,7 @@ ary_cb_reco_bp5mm = npz_lookup_5mm["CB_RECO"]
 # Continuous source position backprojection
 from src import MLEMBackprojection
 
-npz_data = np.load("S1AX_continuous.npz")
+npz_data = np.load("S1AX_continuous_train.npz")
 ary_nn_pred = npz_data["nn_pred"]
 npz_lookup = np.load(os.getcwd() + "/npz_files/" + "OptimisedGeometry_Continuous_2e10protons_lookup.npz")
 ary_meta = npz_lookup["META"]

@@ -183,6 +183,7 @@ def plot_backprojection(image, figure_title, figure_name):
     plt.tick_params('x', labelbottom=False)
 
     axs[1].xaxis.set_tick_params(which='both', labelbottom=True)
+    axs[1].set_ylim(max(proj)*0.5, max(proj)*1.5)
     axs[1].set_aspect('auto')
     # axs[1].set(xlim=(0 , image.shape[1]), ylim=(0, max(proj)))
     axs[1].set_xlabel("z-position [mm]")
