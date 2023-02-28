@@ -347,56 +347,41 @@ def eval_full(NeuralNetwork_clas,
     """
 
 
-def export_mlem_simpleregression(nn_classifier, npz_file, file_name=""):
-    # set classification threshold
-    theta = 0.5
+def export_mlem_simpleregression(NeuralNetwork_clas,
+                                 DataCluster,
+                                 file_name="",
+                                 theta=0.5):
 
-    # load npz file into DataCluster object
-    data_cluster = NPZParser.parse(npz_file)
-
-    # standardize input
-    data_cluster.standardize()
-
-    # get classification results
-    y_scores_classifier = nn_classifier.predict(data_cluster.features)
-
-    # pre-define
-    y_pred_classifier = np.zeros(shape=(len(y_scores_classifier, )))
-
-    for i in range(len(y_pred_classifier)):
-        # apply prediction threshold
-        if y_scores_classifier[i] >= theta:
-            y_pred_classifier[i] = 1
-        else:
-            y_pred_classifier[i] = 0
-
-    list_idx_positives = y_pred_classifier == 1
+    # grab all positive identified events by the neural network
+    y_scores = NeuralNetwork_clas.predict(DataCluster.features)
+    # This is done this way cause y_scores gets a really dumb shape from tensorflow
+    idx_clas_pos = [float(y_scores[i]) > theta for i in range(len(y_scores))]
 
     # denormalize features
-    for i in range(data_cluster.features.shape[1]):
-        data_cluster.features[:, i] *= data_cluster.list_std[i]
-        data_cluster.features[:, i] += data_cluster.list_mean[i]
+    for i in range(DataCluster.features.shape[1]):
+        DataCluster.features[:, i] *= DataCluster.list_std[i]
+        DataCluster.features[:, i] += DataCluster.list_mean[i]
 
     # grab event kinematics from feature list
-    ary_e = data_cluster.features[list_idx_positives, 1]
-    ary_ex = data_cluster.features[list_idx_positives, 2]
-    ary_ey = data_cluster.features[list_idx_positives, 3]
-    ary_ez = data_cluster.features[list_idx_positives, 4]
+    ary_e = DataCluster.features[idx_clas_pos, 2]
+    ary_ex = DataCluster.features[idx_clas_pos, 3]
+    ary_ey = DataCluster.features[idx_clas_pos, 4]
+    ary_ez = DataCluster.features[idx_clas_pos, 5]
 
     # select only absorber energies
     # select only positive events
     # replace -1. (NaN) values with 0.
-    ary_p = data_cluster.features[:, [10, 19, 28, 37, 46]]
-    ary_p = ary_p[list_idx_positives, :]
+    ary_p = DataCluster.features[:, [12, 22, 32, 42, 52, 63, 72]]
+    ary_p = ary_p[idx_clas_pos, :]
     for i in range(ary_p.shape[0]):
         for j in range(ary_p.shape[1]):
             if ary_p[i, j] == -1.:
                 ary_p[i, j] = 0.0
     ary_p = np.sum(ary_p, axis=1)
 
-    ary_px = data_cluster.features[list_idx_positives, 11]
-    ary_py = data_cluster.features[list_idx_positives, 12]
-    ary_pz = data_cluster.features[list_idx_positives, 13]
+    ary_px = DataCluster.features[idx_clas_pos, 13]
+    ary_py = DataCluster.features[idx_clas_pos, 14]
+    ary_pz = DataCluster.features[idx_clas_pos, 15]
 
     from src import MLEMExport
     MLEMExport.export_mlem(ary_e,
@@ -408,8 +393,8 @@ def export_mlem_simpleregression(nn_classifier, npz_file, file_name=""):
                            ary_py,
                            ary_pz,
                            filename=file_name,
-                           b_comptonkinematics=False,
-                           b_dacfilter=False,
+                           b_comptonkinematics=True,
+                           b_dacfilter=True,
                            verbose=1)
 
 

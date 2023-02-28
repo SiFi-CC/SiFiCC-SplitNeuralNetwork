@@ -54,7 +54,7 @@ eval_regE = False
 eval_regP = False
 eval_full = False
 
-sp_efficiency = True
+sp_efficiency = False
 mlemexport = False
 
 # define directory paths
@@ -193,3 +193,7 @@ for i, file in enumerate([NPZ_FILE_EVAL_0MM, NPZ_FILE_EVAL_5MM]):
                                     lookup_file=dir_npz + LOOK_UP_FILES[i],
                                     theta=0.5,
                                     file_name=file[:-4])
+
+        EvaluationHandler.export_mlem_simpleregression(neuralnetwork_clas,
+                                                       DataCluster=data_cluster,
+                                                       file_name=file[:-4])
