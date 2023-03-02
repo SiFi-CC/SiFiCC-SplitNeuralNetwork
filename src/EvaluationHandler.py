@@ -93,6 +93,53 @@ def dist_sourceposition(y_scores, y_true, y_source_pos, theta, figure_name):
                                  figure_name)
 
 
+########################################################################################################################
+
+# ----------------------------------------------------------------------------------------------------------------------
+# Evaluation of Neural Networks for training set
+
+
+def training_clas(NeuralNetwork, DataCluster, theta=0.5):
+    # Generate Neural Network prediction for test sample on training set
+    y_scores = NeuralNetwork.predict(DataCluster.x_test())
+    y_true = DataCluster.y_test()
+
+    # Plot training history
+    Plotter.plot_history_regression(NeuralNetwork,
+                                    NeuralNetwork.model_name + "_" + NeuralNetwork.model_tag + "_history_training")
+    # Generate efficiency map
+    NNAnalysis.efficiency_map_sourceposition(y_scores, y_true, DataCluster.meta[DataCluster.idx_test(), 2], theta=theta)
+    # Generate overall metric analysis
+    write_metrics_classifier(y_scores, y_true)
+    # Score distribution and ROC-Analysis
+    Plotter.plot_score_dist(y_scores, y_true, "score_dist_training")
+    fastROCAUC.fastROCAUC(y_scores, y_true, save_fig="ROCAUC_training")
+
+
+def training_regE(NeuralNetwork, DataCluster):
+    # Generate Neural Network prediction for test sample on training set
+    DataCluster.update_targets_energy()
+    DataCluster.update_indexing_positives()
+    y_pred = NeuralNetwork.predict(DataCluster.x_test())
+    y_true = DataCluster.y_test()
+
+    # Plot training history
+    Plotter.plot_history_regression(NeuralNetwork,
+                                    NeuralNetwork.model_name + "_" + NeuralNetwork.model_tag + "_history_training")
+
+    # energy regression
+    Plotter.plot_energy_error(y_pred, y_true, "error_regression_energy")
+
+    # predicting theta
+    y_true_theta = DataCluster.theta[DataCluster.idx_test()]
+    y_pred_theta = [MLEMBackprojection.calculate_theta(y_pred[i, 0], y_pred[i, 1]) for i in range(len(y_pred))]
+    y_pred_theta = np.array(y_pred_theta)
+    Plotter.plot_theta_error(y_pred_theta, y_true_theta, "error_regression_energy_theta")
+
+
+# ----------------------------------------------------------------------------------------------------------------------
+# Evaluation of Neural Network for evaluation sets
+
 def evaluate_classifier(NeuralNetwork, data_cluster, theta=0.5):
     """
     Standard evaluation script for neural network classifier.
@@ -351,7 +398,6 @@ def export_mlem_simpleregression(NeuralNetwork_clas,
                                  DataCluster,
                                  file_name="",
                                  theta=0.5):
-
     # grab all positive identified events by the neural network
     y_scores = NeuralNetwork_clas.predict(DataCluster.features)
     # This is done this way cause y_scores gets a really dumb shape from tensorflow
