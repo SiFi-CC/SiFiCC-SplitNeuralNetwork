@@ -14,12 +14,11 @@ Currently implemented:
 """
 
 import os
-import numpy as np
 
 from src import NPZParser
 from src import NeuralNetwork
-from src import TrainingHandler
-from src import EvaluationHandler
+from src import NNTraining
+from src import NNEvaluation
 
 # ----------------------------------------------------------------------------------------------------------------------
 # Global Settings
@@ -44,27 +43,28 @@ NPZ_LOOKUP_5MM = "OptimisedGeometry_BP5mm_4e9protons_withTimestamps_S1AX_lookup.
 LOOK_UP_FILES = [NPZ_LOOKUP_0MM, NPZ_LOOKUP_5MM]
 
 # GLOBAL SETTINGS
-RUN_NAME = "DNN_S1AX_continuous"
+RUN_NAME = "DNN_S1AX_continuous_master"
 
 # Neural Network settings
-epochs_clas = 300
-epochs_regE = 300
-epochs_regP = 300
-batchsize_clas = 128
+epochs_clas = 200
+epochs_regE = 200
+epochs_regP = 200
+batchsize_clas = 32
 batchsize_regE = 32
 batchsize_regP = 32
+theta = 0.5
 
 # Global switches to turn on/off training or analysis steps
-train_clas = False
-train_regE = False
-train_regP = False
-eval_clas = False
-eval_regE = False
-eval_regP = False
-eval_full = False
+train_clas = True
+train_regE = True
+train_regP = True
+eval_clas = True
+eval_regE = True
+eval_regP = True
+eval_full = True
 
-sp_efficiency = False
-mlemexport = False
+# MLEM export setting: None (to disable export), "Reco" (for classical), "Pred" (For Neural Network predictions)
+mlemexport = "RECO"
 
 # ----------------------------------------------------------------------------------------------------------------------
 # define directory paths
@@ -77,10 +77,13 @@ dir_results = dir_main + "/results/"
 # create subdirectory for run output
 if not os.path.isdir(dir_results + RUN_NAME + "/"):
     os.mkdir(dir_results + RUN_NAME + "/")
-
+# Evaluation directories
 for file in [NPZ_FILE_EVAL_0MM, NPZ_FILE_EVAL_5MM]:
     if not os.path.isdir(dir_results + RUN_NAME + "/" + file[:-4] + "/"):
         os.mkdir(dir_results + RUN_NAME + "/" + file[:-4] + "/")
+# Training evaluation directory
+if not os.path.isdir(dir_results + RUN_NAME + "/" + NPZ_FILE_TRAIN[:-4] + "/"):
+    os.mkdir(dir_results + RUN_NAME + "/" + NPZ_FILE_TRAIN[:-4] + "/")
 
 # ----------------------------------------------------------------------------------------------------------------------
 # Training schedule
@@ -90,9 +93,9 @@ from models import DNN_base_classifier
 from models import DNN_base_regression_energy
 from models import DNN_base_regression_position
 
-tfmodel_clas = DNN_base_classifier.return_model(80)
-tfmodel_regE = DNN_base_regression_energy.return_model(80)
-tfmodel_regP = DNN_base_regression_position.return_model(80)
+tfmodel_clas = DNN_base_classifier.return_model(60)
+tfmodel_regE = DNN_base_regression_energy.return_model(60)
+tfmodel_regP = DNN_base_regression_position.return_model(60)
 
 neuralnetwork_clas = NeuralNetwork.NeuralNetwork(model=tfmodel_clas,
                                                  model_name=RUN_NAME,
@@ -117,11 +120,11 @@ data_cluster = NPZParser.wrapper(dir_npz + NPZ_FILE_TRAIN,
                                  set_peakweights=False)
 
 if train_clas:
-    TrainingHandler.train_clas(neuralnetwork_clas,
-                               data_cluster,
-                               verbose=1,
-                               epochs=epochs_clas,
-                               batch_size=batchsize_clas)
+    NNTraining.train_clas(neuralnetwork_clas,
+                          data_cluster,
+                          verbose=1,
+                          epochs=epochs_clas,
+                          batch_size=batchsize_clas)
 if eval_clas:
     neuralnetwork_clas.load()
 
@@ -132,34 +135,43 @@ data_cluster = NPZParser.wrapper(dir_npz + NPZ_FILE_TRAIN,
                                  set_peakweights=False)
 
 if train_regE:
-    TrainingHandler.train_regE(neuralnetwork_regE,
-                               data_cluster,
-                               verbose=1,
-                               epochs=epochs_regE,
-                               batch_size=batchsize_regE)
+    NNTraining.train_regE(neuralnetwork_regE,
+                          data_cluster,
+                          verbose=1,
+                          epochs=epochs_regE,
+                          batch_size=batchsize_regE)
 if eval_regE:
     neuralnetwork_regE.load()
 
 if train_regP:
-    TrainingHandler.train_regP(neuralnetwork_regP,
-                               data_cluster,
-                               verbose=1,
-                               epochs=epochs_regP,
-                               batch_size=batchsize_regP)
+    NNTraining.train_regP(neuralnetwork_regP,
+                          data_cluster,
+                          verbose=1,
+                          epochs=epochs_regP,
+                          batch_size=batchsize_regP)
 if eval_regP:
     neuralnetwork_regP.load()
 
 # ----------------------------------------------------------------------------------------------------------------------
 # Evaluation schedule
 
-if sp_efficiency:
-    neuralnetwork_clas.load()
-    # Evaluation of classifier training: efficiency map
+# evaluation of training data
+os.chdir(dir_results + RUN_NAME + "/" + NPZ_FILE_TRAIN[:-4] + "/")
+if eval_clas:
     data_cluster = NPZParser.wrapper(dir_npz + NPZ_FILE_TRAIN,
-                                     set_testall=True,
+                                     set_testall=False,
                                      standardize=True)
-    EvaluationHandler.eval_sourcepos_efficiency(neuralnetwork_clas,
-                                                DataCluster=data_cluster)
+    NNEvaluation.training_clas(neuralnetwork_clas, data_cluster, theta)
+if eval_regE:
+    data_cluster = NPZParser.wrapper(dir_npz + NPZ_FILE_TRAIN,
+                                     set_testall=False,
+                                     standardize=True)
+    NNEvaluation.training_regE(neuralnetwork_regE, data_cluster)
+if eval_regP:
+    data_cluster = NPZParser.wrapper(dir_npz + NPZ_FILE_TRAIN,
+                                     set_testall=False,
+                                     standardize=True)
+    NNEvaluation.training_regP(neuralnetwork_regP, data_cluster)
 
 # Evaluation of test dataset
 for i, file in enumerate([NPZ_FILE_EVAL_0MM, NPZ_FILE_EVAL_5MM]):
@@ -170,19 +182,19 @@ for i, file in enumerate([NPZ_FILE_EVAL_0MM, NPZ_FILE_EVAL_5MM]):
         data_cluster = NPZParser.wrapper(dir_npz + file,
                                          set_testall=True,
                                          standardize=True)
-        EvaluationHandler.evaluate_classifier(neuralnetwork_clas,
-                                              data_cluster=data_cluster)
+        NNEvaluation.evaluate_classifier(neuralnetwork_clas,
+                                         data_cluster=data_cluster)
     if train_regE or eval_regE:
         data_cluster = NPZParser.wrapper(dir_npz + file,
                                          set_testall=True,
                                          standardize=True)
-        EvaluationHandler.eval_regression_energy(neuralnetwork_regE, DataCluster=data_cluster)
+        NNEvaluation.evaluate_regression_energy(neuralnetwork_regE, DataCluster=data_cluster)
 
     if train_regP or eval_regP:
         data_cluster = NPZParser.wrapper(dir_npz + file,
                                          set_testall=True,
                                          standardize=True)
-        EvaluationHandler.eval_regression_position(neuralnetwork_regP, DataCluster=data_cluster)
+        NNEvaluation.evaluate_regression_position(neuralnetwork_regP, DataCluster=data_cluster)
 
     if eval_full:
         os.chdir(dir_results + RUN_NAME + "/")
@@ -195,14 +207,11 @@ for i, file in enumerate([NPZ_FILE_EVAL_0MM, NPZ_FILE_EVAL_5MM]):
                                          set_testall=True,
                                          standardize=True)
 
-        EvaluationHandler.eval_full(neuralnetwork_clas,
-                                    neuralnetwork_regE,
-                                    neuralnetwork_regP,
-                                    DataCluster=data_cluster,
-                                    lookup_file=dir_npz + LOOK_UP_FILES[i],
-                                    theta=0.5,
-                                    file_name=file[:-4])
-
-        EvaluationHandler.export_mlem_simpleregression(neuralnetwork_clas,
-                                                       DataCluster=data_cluster,
-                                                       file_name=file[:-4])
+        NNEvaluation.eval_full(neuralnetwork_clas,
+                               neuralnetwork_regE,
+                               neuralnetwork_regP,
+                               DataCluster=data_cluster,
+                               lookup_file=dir_npz + LOOK_UP_FILES[i],
+                               mlem_export=mlemexport,
+                               theta=0.5,
+                               file_name=file[:-4])
