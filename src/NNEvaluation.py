@@ -3,14 +3,14 @@ from src import NPZParser
 from src import fastROCAUC
 from src import Plotter
 from src import SaliencyMap
-from src import Metrics
 from src import NNAnalysis
-from src.MLEMBackprojection import calculate_theta
+from src import MLEMBackprojection
+from src import MLEMExport
 
 
 def write_metrics_classifier(y_scores, y_true):
-    acc_base, eff_base, pur_base, conf_base = Metrics.get_classifier_metrics(y_scores, y_true, threshold=0.5)
-    acc_weight, _, _, _ = Metrics.get_classifier_metrics(y_scores, y_true, threshold=0.5, weighted=True)
+    acc_base, eff_base, pur_base, conf_base = NNAnalysis.get_classifier_metrics(y_scores, y_true, threshold=0.5)
+    acc_weight, _, _, _ = NNAnalysis.get_classifier_metrics(y_scores, y_true, threshold=0.5, weighted=True)
     print("\nMetrics base threshold: ")
     print("Threshold: {:.3f}".format(0.5))
     print("Baseline accuracy: {:.3f}".format(1 - (np.sum(y_true) / len(y_true))))
@@ -22,8 +22,8 @@ def write_metrics_classifier(y_scores, y_true):
 
     # run ROC curve and AUC score analysis
     auc, theta = fastROCAUC.fastROCAUC(y_scores, y_true, return_score=True)
-    acc_opt, eff_opt, pur_opt, conf_opt = Metrics.get_classifier_metrics(y_scores, y_true, threshold=theta)
-    acc_opt_weight, _, _, _ = Metrics.get_classifier_metrics(y_scores, y_true, threshold=theta, weighted=True)
+    acc_opt, eff_opt, pur_opt, conf_opt = NNAnalysis.get_classifier_metrics(y_scores, y_true, threshold=theta)
+    acc_opt_weight, _, _, _ = NNAnalysis.get_classifier_metrics(y_scores, y_true, threshold=theta, weighted=True)
     print("\nMetrics base threshold: ")
     print("AUC Score: {:.3f}".format(auc))
     print("Threshold: {:.3f}".format(theta))
@@ -105,36 +105,27 @@ def training_clas(NeuralNetwork, DataCluster, theta=0.5):
     y_true = DataCluster.y_test()
 
     # Plot training history
-    Plotter.plot_history_regression(NeuralNetwork,
+    Plotter.plot_history_classifier(NeuralNetwork,
                                     NeuralNetwork.model_name + "_" + NeuralNetwork.model_tag + "_history_training")
     # Generate efficiency map
     NNAnalysis.efficiency_map_sourceposition(y_scores, y_true, DataCluster.meta[DataCluster.idx_test(), 2], theta=theta)
-    # Generate overall metric analysis
-    write_metrics_classifier(y_scores, y_true)
-    # Score distribution and ROC-Analysis
-    Plotter.plot_score_dist(y_scores, y_true, "score_dist_training")
-    fastROCAUC.fastROCAUC(y_scores, y_true, save_fig="ROCAUC_training")
+    # classic evaluation of classification
+    evaluate_classifier(NeuralNetwork, DataCluster, theta=theta)
 
 
 def training_regE(NeuralNetwork, DataCluster):
-    # Generate Neural Network prediction for test sample on training set
-    DataCluster.update_targets_energy()
-    DataCluster.update_indexing_positives()
-    y_pred = NeuralNetwork.predict(DataCluster.x_test())
-    y_true = DataCluster.y_test()
-
     # Plot training history
     Plotter.plot_history_regression(NeuralNetwork,
                                     NeuralNetwork.model_name + "_" + NeuralNetwork.model_tag + "_history_training")
+    # classic evaluation of energy regression
+    evaluate_regression_energy(NeuralNetwork, DataCluster)
 
-    # energy regression
-    Plotter.plot_energy_error(y_pred, y_true, "error_regression_energy")
 
-    # predicting theta
-    y_true_theta = DataCluster.theta[DataCluster.idx_test()]
-    y_pred_theta = [MLEMBackprojection.calculate_theta(y_pred[i, 0], y_pred[i, 1]) for i in range(len(y_pred))]
-    y_pred_theta = np.array(y_pred_theta)
-    Plotter.plot_theta_error(y_pred_theta, y_true_theta, "error_regression_energy_theta")
+def training_regP(NeuralNetwork, DataCluster):
+    # Plot training history
+    Plotter.plot_history_regression(NeuralNetwork,
+                                    NeuralNetwork.model_name + "_" + NeuralNetwork.model_tag + "_history_training")
+    evaluate_regression_position(NeuralNetwork, DataCluster)
 
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -200,17 +191,7 @@ def evaluate_classifier(NeuralNetwork, data_cluster, theta=0.5):
     """
 
 
-def eval_sourcepos_efficiency(NeuralNetwork, DataCluster, theta=0.5):
-    # grab neural network predictions for test dataset
-    y_scores = NeuralNetwork.predict(DataCluster.x_test())
-    y_true = DataCluster.y_test()
-
-    # efficiency map for source position
-    NNAnalysis.efficiency_map_sourceposition(y_scores, y_true, DataCluster.meta[DataCluster.idx_test(), 2], theta=theta)
-
-
-def eval_regression_energy(NeuralNetwork, DataCluster):
-    from src import MLEMBackprojection
+def evaluate_regression_energy(NeuralNetwork, DataCluster):
     # set regression
     DataCluster.update_targets_energy()
     DataCluster.update_indexing_positives()
@@ -228,7 +209,7 @@ def eval_regression_energy(NeuralNetwork, DataCluster):
     Plotter.plot_theta_error(y_pred_theta, y_true_theta, "error_regression_energy_theta")
 
 
-def eval_regression_position(NeuralNetwork, DataCluster):
+def evaluate_regression_position(NeuralNetwork, DataCluster):
     # set regression
     DataCluster.update_targets_position()
     DataCluster.update_indexing_positives()
@@ -239,6 +220,7 @@ def eval_regression_position(NeuralNetwork, DataCluster):
     Plotter.plot_position_error(y_pred, y_true, "error_regression_position")
 
 
+"""
 def eval_regression_theta(NeuralNetwork, DataCluster):
     # set regression
     DataCluster.update_targets_theta()
@@ -248,6 +230,11 @@ def eval_regression_theta(NeuralNetwork, DataCluster):
     y_true = DataCluster.y_test()
 
     Plotter.plot_theta_error(y_pred, y_true, "error_regression_theta")
+"""
+
+
+# ----------------------------------------------------------------------------------------------------------------------
+# Full Evaluation of Neural Network for evaluation sets
 
 
 def eval_full(NeuralNetwork_clas,
@@ -256,7 +243,7 @@ def eval_full(NeuralNetwork_clas,
               DataCluster,
               lookup_file,
               file_name="",
-              mlem_export=False,
+              mlem_export=None,
               theta=0.5):
     # load lookup file for monte carlo truth and cut-based reconstruction
     npz_lookup = np.load(lookup_file)
@@ -280,6 +267,61 @@ def eval_full(NeuralNetwork_clas,
 
     # plot regression neural network vs cut-based approach
     NNAnalysis.regression_nn_vs_cb(ary_nn_pred, ary_cb_reco, ary_mc_truth, ary_meta)
+
+    if mlem_export is not None:
+        if mlem_export == "RECO":
+            MLEMExport.export_mlem(ary_e=y_pred_energy[:, 0],
+                                   ary_p=y_pred_energy[:, 1],
+                                   ary_ex=y_pred_position[:, 0],
+                                   ary_ey=y_pred_position[:, 1],
+                                   ary_ez=y_pred_position[:, 2],
+                                   ary_px=y_pred_position[:, 3],
+                                   ary_py=y_pred_position[:, 4],
+                                   ary_pz=y_pred_position[:, 5],
+                                   filename=file_name,
+                                   b_comptonkinematics=True,
+                                   b_dacfilter=True,
+                                   verbose=1)
+
+        if mlem_export == "PRED":
+            # denormalize features
+            for i in range(DataCluster.features.shape[1]):
+                DataCluster.features[:, i] *= DataCluster.list_std[i]
+                DataCluster.features[:, i] += DataCluster.list_mean[i]
+
+            # grab event kinematics from feature list
+            ary_e = DataCluster.features[idx_clas_pos, 2]
+            ary_ex = DataCluster.features[idx_clas_pos, 3]
+            ary_ey = DataCluster.features[idx_clas_pos, 4]
+            ary_ez = DataCluster.features[idx_clas_pos, 5]
+
+            # select only absorber energies
+            # select only positive events
+            # replace -1. (NaN) values with 0.
+            ary_p = DataCluster.features[:, [12, 22, 32, 42, 52]]
+            ary_p = ary_p[idx_clas_pos, :]
+            for i in range(ary_p.shape[0]):
+                for j in range(ary_p.shape[1]):
+                    if ary_p[i, j] == -1.:
+                        ary_p[i, j] = 0.0
+            ary_p = np.sum(ary_p, axis=1)
+
+            ary_px = DataCluster.features[idx_clas_pos, 13]
+            ary_py = DataCluster.features[idx_clas_pos, 14]
+            ary_pz = DataCluster.features[idx_clas_pos, 15]
+
+            MLEMExport.export_mlem(ary_e,
+                                   ary_p,
+                                   ary_ex,
+                                   ary_ey,
+                                   ary_ez,
+                                   ary_px,
+                                   ary_py,
+                                   ary_pz,
+                                   filename=file_name,
+                                   b_comptonkinematics=True,
+                                   b_dacfilter=True,
+                                   verbose=1)
 
     """
     # plotting score distribution vs neural network error
