@@ -16,9 +16,9 @@ class DataCluster:
         # can still be used as final targets for whatever
         self.targets = ary_targets_clas
 
-        self.p_train = 0.7
-        self.p_test = 0.2
-        self.p_valid = 0.1
+        self.p_train = 0.5
+        self.p_test = 0.1
+        self.p_valid = 0.4
 
         self.entries = len(ary_targets_clas)
 

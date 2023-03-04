@@ -268,22 +268,26 @@ def eval_full(NeuralNetwork_clas,
     # plot regression neural network vs cut-based approach
     NNAnalysis.regression_nn_vs_cb(ary_nn_pred, ary_cb_reco, ary_mc_truth, ary_meta)
 
+    # export prediction to a usable npz file
+    with open(file_name + ".npz", 'wb') as f_output:
+        np.savez_compressed(f_output, NN_PRED=ary_nn_pred)
+
     if mlem_export is not None:
-        if mlem_export == "RECO":
-            MLEMExport.export_mlem(ary_e=y_pred_energy[:, 0],
-                                   ary_p=y_pred_energy[:, 1],
-                                   ary_ex=y_pred_position[:, 0],
-                                   ary_ey=y_pred_position[:, 1],
-                                   ary_ez=y_pred_position[:, 2],
-                                   ary_px=y_pred_position[:, 3],
-                                   ary_py=y_pred_position[:, 4],
-                                   ary_pz=y_pred_position[:, 5],
+        if mlem_export == "PRED":
+            MLEMExport.export_mlem(ary_e=y_pred_energy[idx_clas_pos, 0],
+                                   ary_p=y_pred_energy[idx_clas_pos, 1],
+                                   ary_ex=y_pred_position[idx_clas_pos, 0],
+                                   ary_ey=y_pred_position[idx_clas_pos, 1],
+                                   ary_ez=y_pred_position[idx_clas_pos, 2],
+                                   ary_px=y_pred_position[idx_clas_pos, 3],
+                                   ary_py=y_pred_position[idx_clas_pos, 4],
+                                   ary_pz=y_pred_position[idx_clas_pos, 5],
                                    filename=file_name,
                                    b_comptonkinematics=True,
                                    b_dacfilter=True,
                                    verbose=1)
 
-        if mlem_export == "PRED":
+        if mlem_export == "RECO":
             # denormalize features
             for i in range(DataCluster.features.shape[1]):
                 DataCluster.features[:, i] *= DataCluster.list_std[i]
