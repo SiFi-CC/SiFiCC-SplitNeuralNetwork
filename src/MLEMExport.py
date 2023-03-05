@@ -74,7 +74,7 @@ def export_mlem(ary_e, ary_p, ary_ex, ary_ey, ary_ez, ary_px, ary_py, ary_pz,
     # print MLEM export statistics
     if verbose == 1:
         print("\n# MLEM export statistics: ")
-        print("Number of total evenst: ", len(ary_e))
+        print("Number of total events: ", len(ary_e))
         print("Number of events after cuts: ", np.sum(ary_identified))
         print("Number of cut events: ", len(ary_e) - np.sum(ary_identified))
         print("    - Valid prediction: ", error_valid_prediction)
