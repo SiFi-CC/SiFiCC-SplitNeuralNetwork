@@ -150,12 +150,12 @@ class RootParser:
 
     ####################################################################################################################
 
-    def export_npz_lookup(self, npz_filename, n=None, is_s1ax=False):
+    def export_npz_lookup(self, n=None, is_s1ax=False):
         """generates compressed npz file containing MC-Truth data and Cut-based reco data.
 
         Args:
-            npz_filename (str): filename of the generated .npz file
             n (int or none): number of events parsed from root tree, None if all events are iterated
+            is_s1ax (bool): If true, skip events with more than 1 scatterer cluster
 
         """
 
@@ -166,8 +166,8 @@ class RootParser:
         # - CutBased-data: Cut-based reconstruction data
 
         ary_meta = np.zeros(shape=(self.events_entries, 4))
-        ary_mc = np.zeros(shape=(self.events_entries, 9))
-        ary_cb = np.zeros(shape=(self.events_entries, 9))
+        ary_mc = np.zeros(shape=(self.events_entries, 10))
+        ary_cb = np.zeros(shape=(self.events_entries, 10))
 
         # Fill Meta-data, Monte-Carlo data and Cluster data into empty arrays
         # Cut-based reco data is not iterable since uproot can't handle the reco data stored in branches
@@ -186,7 +186,8 @@ class RootParser:
                                     event.is_ideal_compton * 1,
                                     event.Identified]
 
-            ary_mc[counter, :] = [event.MCEnergy_e,
+            ary_mc[counter, :] = [event.is_ideal_compton * 1,
+                                  event.MCEnergy_e,
                                   event.MCEnergy_p,
                                   event.MCPosition_e_first.x,
                                   event.MCPosition_e_first.y,
@@ -200,7 +201,8 @@ class RootParser:
             e2, _ = event.get_photon_energy()
             p1, _ = event.get_electron_position()
             p2, _ = event.get_photon_position()
-            ary_cb[counter, :] = [e1,
+            ary_cb[counter, :] = [event.is_ideal_compton * 1,
+                                  e1,
                                   e2,
                                   p1.x,
                                   p1.y,
@@ -218,10 +220,10 @@ class RootParser:
         ary_cb = ary_cb[:counter, :]
 
         # export dataframe to compressed .npz
-        with open(npz_filename, 'wb') as file:
+        with open(self.file_name + "_lookup.npz", 'wb') as file:
             np.savez_compressed(file,
                                 META=ary_meta,
                                 MC_TRUTH=ary_mc,
                                 CB_RECO=ary_cb)
 
-        print("file saved: ", npz_filename)
+        print("file saved: ", self.file_name + "_lookup.npz")
