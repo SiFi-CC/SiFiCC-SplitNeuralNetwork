@@ -39,10 +39,8 @@ def parse(npz_file):
 
 def wrapper(npz_file,
             set_testall=False,
-            standardize=True,
-            set_classweights=True,
-            set_energyweights=False,
-            set_peakweights=False):
+            set_classweights=True):
+
     # load npz file into DataCluster object
     data_cluster = parse(npz_file)
 
@@ -52,16 +50,7 @@ def wrapper(npz_file,
         data_cluster.p_valid = 0.0
         data_cluster.p_test = 1.0
 
-    if standardize:
-        data_cluster.standardize()
-
     if set_classweights:
         data_cluster.weights *= data_cluster.get_classweights()
-
-    if set_energyweights:
-        data_cluster.weights *= data_cluster.get_energyweights()
-
-    if set_peakweights:
-        data_cluster.weights *= data_cluster.get_peakweights()
 
     return data_cluster

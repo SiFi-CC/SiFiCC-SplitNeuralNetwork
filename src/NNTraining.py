@@ -11,6 +11,12 @@ def train_clas(NeuralNetwork,
     NeuralNetwork.epochs = epochs
     NeuralNetwork.batch_size = batch_size
 
+    # load normalization into Neural Network Class
+    ary_mean, ary_std = DataCluster.get_standardize()
+    DataCluster.standardize(ary_mean, ary_std)
+    NeuralNetwork.norm_mean = ary_mean
+    NeuralNetwork.norm_std = ary_std
+
     if verbose == 1:
         print("\n# Training statistics: ")
         print("Feature dimension: ({} ,{})".format(DataCluster.features.shape[0], DataCluster.features.shape[1]))
@@ -45,6 +51,12 @@ def train_regE(NeuralNetwork,
     NeuralNetwork.epochs = epochs
     NeuralNetwork.batch_size = batch_size
 
+    # load normalization into Neural Network Class
+    ary_mean, ary_std = DataCluster.get_standardize()
+    DataCluster.standardize(ary_mean, ary_std)
+    NeuralNetwork.norm_mean = ary_mean
+    NeuralNetwork.norm_std = ary_std
+
     if verbose == 1:
         print("\n# Training statistics: ")
         print("Feature dimension: ({} ,{})".format(DataCluster.features.shape[0], DataCluster.features.shape[1]))
@@ -78,6 +90,12 @@ def train_regP(NeuralNetwork,
     NeuralNetwork.epochs = epochs
     NeuralNetwork.batch_size = batch_size
 
+    # load normalization into Neural Network Class
+    ary_mean, ary_std = DataCluster.get_standardize()
+    DataCluster.standardize(ary_mean, ary_std)
+    NeuralNetwork.norm_mean = ary_mean
+    NeuralNetwork.norm_std = ary_std
+
     if verbose == 1:
         print("\n# Training statistics: ")
         print("Feature dimension: ({} ,{})".format(DataCluster.features.shape[0], DataCluster.features.shape[1]))
@@ -110,6 +128,12 @@ def train_regTheta(NeuralNetwork,
     # update run settings
     NeuralNetwork.epochs = epochs
     NeuralNetwork.batch_size = batch_size
+
+    # load normalization into Neural Network Class
+    ary_mean, ary_std = DataCluster.get_standardize()
+    DataCluster.standardize(ary_mean, ary_std)
+    NeuralNetwork.norm_mean = ary_mean
+    NeuralNetwork.norm_std = ary_std
 
     if verbose == 1:
         print("\n# Training statistics: ")

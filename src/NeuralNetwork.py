@@ -1,13 +1,15 @@
+import numpy as np
 import pickle as pkl
 from tensorflow import keras
 
 
 def lr_scheduler(epoch):
     if epoch < 70:
-        return 3e-5
-    if epoch < 200:
-        return 1e-5
+        return 3e-4
+    if epoch < 150:
+        return 1e-4
     return 1e-5
+
 
 class NeuralNetwork:
 
@@ -22,6 +24,9 @@ class NeuralNetwork:
         self.epochs = epochs
         self.batch_size = batch_size
         self.verbose = verbose
+
+        self.norm_mean = []
+        self.norm_std = []
 
     def train(self, x_train, y_train, x_weights, x_valid, y_valid):
         # train model
@@ -53,6 +58,12 @@ class NeuralNetwork:
             with open(str_save + ".hst", 'wb') as f_hist:
                 pkl.dump(self.history, f_hist)
 
+        # save normalization as npz file
+        with open(str_save + "_norm.npz", 'wb') as file:
+            np.savez_compressed(file,
+                                NORM_MEAN=np.array(self.norm_mean, dtype=np.float32),
+                                NORM_STD=np.array(self.norm_std, dtype=np.float32))
+
     def load(self, load_history=True):
         # load model
         str_load = self.model_name
@@ -65,6 +76,11 @@ class NeuralNetwork:
         if load_history:
             with open(str_load + ".hst", 'rb') as f_hist:
                 self.history = pkl.load(f_hist)
+
+        # load normalization
+        npz_norm = np.load(str_load + "_norm.npz")
+        self.norm_mean = npz_norm["NORM_MEAN"]
+        self.norm_std = npz_norm["NORM_STD"]
 
     def append_history(self, history):
         if self.history is None or self.history == {}:

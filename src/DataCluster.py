@@ -5,6 +5,7 @@ class DataCluster:
 
     def __init__(self, ary_meta, ary_features, ary_targets_clas, ary_targets_reg1, ary_targets_reg2, ary_weights,
                  ary_theta):
+        # all core features of the DataCluster class
         self.meta = ary_meta
         self.features = ary_features
         self.weights = ary_weights
@@ -12,10 +13,12 @@ class DataCluster:
         self.targets_reg1 = ary_targets_reg1
         self.targets_reg2 = ary_targets_reg2
         self.theta = ary_theta
+
         # legacy feature
         # can still be used as final targets for whatever
         self.targets = ary_targets_clas
 
+        # Train-Test-Valid split
         self.p_train = 0.5
         self.p_test = 0.1
         self.p_valid = 0.4
@@ -64,20 +67,30 @@ class DataCluster:
     def num_features(self):
         return self.features.shape[1]
 
-    def standardize(self):
+    def get_standardize(self):
         # save mean and std of every feature
-        self.list_mean = []
-        self.list_std = []
+        list_mean = []
+        list_std = []
 
         for i in range(self.features.shape[1]):
-            self.list_mean.append(np.mean(self.features[:, i]))
-            self.list_std.append(np.std(self.features[:, i]))
+            list_mean.append(np.mean(self.features[:, i]))
+            list_std.append(np.std(self.features[:, i]))
 
+        return list_mean, list_std
+
+    def standardize(self, list_mean, list_std):
+        for i in range(self.features.shape[1]):
             if np.std(self.features[:, i]) == 0.0:
                 print("Zero Division in feature :", i)
 
-            self.features[:, i] = (self.features[:, i] - np.mean(self.features[:, i])) / np.std(self.features[:, i])
+            self.features[:, i] = (self.features[:, i] - list_mean[i]) / list_std[i]
 
+    def de_standardize(self, list_mean, list_std):
+        for i in range(self.features.shape[1]):
+            self.features[:, i] *= list_std[i]
+            self.features[:, i] += list_mean[i]
+
+    """
     def new_standardize(self):
         n_cluster = 8
         n_features = 9
@@ -101,6 +114,7 @@ class DataCluster:
             std = self.list_std[i]
             self.features[:, i] -= mean
             self.features[:, i] /= std
+    """
 
     def update_indexing_positives(self):
         ary_idx = np.arange(0, self.entries, 1.0, dtype=int)

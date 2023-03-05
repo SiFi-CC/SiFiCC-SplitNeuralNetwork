@@ -131,14 +131,17 @@ def training_regP(NeuralNetwork, DataCluster):
 # ----------------------------------------------------------------------------------------------------------------------
 # Evaluation of Neural Network for evaluation sets
 
-def evaluate_classifier(NeuralNetwork, data_cluster, theta=0.5):
+def evaluate_classifier(NeuralNetwork, DataCluster, theta=0.5):
     """
     Standard evaluation script for neural network classifier.
     """
 
+    # Normalize the evaluation data
+    DataCluster.standardize(NeuralNetwork.norm_mean, NeuralNetwork.norm_std)
+
     # grab neural network predictions for test dataset
-    y_scores = NeuralNetwork.predict(data_cluster.x_test())
-    y_true = data_cluster.y_test()
+    y_scores = NeuralNetwork.predict(DataCluster.x_test())
+    y_true = DataCluster.y_test()
 
     # write general binary classifier metrics into console and .txt file
     write_metrics_classifier(y_scores, y_true)
@@ -149,25 +152,25 @@ def evaluate_classifier(NeuralNetwork, data_cluster, theta=0.5):
     _, theta_opt = fastROCAUC.fastROCAUC(y_scores, y_true, return_score=True)
 
     # evaluate source position spectrum for baseline and optimal threshold
-    dist_sourceposition(y_scores, y_true, data_cluster.meta[data_cluster.idx_test(), 2], 0.3,
+    dist_sourceposition(y_scores, y_true, DataCluster.meta[DataCluster.idx_test(), 2], 0.3,
                         "dist_sourceposition_theta03")
-    dist_sourceposition(y_scores, y_true, data_cluster.meta[data_cluster.idx_test(), 2], 0.5,
+    dist_sourceposition(y_scores, y_true, DataCluster.meta[DataCluster.idx_test(), 2], 0.5,
                         "dist_sourceposition_theta05")
-    dist_sourceposition(y_scores, y_true, data_cluster.meta[data_cluster.idx_test(), 2], theta_opt,
+    dist_sourceposition(y_scores, y_true, DataCluster.meta[DataCluster.idx_test(), 2], theta_opt,
                         "dist_sourceposition_thetaOPT")
 
     # evaluate primary energy spectrum
-    dist_primaryenergy(y_scores, y_true, data_cluster.meta[data_cluster.idx_test(), 1], 0.3,
+    dist_primaryenergy(y_scores, y_true, DataCluster.meta[DataCluster.idx_test(), 1], 0.3,
                        "dist_primaryenergy_theta03")
-    dist_primaryenergy(y_scores, y_true, data_cluster.meta[data_cluster.idx_test(), 1], 0.5,
+    dist_primaryenergy(y_scores, y_true, DataCluster.meta[DataCluster.idx_test(), 1], 0.5,
                        "dist_primaryenergy_theta05")
-    dist_primaryenergy(y_scores, y_true, data_cluster.meta[data_cluster.idx_test(), 1], theta_opt,
+    dist_primaryenergy(y_scores, y_true, DataCluster.meta[DataCluster.idx_test(), 1], theta_opt,
                        "dist_primaryenergy_thetaOPT")
 
     # score distributions as 2d-historgrams
     y_scores_pos = y_scores[y_true == 1]
-    y_sourcepos = data_cluster.meta[data_cluster.idx_test(), 2]
-    y_eprimary = data_cluster.meta[data_cluster.idx_test(), 1]
+    y_sourcepos = DataCluster.meta[DataCluster.idx_test(), 2]
+    y_eprimary = DataCluster.meta[DataCluster.idx_test(), 1]
     y_eprimary = y_eprimary[y_true == 1]
     y_sourcepos = y_sourcepos[y_true == 1]
     Plotter.plot_2dhist_score_sourcepos(y_scores_pos, y_sourcepos, "hist2d_score_sourcepos")
@@ -192,6 +195,9 @@ def evaluate_classifier(NeuralNetwork, data_cluster, theta=0.5):
 
 
 def evaluate_regression_energy(NeuralNetwork, DataCluster):
+    # Normalize the evaluation data
+    DataCluster.standardize(NeuralNetwork.norm_mean, NeuralNetwork.norm_std)
+
     # set regression
     DataCluster.update_targets_energy()
     DataCluster.update_indexing_positives()
@@ -210,6 +216,9 @@ def evaluate_regression_energy(NeuralNetwork, DataCluster):
 
 
 def evaluate_regression_position(NeuralNetwork, DataCluster):
+    # Normalize the evaluation data
+    DataCluster.standardize(NeuralNetwork.norm_mean, NeuralNetwork.norm_std)
+
     # set regression
     DataCluster.update_targets_position()
     DataCluster.update_indexing_positives()
@@ -245,6 +254,9 @@ def eval_full(NeuralNetwork_clas,
               file_name="",
               mlem_export=None,
               theta=0.5):
+    # Normalize the evaluation data
+    DataCluster.standardize(NeuralNetwork_clas.norm_mean, NeuralNetwork_clas.norm_std)
+
     # load lookup file for monte carlo truth and cut-based reconstruction
     npz_lookup = np.load(lookup_file)
     ary_mc_truth = npz_lookup["MC_TRUTH"]
