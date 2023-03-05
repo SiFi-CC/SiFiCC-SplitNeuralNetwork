@@ -8,6 +8,7 @@ ignore/
 # ignore png's and root files in the results subdirectory
 results/**/*.png
 results/**/*.root
+results/**/*.npz
 
 # root_files directory since the datafiles are too large
 root_files/
@@ -16,9 +17,15 @@ root_files/*.root
 # npz_files in the directory are ignored due to their size
 npz_files/*.npz
 
+# ignore the toy subdirectoy
+toy/
+
 # ignore example_code.py
 # it is a redundant file just to test code
 example_code.py
+
+# ignore pngs in main folder
+*.png
 
 # 2023 Beamtime HIT
 Jan2023HIT/
