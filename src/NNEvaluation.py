@@ -100,6 +100,9 @@ def dist_sourceposition(y_scores, y_true, y_source_pos, theta, figure_name):
 
 
 def training_clas(NeuralNetwork, DataCluster, theta=0.5):
+    # Normalize the evaluation data
+    DataCluster.standardize(NeuralNetwork.norm_mean, NeuralNetwork.norm_std)
+
     # Generate Neural Network prediction for test sample on training set
     y_scores = NeuralNetwork.predict(DataCluster.x_test())
     y_true = DataCluster.y_test()
@@ -114,6 +117,9 @@ def training_clas(NeuralNetwork, DataCluster, theta=0.5):
 
 
 def training_regE(NeuralNetwork, DataCluster):
+    # Normalize the evaluation data
+    DataCluster.standardize(NeuralNetwork.norm_mean, NeuralNetwork.norm_std)
+
     # Plot training history
     Plotter.plot_history_regression(NeuralNetwork,
                                     NeuralNetwork.model_name + "_" + NeuralNetwork.model_tag + "_history_training")
@@ -122,6 +128,9 @@ def training_regE(NeuralNetwork, DataCluster):
 
 
 def training_regP(NeuralNetwork, DataCluster):
+    # Normalize the evaluation data
+    DataCluster.standardize(NeuralNetwork.norm_mean, NeuralNetwork.norm_std)
+
     # Plot training history
     Plotter.plot_history_regression(NeuralNetwork,
                                     NeuralNetwork.model_name + "_" + NeuralNetwork.model_tag + "_history_training")
@@ -195,12 +204,12 @@ def evaluate_classifier(NeuralNetwork, DataCluster, theta=0.5):
 
 
 def evaluate_regression_energy(NeuralNetwork, DataCluster):
-    # Normalize the evaluation data
-    DataCluster.standardize(NeuralNetwork.norm_mean, NeuralNetwork.norm_std)
-
     # set regression
     DataCluster.update_targets_energy()
     DataCluster.update_indexing_positives()
+
+    # Normalize the evaluation data
+    DataCluster.standardize(NeuralNetwork.norm_mean, NeuralNetwork.norm_std)
 
     y_pred = NeuralNetwork.predict(DataCluster.x_test())
     y_true = DataCluster.y_test()
@@ -216,12 +225,12 @@ def evaluate_regression_energy(NeuralNetwork, DataCluster):
 
 
 def evaluate_regression_position(NeuralNetwork, DataCluster):
-    # Normalize the evaluation data
-    DataCluster.standardize(NeuralNetwork.norm_mean, NeuralNetwork.norm_std)
-
     # set regression
     DataCluster.update_targets_position()
     DataCluster.update_indexing_positives()
+    
+    # Normalize the evaluation data
+    DataCluster.standardize(NeuralNetwork.norm_mean, NeuralNetwork.norm_std)
 
     y_pred = NeuralNetwork.predict(DataCluster.x_test())
     y_true = DataCluster.y_test()

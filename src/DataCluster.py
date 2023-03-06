@@ -83,7 +83,7 @@ class DataCluster:
             if np.std(self.features[:, i]) == 0.0:
                 print("Zero Division in feature :", i)
 
-            self.features[:, i] = (self.features[:, i] - list_mean[i]) / list_std[i]
+            self.features[self.ary_idx, i] = (self.features[self.ary_idx, i] - list_mean[i]) / list_std[i]
 
     def de_standardize(self, list_mean, list_std):
         for i in range(self.features.shape[1]):
