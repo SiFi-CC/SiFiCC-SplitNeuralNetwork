@@ -28,11 +28,11 @@ ROOT_FILE_BP0mm = "OptimisedGeometry_BP0mm_2e10protons.root"
 ROOT_FILE_BP5mm = "OptimisedGeometry_BP5mm_4e9protons.root"
 # Training file used for classification and regression training
 # Generated via an input generator
-NPZ_FILE_TRAIN = "OptimisedGeometry_Continuous_2e10protons_DNN_S1AX_anp.npz"
+NPZ_FILE_TRAIN = "OptimisedGeometry_Continuous_2e10protons_DNN_S1AX.npz"
 # Evaluation files
 # Generated via an input generator, contain one Bragg-peak position
-NPZ_FILE_EVAL_0MM = "OptimisedGeometry_BP0mm_2e10protons_withTimestamps_DNN_S1AX_anp.npz"
-NPZ_FILE_EVAL_5MM = "OptimisedGeometry_BP5mm_4e9protons_withTimestamps_DNN_S1AX_anp.npz"
+NPZ_FILE_EVAL_0MM = "OptimisedGeometry_BP0mm_2e10protons_withTimestamps_DNN_S1AX.npz"
+NPZ_FILE_EVAL_5MM = "OptimisedGeometry_BP5mm_4e9protons_withTimestamps_DNN_S1AX.npz"
 EVALUATION_FILES = [NPZ_FILE_EVAL_0MM, NPZ_FILE_EVAL_5MM]
 
 # Lookup files
@@ -43,10 +43,10 @@ NPZ_LOOKUP_5MM = "OptimisedGeometry_BP5mm_4e9protons_withTimestamps_S1AX_lookup.
 LOOK_UP_FILES = [NPZ_LOOKUP_0MM, NPZ_LOOKUP_5MM]
 
 # GLOBAL SETTINGS
-RUN_NAME = "DNN_S1AX_continuous_anp"
+RUN_NAME = "DNN_S1AX_continuous_an"
 
 # Neural Network settings
-epochs_clas = 70
+epochs_clas = 100
 epochs_regE = 200
 epochs_regP = 200
 batchsize_clas = 64
@@ -56,12 +56,12 @@ theta = 0.5
 
 # Global switches to turn on/off training or analysis steps
 train_clas = True
-train_regE = False
-train_regP = False
+train_regE = True
+train_regP = True
 eval_clas = True
-eval_regE = False
-eval_regP = False
-eval_full = False
+eval_regE = True
+eval_regP = True
+eval_full = True
 
 # MLEM export setting: None (to disable export), "Reco" (for classical), "Pred" (For Neural Network predictions)
 mlemexport = ""
