@@ -5,10 +5,10 @@ from tensorflow import keras
 
 def lr_scheduler(epoch):
     if epoch < 70:
-        return 3e-4
+        return 1e-3
     if epoch < 150:
-        return 1e-4
-    return 1e-5
+        return 5e-4
+    return 1e-4
 
 
 class NeuralNetwork:

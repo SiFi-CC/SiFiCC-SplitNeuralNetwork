@@ -13,8 +13,7 @@ def return_model(input_dim):
     layers = keras.layers
 
     ####################################################################################################################
-
-    """
+    """    
     # create model
     model = keras.models.Sequential()
     # add first dense layer with predefined input dimension
@@ -36,6 +35,9 @@ def return_model(input_dim):
     model = keras.models.Sequential()
     # add first dense layer with predefined input dimension
     model.add(tf.keras.layers.Dense(64, input_dim=input_dim, activation="relu"))
+    model.add(tf.keras.layers.Dense(64, activation="relu"))
+    model.add(tf.keras.layers.Dropout(0.2))
+    model.add(tf.keras.layers.Dense(32, activation="relu"))
     model.add(tf.keras.layers.Dense(32, activation="relu"))
     model.add(tf.keras.layers.Dropout(0.2))
     model.add(tf.keras.layers.Dense(1, activation="sigmoid"))
@@ -44,3 +46,7 @@ def return_model(input_dim):
                   metrics=[keras.metrics.Precision(), keras.metrics.Recall()])
     # return model
     return model
+
+
+
+

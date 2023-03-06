@@ -10,7 +10,7 @@ dir_results = dir_main + "/results/"
 
 def change_padding(filename, new_padding, tag, n_cluster=6):
     # open training file
-    npz_data = np.load(dir_npz + filename)
+    npz_data = np.load(filename)
     ary_features = npz_data["features"]
     ary_theta = npz_data["theta"]
     ary_targets_clas = npz_data["targets_clas"]
@@ -26,7 +26,7 @@ def change_padding(filename, new_padding, tag, n_cluster=6):
         ary_idx = ary_features[:, i] == list_padding_old[i]
         ary_features[ary_idx, i] = list_padding_new[i]
 
-    with open(dir_npz + filename[:-4] + "_" + tag + ".npz", 'wb') as f_output:
+    with open(filename[:-4] + "_" + tag + ".npz", 'wb') as f_output:
         np.savez_compressed(f_output,
                             features=ary_features,
                             theta=ary_theta,
@@ -46,6 +46,6 @@ f1 = "OptimisedGeometry_Continuous_2e10protons_DNN_S1AX.npz"
 f2 = "OptimisedGeometry_BP0mm_2e10protons_withTimestamps_DNN_S1AX.npz"
 f3 = "OptimisedGeometry_BP5mm_4e9protons_withTimestamps_DNN_S1AX.npz"
 
-change_padding(dir_npz + f1, [0.0, -1.0, -1.0, 0.0, -55.0, 55.0, 0.0, 0.0, 0.0, 0.0], "flip")
-change_padding(dir_npz + f2, [0.0, -1.0, -1.0, 0.0, -55.0, 55.0, 0.0, 0.0, 0.0, 0.0], "flip")
-change_padding(dir_npz + f3, [0.0, -1.0, -1.0, 0.0, -55.0, 55.0, 0.0, 0.0, 0.0, 0.0], "flip")
+change_padding(dir_npz + f1, [-500.0, -500.0, -500.0, -500.0, -500.0, -500.0, -500.0, -500.0, -500.0, -500.0], "anp")
+change_padding(dir_npz + f2, [-500.0, -500.0, -500.0, -500.0, -500.0, -500.0, -500.0, -500.0, -500.0, -500.0], "anp")
+change_padding(dir_npz + f3, [-500.0, -500.0, -500.0, -500.0, -500.0, -500.0, -500.0, -500.0, -500.0, -500.0], "anp")

@@ -12,7 +12,7 @@ def train_clas(NeuralNetwork,
     NeuralNetwork.batch_size = batch_size
 
     # load normalization into Neural Network Class
-    ary_mean, ary_std = DataCluster.get_standardize()
+    ary_mean, ary_std = DataCluster.get_standardize_alt(ary_padding=[-500.0, -500.0, -500.0, -500.0, -500.0, -500.0, -500.0, -500.0, -500.0, -500.0])
     DataCluster.standardize(ary_mean, ary_std)
     NeuralNetwork.norm_mean = ary_mean
     NeuralNetwork.norm_std = ary_std
@@ -52,7 +52,7 @@ def train_regE(NeuralNetwork,
     NeuralNetwork.batch_size = batch_size
 
     # load normalization into Neural Network Class
-    ary_mean, ary_std = DataCluster.get_standardize()
+    ary_mean, ary_std = DataCluster.get_standardize_alt(ary_padding=[-500.0, -500.0, -500.0, -500.0, -500.0, -500.0, -500.0, -500.0, -500.0, -500.0])
     DataCluster.standardize(ary_mean, ary_std)
     NeuralNetwork.norm_mean = ary_mean
     NeuralNetwork.norm_std = ary_std
@@ -91,7 +91,7 @@ def train_regP(NeuralNetwork,
     NeuralNetwork.batch_size = batch_size
 
     # load normalization into Neural Network Class
-    ary_mean, ary_std = DataCluster.get_standardize()
+    ary_mean, ary_std = DataCluster.get_standardize_alt(ary_padding=[-500.0, -500.0, -500.0, -500.0, -500.0, -500.0, -500.0, -500.0, -500.0, -500.0])
     DataCluster.standardize(ary_mean, ary_std)
     NeuralNetwork.norm_mean = ary_mean
     NeuralNetwork.norm_std = ary_std
