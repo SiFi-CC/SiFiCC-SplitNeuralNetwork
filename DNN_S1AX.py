@@ -156,6 +156,7 @@ os.chdir(dir_results + RUN_NAME + "/" + NPZ_FILE_TRAIN[:-4] + "/")
 if eval_clas:
     data_cluster = NPZParser.wrapper(dir_npz + NPZ_FILE_TRAIN, set_testall=False)
     NNEvaluation.training_clas(neuralnetwork_clas, data_cluster, theta)
+    NNEvaluation.evaluate_classifier(neuralnetwork_clas, data_cluster, theta)
 if eval_regE:
     data_cluster = NPZParser.wrapper(dir_npz + NPZ_FILE_TRAIN, set_testall=False)
     NNEvaluation.training_regE(neuralnetwork_regE, data_cluster)

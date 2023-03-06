@@ -112,14 +112,9 @@ def training_clas(NeuralNetwork, DataCluster, theta=0.5):
                                     NeuralNetwork.model_name + "_" + NeuralNetwork.model_tag + "_history_training")
     # Generate efficiency map
     NNAnalysis.efficiency_map_sourceposition(y_scores, y_true, DataCluster.meta[DataCluster.idx_test(), 2], theta=theta)
-    # classic evaluation of classification
-    evaluate_classifier(NeuralNetwork, DataCluster, theta=theta)
 
 
 def training_regE(NeuralNetwork, DataCluster):
-    # Normalize the evaluation data
-    DataCluster.standardize(NeuralNetwork.norm_mean, NeuralNetwork.norm_std)
-
     # Plot training history
     Plotter.plot_history_regression(NeuralNetwork,
                                     NeuralNetwork.model_name + "_" + NeuralNetwork.model_tag + "_history_training")
@@ -128,9 +123,6 @@ def training_regE(NeuralNetwork, DataCluster):
 
 
 def training_regP(NeuralNetwork, DataCluster):
-    # Normalize the evaluation data
-    DataCluster.standardize(NeuralNetwork.norm_mean, NeuralNetwork.norm_std)
-
     # Plot training history
     Plotter.plot_history_regression(NeuralNetwork,
                                     NeuralNetwork.model_name + "_" + NeuralNetwork.model_tag + "_history_training")
@@ -228,7 +220,7 @@ def evaluate_regression_position(NeuralNetwork, DataCluster):
     # set regression
     DataCluster.update_targets_position()
     DataCluster.update_indexing_positives()
-    
+
     # Normalize the evaluation data
     DataCluster.standardize(NeuralNetwork.norm_mean, NeuralNetwork.norm_std)
 
