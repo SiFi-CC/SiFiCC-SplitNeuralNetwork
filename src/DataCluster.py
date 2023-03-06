@@ -78,6 +78,25 @@ class DataCluster:
 
         return list_mean, list_std
 
+    def get_standardize_alt(self, ary_padding):
+        # save mean and std of every feature
+        list_mean = []
+        list_std = []
+
+        list_idx = np.arange(0, 6 * 10, 10)
+
+        for i in range(10):
+            # print(np.array(list_idx) + i)
+            ary_con = np.reshape(self.features[:, np.array(list_idx) + i], (self.features.shape[0] * 6,))
+            ary_con = ary_con[ary_con != ary_padding[i]]
+            list_mean.append(np.mean(ary_con))
+            list_std.append(np.std(ary_con))
+
+        list_mean = list_mean * 6
+        list_std = list_std * 6
+
+        return list_mean, list_std
+
     def standardize(self, list_mean, list_std):
         for i in range(self.features.shape[1]):
             if np.std(self.features[:, i]) == 0.0:
@@ -89,32 +108,6 @@ class DataCluster:
         for i in range(self.features.shape[1]):
             self.features[:, i] *= list_std[i]
             self.features[:, i] += list_mean[i]
-
-    """
-    def new_standardize(self):
-        n_cluster = 8
-        n_features = 9
-        self.list_mean = []
-        self.list_std = []
-        list_idx = np.arange(0, n_cluster * n_features, n_features)
-        ary_padding = np.array([0.0, -1.0, 0.0, -55.0, -55.0, 0.0, 0.0, 0.0, 0.0])
-
-        for i in range(9):
-            # print(np.array(list_idx) + i)
-            ary_con = np.reshape(self.features[:, np.array(list_idx) + i], (self.features.shape[0] * n_cluster,))
-            ary_con = ary_con[ary_con != ary_padding[i]]
-            self.list_mean.append(np.mean(ary_con))
-            self.list_std.append(np.std(ary_con))
-
-        self.list_mean = self.list_mean * n_cluster
-        self.list_std = self.list_std * n_cluster
-
-        for i in range(len(self.list_mean)):
-            mean = self.list_mean[i]
-            std = self.list_std[i]
-            self.features[:, i] -= mean
-            self.features[:, i] /= std
-    """
 
     def update_indexing_positives(self):
         ary_idx = np.arange(0, self.entries, 1.0, dtype=int)
