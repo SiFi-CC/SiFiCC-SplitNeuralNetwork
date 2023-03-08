@@ -201,7 +201,7 @@ class RootParser:
             e2, _ = event.get_photon_energy()
             p1, _ = event.get_electron_position()
             p2, _ = event.get_photon_position()
-            ary_cb[counter, :] = [event.is_ideal_compton * 1,
+            ary_cb[counter, :] = [event.Identified,
                                   e1,
                                   e2,
                                   p1.x,

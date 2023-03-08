@@ -266,3 +266,32 @@ def plot_backprojection_stacked(list_image, list_labels, figure_title, figure_na
 
     plt.tight_layout()
     plt.savefig(figure_name + ".png")
+
+def plot_backprojection_stacked_dual(list_image_0mm, list_image_5mm, list_labels, figure_title, figure_name):
+    list_proj_0mm = []
+    list_proj_5mm = []
+    for i in range(len(list_image_0mm)):
+        list_image_0mm[i] = np.rot90(list_image_0mm[i])
+        proj_0mm = np.sum(list_image_0mm[i], axis=0)
+        list_proj_0mm.append(proj_0mm)
+
+        list_image_5mm[i] = np.rot90(list_image_5mm[i])
+        proj_5mm = np.sum(list_image_5mm[i], axis=0)
+        list_proj_5mm.append(proj_5mm)
+
+    xticks = np.arange(0, list_image_0mm[0].shape[1] + 10.0, 10.0)
+    xlabels = xticks - list_image_0mm[0].shape[1] / 2
+    list_colors = ["black", "blue", "green", "red", "orange", "purple", "grey"]
+
+    plt.figure()
+    plt.title(figure_title)
+    # axs[1].set(xlim=(0 , image.shape[1]), ylim=(0, max(proj)))
+    plt.xlabel("z-position [mm]")
+    plt.xticks(xticks, xlabels)
+    for i in range(len(list_image_0mm)):
+        plt.plot(list_proj_0mm[i], label=list_labels[i], color=list_colors[i])
+        plt.plot(list_proj_5mm[i], color=list_colors[i], linestyle="--")
+    plt.legend(loc="upper right")
+
+    plt.tight_layout()
+    plt.savefig(figure_name + ".png")
