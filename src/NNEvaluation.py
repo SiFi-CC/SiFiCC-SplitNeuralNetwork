@@ -128,6 +128,12 @@ def training_regP(NeuralNetwork, DataCluster):
                                     NeuralNetwork.model_name + "_" + NeuralNetwork.model_tag + "_history_training")
     evaluate_regression_position(NeuralNetwork, DataCluster)
 
+def training_full(NeuralNetwork, DataCluster):
+    # Plot training history
+    Plotter.plot_history_regression(NeuralNetwork,
+                                    NeuralNetwork.model_name + "_" + NeuralNetwork.model_tag + "_history_training")
+    evaluate_regression_position(NeuralNetwork, DataCluster)
+
 
 # ----------------------------------------------------------------------------------------------------------------------
 # Evaluation of Neural Network for evaluation sets

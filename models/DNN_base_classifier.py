@@ -34,12 +34,12 @@ def return_model(input_dim):
     # create model
     model = keras.models.Sequential()
     # add first dense layer with predefined input dimension
-    model.add(tf.keras.layers.Dense(64, input_dim=input_dim, activation="relu"))
+    model.add(tf.keras.layers.Dense(128, input_dim=input_dim, activation="relu"))
+    model.add(tf.keras.layers.Dense(128, activation="relu"))
+    model.add(tf.keras.layers.Dropout(0.1))
     model.add(tf.keras.layers.Dense(64, activation="relu"))
-    model.add(tf.keras.layers.Dropout(0.2))
     model.add(tf.keras.layers.Dense(32, activation="relu"))
-    model.add(tf.keras.layers.Dense(32, activation="relu"))
-    model.add(tf.keras.layers.Dropout(0.2))
+    model.add(tf.keras.layers.Dropout(0.1))
     model.add(tf.keras.layers.Dense(1, activation="sigmoid"))
     # compile model with loss function, optimizer and accuracy
     model.compile(loss="binary_crossentropy", optimizer="Adam",
