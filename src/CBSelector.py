@@ -66,7 +66,7 @@ def check_compton_kinematics(e, p, ee=0.0, ep=0.0, compton=True):
     return True
 
 
-def beam_origin(e, p, p_ex, p_ey, p_ez, p_px, p_py, p_pz, beam_diff, inverse):
+def beam_origin(e, p, p_ex, p_ey, p_ez, p_px, p_py, p_pz, beam_diff, inverse, return_dac=False):
     #
     #
     #
@@ -120,6 +120,15 @@ def beam_origin(e, p, p_ex, p_ey, p_ez, p_px, p_py, p_pz, beam_diff, inverse):
 
     f2 = -coneapex.z / endvec.z
     m0 = (coneapex + (f2 * endvec))
+
+    if return_dac:
+        if crosspoint.y > 0 and m0.y < 0:
+            return 0.0
+        elif crosspoint.y < 0 and m0.y > 0:
+            return 0.0
+
+        distance = m0.y
+        return abs(distance)
 
     if crosspoint.y > 0 and m0.y < 0:
         return True
