@@ -104,8 +104,8 @@ def reconstruct_image(ary_e1, ary_e2, ary_x1, ary_y1, ary_z1, ary_x2, ary_y2, ar
     # histogram settings (in this case a 2d-array)
     # detector dimensions are hardcoded at the moment!
     entries = len(ary_e1)
-    scatz = 60.0
-    scaty = 30.0
+    scatz = 80.0
+    scaty = 40.0
     nbinsz = int(scatz)
     nbinsy = int(scaty)
     zlimit = scatz / 2.0
@@ -183,7 +183,7 @@ def plot_backprojection(image, figure_title, figure_name):
     plt.tick_params('x', labelbottom=False)
 
     axs[1].xaxis.set_tick_params(which='both', labelbottom=True)
-    axs[1].set_ylim(max(proj)*0.5, max(proj)*1.5)
+    axs[1].set_ylim(max(proj) * 0.5, max(proj) * 1.5)
     axs[1].set_aspect('auto')
     # axs[1].set(xlim=(0 , image.shape[1]), ylim=(0, max(proj)))
     axs[1].set_xlabel("z-position [mm]")
@@ -194,7 +194,7 @@ def plot_backprojection(image, figure_title, figure_name):
     plt.savefig(figure_name + ".png")
 
 
-def plot_backprojection_stacked(image_0mm, image_5mm, figure_title, figure_name):
+def plot_backprojection_dual(image_0mm, image_5mm, figure_title, figure_name):
     # rotate original image by 90 degrees
     image_0mm = np.rot90(image_0mm)
     proj_0mm = np.sum(image_0mm, axis=0)
@@ -226,6 +226,43 @@ def plot_backprojection_stacked(image_0mm, image_5mm, figure_title, figure_name)
     axs[1].plot(proj_0mm, color="black", label="0mm")
     axs[1].plot(proj_5mm, color="red", label="5mm")
     axs[1].legend()
+
+    plt.tight_layout()
+    plt.savefig(figure_name + ".png")
+
+
+def plot_backprojection_stacked(list_image, list_labels, figure_title, figure_name):
+    list_proj = []
+    for i in range(len(list_image)):
+        list_image[i] = np.rot90(list_image[i])
+        proj = np.sum(list_image[i], axis=0)
+        list_proj.append(proj)
+
+    xticks = np.arange(0, list_image[0].shape[1] + 10.0, 10.0)
+    xlabels = xticks - list_image[0].shape[1] / 2
+    yticks = np.arange(0, list_image[0].shape[0] + 5.0, 5.0)
+    ylabels = yticks - list_image[0].shape[0] / 2
+
+    fig = plt.figure()
+    gs = fig.add_gridspec(2, hspace=0)
+    axs = gs.subplots(sharex=True)
+
+    axs[0].set_title(figure_title)
+    axs[0].imshow(list_image[0])
+    axs[0].set_aspect('auto')
+    axs[0].set_yticks(yticks, ylabels)
+    # axs[0].set(xlim=(0, image.shape[1]), ylim=(0, image.shape[0]))
+    plt.tick_params('x', labelbottom=False)
+
+    axs[1].xaxis.set_tick_params(which='both', labelbottom=True)
+    axs[1].set_aspect('auto')
+    # axs[1].set(xlim=(0 , image.shape[1]), ylim=(0, max(proj)))
+    axs[1].set_xlabel("z-position [mm]")
+    axs[1].set_xticks(xticks, xlabels)
+    for i in range(len(list_image)):
+        axs[1].plot(list_proj[i], label=list_labels[i])
+
+    axs[1].legend(loc="upper right")
 
     plt.tight_layout()
     plt.savefig(figure_name + ".png")
