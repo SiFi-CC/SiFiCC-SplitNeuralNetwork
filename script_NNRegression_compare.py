@@ -13,201 +13,9 @@ dir_npz = dir_main + "/npz_files/"
 dir_toy = dir_main + "/toy/"
 dir_results = dir_main + "/results/"
 
-
-# ----------------------------------------------------------------------------------------------------------------------
-
-def generate_export():
-    # --------------------------------------------
-    # General input for data generation:
-    # - root file
-    # - npz file for Neural network features
-    # - Neural Network Classification, Regression models
-    from src import RootParser
-    from src import root_files
-    from src import NPZParser
-
-    from src import NeuralNetwork
-    from models import DNN_base_classifier
-    from models import DNN_base_regression_energy
-    from models import DNN_base_regression_position
-
-    # ---------------------------------------------
-    # definition of directory paths
-    dir_main = os.getcwd()
-    dir_root = dir_main + "/root_files/"
-    dir_npz = dir_main + "/npz_files/"
-    dir_results = dir_main + "/results/"
-
-    # ---------------------------------------------
-    # loading neural network models
-    RUN_NAME = "DNN_S1AX"
-    RUN_TAG = "continuous_flip"
-    LOOKUP_NAME_BP0mm = "OptimisedGeometry_BP0mm_2e10protons_withTimestamps_S1AX_lookup.npz"
-    LOOKUP_NAME_BP5mm = "OptimisedGeometry_BP5mm_4e9protons_withTimestamps_S1AX_lookup.npz"
-
-    SAMPLE_NAME_BP0mm = "OptimisedGeometry_BP0mm_2e10protons_withTimestamps_DNN_S1AX_flip.npz"
-    SAMPLE_NAME_BP5mm = "OptimisedGeometry_BP5mm_4e9protons_withTimestamps_DNN_S1AX_flip.npz"
-
-    # ----------------------------------------------
-    # load up all required datasets
-    # - Lookup file for MC-Truth and CB-Reco
-    # - NN predictions
-
-    # Lookup datasets
-    npz_lookup_bp0mm = np.load(dir_npz + LOOKUP_NAME_BP0mm)
-    npz_lookup_bp5mm = np.load(dir_npz + LOOKUP_NAME_BP5mm)
-
-    ary_mc_truth_bp0mm = npz_lookup_bp0mm["MC_TRUTH"]
-    ary_mc_truth_bp5mm = npz_lookup_bp5mm["MC_TRUTH"]
-    ary_mc_truth_bp0mm_meta = npz_lookup_bp0mm["META"]
-    ary_mc_truth_bp5mm_meta = npz_lookup_bp5mm["META"]
-
-    ary_cb_reco_bp0mm = npz_lookup_bp0mm["CB_RECO"]
-    ary_cb_reco_bp5mm = npz_lookup_bp5mm["CB_RECO"]
-
-    # get neural network predictions
-    os.chdir(dir_results + RUN_NAME + "_" + RUN_TAG + "/")
-    tfmodel_clas = DNN_base_classifier.return_model(80)
-    tfmodel_regE = DNN_base_regression_energy.return_model(80)
-    tfmodel_regP = DNN_base_regression_position.return_model(80)
-
-    neuralnetwork_clas = NeuralNetwork.NeuralNetwork(model=tfmodel_clas,
-                                                     model_name=RUN_NAME,
-                                                     model_tag=RUN_TAG + "_clas")
-
-    neuralnetwork_regE = NeuralNetwork.NeuralNetwork(model=tfmodel_regE,
-                                                     model_name=RUN_NAME,
-                                                     model_tag=RUN_TAG + "_regE")
-
-    neuralnetwork_regP = NeuralNetwork.NeuralNetwork(model=tfmodel_regP,
-                                                     model_name=RUN_NAME,
-                                                     model_tag=RUN_TAG + "_regP")
-    neuralnetwork_clas.load()
-    neuralnetwork_regE.load()
-    neuralnetwork_regP.load()
-    os.chdir(dir_main)
-
-    DataCluster_BP0mm = NPZParser.wrapper(dir_npz + SAMPLE_NAME_BP0mm,
-                                          standardize=True,
-                                          set_classweights=False,
-                                          set_peakweights=False)
-    DataCluster_BP5mm = NPZParser.wrapper(dir_npz + SAMPLE_NAME_BP5mm,
-                                          standardize=True,
-                                          set_classweights=False,
-                                          set_peakweights=False)
-
-    ary_nn_pred_bp0mm = np.zeros(shape=(DataCluster_BP0mm.entries, 9))
-    ary_nn_pred_bp5mm = np.zeros(shape=(DataCluster_BP5mm.entries, 9))
-
-    # get neural network predictions
-    y_pred_bp0mm = neuralnetwork_clas.predict(DataCluster_BP0mm.features)
-    ary_nn_pred_bp0mm[:, 0] = np.reshape(y_pred_bp0mm, newshape=(len(y_pred_bp0mm),))
-    ary_nn_pred_bp0mm[:, 1:3] = neuralnetwork_regE.predict(DataCluster_BP0mm.features)
-    ary_nn_pred_bp0mm[:, 3:9] = neuralnetwork_regP.predict(DataCluster_BP0mm.features)
-
-    y_pred_bp5mm = neuralnetwork_clas.predict(DataCluster_BP5mm.features)
-    ary_nn_pred_bp5mm[:, 0] = np.reshape(y_pred_bp5mm, newshape=(len(y_pred_bp5mm),))
-    ary_nn_pred_bp5mm[:, 1:3] = neuralnetwork_regE.predict(DataCluster_BP5mm.features)
-    ary_nn_pred_bp5mm[:, 3:9] = neuralnetwork_regP.predict(DataCluster_BP5mm.features)
-
-    str_savefile = "S1AX_continuous_flip.npz"
-    with open(str_savefile, 'wb') as f_output:
-        np.savez_compressed(f_output,
-                            mc_truth_0mm=ary_mc_truth_bp0mm,
-                            mc_truth_5mm=ary_mc_truth_bp5mm,
-                            cb_reco_0mm=ary_cb_reco_bp0mm,
-                            cb_reco_5mm=ary_cb_reco_bp5mm,
-                            nn_pred_0mm=ary_nn_pred_bp0mm,
-                            nn_pred_5mm=ary_nn_pred_bp5mm)
-
-
-def generate_export_temp():
-    # --------------------------------------------
-    # General input for data generation:
-    # - root file
-    # - npz file for Neural network features
-    # - Neural Network Classification, Regression models
-    from src import RootParser
-    from src import root_files
-    from src import NPZParser
-
-    from src import NeuralNetwork
-    from models import DNN_base_classifier
-    from models import DNN_base_regression_energy
-    from models import DNN_base_regression_position
-
-    # ---------------------------------------------
-    # definition of directory paths
-    dir_main = os.getcwd()
-    dir_root = dir_main + "/root_files/"
-    dir_npz = dir_main + "/npz_files/"
-    dir_results = dir_main + "/results/"
-
-    # ---------------------------------------------
-    # loading neural network models
-    RUN_NAME = "DNN_S1AX"
-    RUN_TAG = "continuous_flip"
-    LOOKUP_NAME = "OptimisedGeometry_Continuous_2e10protons_lookup.npz"
-    SAMPLE_NAME = "OptimisedGeometry_Continuous_2e10protons_DNN_S1AX_flip.npz"
-
-    # ----------------------------------------------
-    # load up all required datasets
-    # - Lookup file for MC-Truth and CB-Reco
-    # - NN predictions
-
-    # Lookup datasets
-    npz_lookup_bp0mm = np.load(dir_npz + LOOKUP_NAME)
-
-    ary_mc_truth_bp0mm = npz_lookup_bp0mm["MC_TRUTH"]
-    ary_mc_truth_bp0mm_meta = npz_lookup_bp0mm["META"]
-    ary_cb_reco_bp0mm = npz_lookup_bp0mm["CB_RECO"]
-
-    # get neural network predictions
-    os.chdir(dir_results + RUN_NAME + "_" + RUN_TAG + "/")
-    tfmodel_clas = DNN_base_classifier.return_model(80)
-    tfmodel_regE = DNN_base_regression_energy.return_model(80)
-    tfmodel_regP = DNN_base_regression_position.return_model(80)
-
-    neuralnetwork_clas = NeuralNetwork.NeuralNetwork(model=tfmodel_clas,
-                                                     model_name=RUN_NAME,
-                                                     model_tag=RUN_TAG + "_clas")
-
-    neuralnetwork_regE = NeuralNetwork.NeuralNetwork(model=tfmodel_regE,
-                                                     model_name=RUN_NAME,
-                                                     model_tag=RUN_TAG + "_regE")
-
-    neuralnetwork_regP = NeuralNetwork.NeuralNetwork(model=tfmodel_regP,
-                                                     model_name=RUN_NAME,
-                                                     model_tag=RUN_TAG + "_regP")
-    neuralnetwork_clas.load()
-    neuralnetwork_regE.load()
-    neuralnetwork_regP.load()
-    os.chdir(dir_main)
-
-    DataCluster_BP0mm = NPZParser.wrapper(dir_npz + SAMPLE_NAME,
-                                          standardize=True,
-                                          set_classweights=False,
-                                          set_peakweights=False)
-
-    ary_nn_pred_bp0mm = np.zeros(shape=(DataCluster_BP0mm.entries, 9))
-
-    # get neural network predictions
-    y_pred_bp0mm = neuralnetwork_clas.predict(DataCluster_BP0mm.features)
-    ary_nn_pred_bp0mm[:, 0] = np.reshape(y_pred_bp0mm, newshape=(len(y_pred_bp0mm),))
-    ary_nn_pred_bp0mm[:, 1:3] = neuralnetwork_regE.predict(DataCluster_BP0mm.features)
-    ary_nn_pred_bp0mm[:, 3:9] = neuralnetwork_regP.predict(DataCluster_BP0mm.features)
-
-    str_savefile = "S1AX_continuous_train_flip.npz"
-    with open(str_savefile, 'wb') as f_output:
-        np.savez_compressed(f_output,
-                            mc_truth=ary_mc_truth_bp0mm,
-                            cb_reco=ary_cb_reco_bp0mm,
-                            nn_pred=ary_nn_pred_bp0mm)
-
-
 # ----------------------------------------------------------------------------------------------------------------------
 # Analysis script
-
+"""
 npz_nn_0mm = np.load(
     dir_results + "DNN_S1AX_continuous_master/OptimisedGeometry_BP0mm_2e10protons_withTimestamps_DNN_S1AX/OptimisedGeometry_BP0mm_2e10protons_withTimestamps_DNN_S1AX.npz")
 npz_nn_5mm = np.load(
@@ -290,7 +98,7 @@ image_5mm = MLEMBackprojection.reconstruct_image(ary_cb_5mm[idx_pos_5mm, 1],
 MLEMBackprojection.plot_backprojection_stacked(image_0mm, image_5mm,
                                                "S1AX_nnpred_base",
                                                "MLEMbackproj_S1AX_continuous_reco_theta05")
-
+"""
 """
 # ----------------------------------------------------------------------------------------------------------------------
 # Continuous source position backprojection
@@ -359,135 +167,61 @@ print(NNLoss.loss_energy_mae_asym(ary_cb_reco_bp0mm[:, 0:2], ary_mc_truth_bp0mm[
 """
 
 # ----------------------------------------------------------------------------------------------------------------------
-# Backprojection plots
+# Backprojection Stacked from Toy datasets
 
-"""
-image_0mm = MLEMBackprojection.reconstruct_image(ary_nn_pred_bp0mm[idx_pos_0mm, 1],
-                                                 ary_nn_pred_bp0mm[idx_pos_0mm, 2],
-                                                 ary_nn_pred_bp0mm[idx_pos_0mm, 3],
-                                                 ary_nn_pred_bp0mm[idx_pos_0mm, 4],
-                                                 ary_nn_pred_bp0mm[idx_pos_0mm, 5],
-                                                 ary_nn_pred_bp0mm[idx_pos_0mm, 6],
-                                                 ary_nn_pred_bp0mm[idx_pos_0mm, 7],
-                                                 ary_nn_pred_bp0mm[idx_pos_0mm, 8],
+list_files = ["S1AX_continuous_an_pur10_toy.npz",
+              "S1AX_continuous_an_pur02_toy.npz",
+              "S1AX_continuous_an_pur015_toy.npz",
+              "S1AX_continuous_an_pur01_toy.npz",
+              "S1AX_continuous_an_pur005_toy.npz",
+              "S1AX_continuous_an_pur00_toy.npz"]
+
+list_labels = ["fPur = 1.0",
+               "fPur = 0.2",
+               "fPur = 0.15",
+               "fPur = 0.1",
+               "fPur = 0.05",
+               "fPur = 0.0"]
+
+npz_lookup_0mm = np.load(dir_npz + "OptimisedGeometry_BP0mm_2e10protons_withTimestamps_S1AX_lookup.npz")
+npz_lookup_5mm = np.load(dir_npz + "OptimisedGeometry_BP5mm_4e9protons_withTimestamps_S1AX_lookup.npz")
+ary_meta_0mm = npz_lookup_0mm["META"]
+ary_meta_5mm = npz_lookup_5mm["META"]
+ary_mc_0mm = npz_lookup_0mm["MC_TRUTH"]
+ary_mc_5mm = npz_lookup_5mm["MC_TRUTH"]
+ary_cb_0mm = npz_lookup_0mm["CB_RECO"]
+ary_cb_5mm = npz_lookup_5mm["CB_RECO"]
+
+n = 30000
+ary_meta_0mm = ary_meta_0mm[:n]
+ary_meta_5mm = ary_meta_5mm[:n]
+ary_mc_0mm = ary_mc_0mm[:n]
+ary_mc_5mm = ary_mc_5mm[:n]
+ary_cb_0mm = ary_cb_0mm[:n]
+ary_cb_5mm = ary_cb_5mm[:n]
+
+list_images = []
+for i in range(len(list_files)):
+    npz_nn = np.load(dir_toy + "S1AX_continuous_an/" + list_files[i])
+
+    ary_nn_0mm = npz_nn["NN_PRED_0MM"]
+    # ary_nn_5mm = npz_nn["NN_PRED_5MM"]
+    ary_nn_0mm = ary_nn_0mm[:n]
+    # ary_nn_5mm = ary_nn_5mm[:n]
+
+    idx_pos = ary_nn_0mm[:, 0] > 0.5
+
+    image = MLEMBackprojection.reconstruct_image(ary_nn_0mm[idx_pos, 1],
+                                                 ary_nn_0mm[idx_pos, 2],
+                                                 ary_nn_0mm[idx_pos, 3],
+                                                 ary_nn_0mm[idx_pos, 4],
+                                                 ary_nn_0mm[idx_pos, 5],
+                                                 ary_nn_0mm[idx_pos, 6],
+                                                 ary_nn_0mm[idx_pos, 7],
+                                                 ary_nn_0mm[idx_pos, 8],
                                                  apply_filter=True)
+    print("Image created for : ", list_files[i])
+    list_images.append(image)
 
-image_5mm = MLEMBackprojection.reconstruct_image(ary_nn_pred_bp5mm[idx_pos_5mm, 1],
-                                                 ary_nn_pred_bp5mm[idx_pos_5mm, 2],
-                                                 ary_nn_pred_bp5mm[idx_pos_5mm, 3],
-                                                 ary_nn_pred_bp5mm[idx_pos_5mm, 4],
-                                                 ary_nn_pred_bp5mm[idx_pos_5mm, 5],
-                                                 ary_nn_pred_bp5mm[idx_pos_5mm, 6],
-                                                 ary_nn_pred_bp5mm[idx_pos_5mm, 7],
-                                                 ary_nn_pred_bp5mm[idx_pos_5mm, 8],
-                                                 apply_filter=True)
-MLEMBackprojection.plot_backprojection_stacked(image_0mm, image_5mm,
-                                               "Backprojection NN prediction",
-                                               "MLEM_backproj_S1AX_continuous_emod_theta03")
-"""
-"""
-image_0mm = MLEMBackprojection.reconstruct_image(ary_nn_pred_bp0mm[idx_pos_0mm, 1],
-                                                 ary_nn_pred_bp0mm[idx_pos_0mm, 2],
-                                                 ary_cb_reco_bp0mm[idx_pos_0mm, 2],
-                                                 ary_cb_reco_bp0mm[idx_pos_0mm, 3],
-                                                 ary_cb_reco_bp0mm[idx_pos_0mm, 4],
-                                                 ary_cb_reco_bp0mm[idx_pos_0mm, 5],
-                                                 ary_cb_reco_bp0mm[idx_pos_0mm, 6],
-                                                 ary_cb_reco_bp0mm[idx_pos_0mm, 7],
-                                                 apply_filter=True)
-
-image_5mm = MLEMBackprojection.reconstruct_image(ary_nn_pred_bp5mm[idx_pos_5mm, 1],
-                                                 ary_nn_pred_bp5mm[idx_pos_5mm, 2],
-                                                 ary_cb_reco_bp5mm[idx_pos_5mm, 2],
-                                                 ary_cb_reco_bp5mm[idx_pos_5mm, 3],
-                                                 ary_cb_reco_bp5mm[idx_pos_5mm, 4],
-                                                 ary_cb_reco_bp5mm[idx_pos_5mm, 5],
-                                                 ary_cb_reco_bp5mm[idx_pos_5mm, 6],
-                                                 ary_cb_reco_bp5mm[idx_pos_5mm, 7],
-                                                 apply_filter=True)
-MLEMBackprojection.plot_backprojection_stacked(image_0mm, image_5mm,
-                                               "Backprojection CB identified", "MLEM_backproj_S1AX_theta03_classical")
-
-image_0mm = MLEMBackprojection.reconstruct_image(ary_nn_pred_bp0mm[idx_ic_0mm, 1],
-                                                 ary_nn_pred_bp0mm[idx_ic_0mm, 2],
-                                                 ary_nn_pred_bp0mm[idx_ic_0mm, 3],
-                                                 ary_nn_pred_bp0mm[idx_ic_0mm, 4],
-                                                 ary_nn_pred_bp0mm[idx_ic_0mm, 5],
-                                                 ary_nn_pred_bp0mm[idx_ic_0mm, 6],
-                                                 ary_nn_pred_bp0mm[idx_ic_0mm, 7],
-                                                 ary_nn_pred_bp0mm[idx_ic_0mm, 8],
-                                                 apply_filter=True)
-
-image_5mm = MLEMBackprojection.reconstruct_image(ary_nn_pred_bp5mm[idx_ic_5mm, 1],
-                                                 ary_nn_pred_bp5mm[idx_ic_5mm, 2],
-                                                 ary_nn_pred_bp5mm[idx_ic_5mm, 3],
-                                                 ary_nn_pred_bp5mm[idx_ic_5mm, 4],
-                                                 ary_nn_pred_bp5mm[idx_ic_5mm, 5],
-                                                 ary_nn_pred_bp5mm[idx_ic_5mm, 6],
-                                                 ary_nn_pred_bp5mm[idx_ic_5mm, 7],
-                                                 ary_nn_pred_bp5mm[idx_ic_5mm, 8],
-                                                 apply_filter=True)
-MLEMBackprojection.plot_backprojection_stacked(image_0mm, image_5mm,
-                                               "Backprojection CB identified",
-                                               "MLEM_backproj_S1AX_theta03_idealcompton")
-
-image_0mm = MLEMBackprojection.reconstruct_image(ary_cb_reco_bp0mm[:n, 0],
-                                                 ary_cb_reco_bp0mm[:n, 1],
-                                                 ary_nn_pred_bp0mm[:n, 3],
-                                                 ary_nn_pred_bp0mm[:n, 4],
-                                                 ary_nn_pred_bp0mm[:n, 5],
-                                                 ary_nn_pred_bp0mm[:n, 6],
-                                                 ary_nn_pred_bp0mm[:n, 7],
-                                                 ary_nn_pred_bp0mm[:n, 8])
-
-image_5mm = MLEMBackprojection.reconstruct_image(ary_cb_reco_bp5mm[:n, 0],
-                                                 ary_cb_reco_bp5mm[:n, 1],
-                                                 ary_nn_pred_bp5mm[:n, 3],
-                                                 ary_nn_pred_bp5mm[:n, 4],
-                                                 ary_nn_pred_bp5mm[:n, 5],
-                                                 ary_nn_pred_bp5mm[:n, 6],
-                                                 ary_nn_pred_bp5mm[:n, 7],
-                                                 ary_nn_pred_bp5mm[:n, 8])
-MLEMBackprojection.plot_backprojection_stacked(image_0mm, image_5mm,
-                                               "Backprojection CB identified", "MLEM_backproj_S1AX_theta05_ecorrect")
-
-image_0mm = MLEMBackprojection.reconstruct_image(ary_cb_reco_bp0mm[:n, 0],
-                                                 ary_cb_reco_bp0mm[:n, 1],
-                                                 ary_cb_reco_bp0mm[:n, 2],
-                                                 ary_cb_reco_bp0mm[:n, 3],
-                                                 ary_cb_reco_bp0mm[:n, 4],
-                                                 ary_cb_reco_bp0mm[:n, 5],
-                                                 ary_cb_reco_bp0mm[:n, 6],
-                                                 ary_cb_reco_bp0mm[:n, 7])
-
-image_5mm = MLEMBackprojection.reconstruct_image(ary_cb_reco_bp5mm[:n, 0],
-                                                 ary_cb_reco_bp5mm[:n, 1],
-                                                 ary_cb_reco_bp5mm[:n, 2],
-                                                 ary_cb_reco_bp5mm[:n, 3],
-                                                 ary_cb_reco_bp5mm[:n, 4],
-                                                 ary_cb_reco_bp5mm[:n, 5],
-                                                 ary_cb_reco_bp5mm[:n, 6],
-                                                 ary_cb_reco_bp5mm[:n, 7])
-MLEMBackprojection.plot_backprojection_stacked(image_0mm, image_5mm,
-                                               "Backprojection CB identified", "MLEM_backproj_S1AX_theta05_fullcorrect")
-
-image_0mm = MLEMBackprojection.reconstruct_image(ary_cb_reco_bp0mm[:n, 0],
-                                                 ary_cb_reco_bp0mm[:n, 1],
-                                                 ary_cb_reco_bp0mm[:n, 2],
-                                                 ary_cb_reco_bp0mm[:n, 3],
-                                                 ary_cb_reco_bp0mm[:n, 4],
-                                                 ary_cb_reco_bp0mm[:n, 5],
-                                                 ary_cb_reco_bp0mm[:n, 6],
-                                                 ary_cb_reco_bp0mm[:n, 7])
-
-image_5mm = MLEMBackprojection.reconstruct_image(ary_cb_reco_bp5mm[:n, 0],
-                                                 ary_cb_reco_bp5mm[:n, 1],
-                                                 ary_cb_reco_bp5mm[:n, 2],
-                                                 ary_cb_reco_bp5mm[:n, 3],
-                                                 ary_cb_reco_bp5mm[:n, 4],
-                                                 ary_cb_reco_bp5mm[:n, 5],
-                                                 ary_cb_reco_bp5mm[:n, 6],
-                                                 ary_cb_reco_bp5mm[:n, 7])
-MLEMBackprojection.plot_backprojection_stacked(image_0mm, image_5mm,
-                                               "Backprojection CB identified", "MLEM_backproj_S1AX_CBreco")
-"""
+MLEMBackprojection.plot_backprojection_stacked(list_images, list_labels, "DNN S1AX NN Pred fPur stacked",
+                                               "MLEM_backproj_S1AX_continuous_an_stacked_fpur")

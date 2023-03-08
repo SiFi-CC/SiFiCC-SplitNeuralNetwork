@@ -46,6 +46,6 @@ f1 = "OptimisedGeometry_Continuous_2e10protons_DNN_S1AX.npz"
 f2 = "OptimisedGeometry_BP0mm_2e10protons_withTimestamps_DNN_S1AX.npz"
 f3 = "OptimisedGeometry_BP5mm_4e9protons_withTimestamps_DNN_S1AX.npz"
 
-change_padding(dir_npz + f1, [-500.0, -500.0, -500.0, -500.0, -500.0, -500.0, -500.0, -500.0, -500.0, -500.0], "anp")
-change_padding(dir_npz + f2, [-500.0, -500.0, -500.0, -500.0, -500.0, -500.0, -500.0, -500.0, -500.0, -500.0], "anp")
-change_padding(dir_npz + f3, [-500.0, -500.0, -500.0, -500.0, -500.0, -500.0, -500.0, -500.0, -500.0, -500.0], "anp")
+change_padding(dir_npz + f1, [0.0, -10.0, -10.0,  0.0, -100.0, -100.0,  0.0,  0.0,  0.0,  0.0], "anp")
+change_padding(dir_npz + f2, [0.0, -10.0, -10.0,  0.0, -100.0, -100.0,  0.0,  0.0,  0.0,  0.0], "anp")
+change_padding(dir_npz + f3, [0.0, -10.0, -10.0,  0.0, -100.0, -100.0,  0.0,  0.0,  0.0,  0.0], "anp")
