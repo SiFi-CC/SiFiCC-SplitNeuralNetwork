@@ -77,10 +77,10 @@ def create_toy_set(FILE_NAME,
     ary_scores_0mm = ary_nn_pred_0mm[:, 0]
     ary_scores_5mm = ary_nn_pred_5mm[:, 0]
 
+    ary_idx_0mm = np.flip(ary_idx_0mm[ary_scores_0mm.argsort()])
+    ary_idx_5mm = np.flip(ary_idx_5mm[ary_scores_5mm.argsort()])
     ary_scores_0mm = np.flip(ary_scores_0mm[ary_scores_0mm.argsort()])
     ary_scores_5mm = np.flip(ary_scores_5mm[ary_scores_5mm.argsort()])
-    ary_idx_0mm = np.invert(ary_idx_0mm[ary_scores_0mm.argsort()])
-    ary_idx_5mm = np.invert(ary_idx_5mm[ary_scores_5mm.argsort()])
 
     if f_eff != 1.0:
         n_total = int(np.sum(ary_mc_truth_0mm[:, 0]) * f_eff)
