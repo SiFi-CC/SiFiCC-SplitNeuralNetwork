@@ -62,9 +62,9 @@ ToyGenerator.create_toy_set(FILE_NAME="S1AX_continuous_an",
                             f_tp=0.0,
                             mod_bg=False)
 """
-"""
+
 ToyGenerator.create_toy_set_cutbased(FILE_NAME="S1AX_CB_reco",
-                                     TAG="fp00",
+                                     TAG="tp00",
                                      PATH_LOOKUP_0MM=dir_npz + "OptimisedGeometry_BP0mm_2e10protons_withTimestamps_S1AX_lookup.npz",
                                      PATH_LOOKUP_5MM=dir_npz + "OptimisedGeometry_BP5mm_4e9protons_withTimestamps_S1AX_lookup.npz",
                                      f_reg_ee=1.0,
@@ -75,7 +75,6 @@ ToyGenerator.create_toy_set_cutbased(FILE_NAME="S1AX_CB_reco",
                                      f_reg_xp=1.0,
                                      f_reg_yp=1.0,
                                      f_reg_zp=1.0,
-                                     f_fp=0.0,
-                                     f_tp=1.0,
+                                     f_fp=1.0,
+                                     f_tp=0.0,
                                      mod_bg=False)
-"""

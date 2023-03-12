@@ -47,7 +47,7 @@ RUN_NAME = "DNN_S1AX_continuous_an"
 
 # Neural Network settings
 epochs_clas = 50
-epochs_regE = 200
+epochs_regE = 100
 epochs_regP = 300
 batchsize_clas = 64
 batchsize_regE = 64
@@ -58,13 +58,13 @@ theta = 0.5
 train_clas = False
 train_regE = False
 train_regP = False
-eval_clas = False
+eval_clas = True
 eval_regE = False
 eval_regP = False
 eval_full = False
 
 # MLEM export setting: None (to disable export), "Reco" (for classical), "Pred" (For Neural Network predictions)
-mlemexport = ""
+mlemexport = "PRED"
 
 # ----------------------------------------------------------------------------------------------------------------------
 # define directory paths

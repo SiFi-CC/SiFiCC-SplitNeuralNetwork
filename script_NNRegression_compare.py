@@ -168,19 +168,11 @@ print(NNLoss.loss_energy_mae_asym(ary_cb_reco_bp0mm[:, 0:2], ary_mc_truth_bp0mm[
 
 # ----------------------------------------------------------------------------------------------------------------------
 # Backprojection Stacked from Toy datasets
-
-list_files = ["S1AX_continuous_an_base_toy.npz",
-              "S1AX_continuous_an_fp08_toy.npz",
-              "S1AX_continuous_an_fp06_toy.npz",
-              "S1AX_continuous_an_fp04_toy.npz",
-              "S1AX_continuous_an_fp02_toy.npz",
+"""
+list_files = ["S1AX_continuous_an_tp00_toy.npz",
               "S1AX_continuous_an_fp00_toy.npz"]
 
-list_labels = ["f_fp = 1.0",
-               "f_fp = 0.8",
-               "f_fp = 0.6",
-               "f_fp = 0.4",
-               "f_fp = 0.2",
+list_labels = ["f_tp = 0.0",
                "f_fp = 0.0"]
 
 npz_lookup_0mm = np.load(dir_npz + "OptimisedGeometry_BP0mm_2e10protons_withTimestamps_S1AX_lookup.npz")
@@ -192,7 +184,7 @@ ary_mc_5mm = npz_lookup_5mm["MC_TRUTH"]
 ary_cb_0mm = npz_lookup_0mm["CB_RECO"]
 ary_cb_5mm = npz_lookup_5mm["CB_RECO"]
 
-n = 500
+n = 30000
 ary_meta_0mm = ary_meta_0mm[:n]
 ary_meta_5mm = ary_meta_5mm[:n]
 ary_mc_0mm = ary_mc_0mm[:n]
@@ -237,15 +229,17 @@ for i in range(len(list_files)):
     list_images_5mm.append(image_5mm)
 
 MLEMBackprojection.plot_backprojection_stacked_dual(list_images_0mm, list_images_5mm, list_labels,
-                                                    "S1AX_continuous_an_nn_pred_ffp_stacked_BP0mmBP5mm",
-                                                    "MLEM_backproj_S1AX_continuous_an_stacked_BP0mmBP5mm_fpur")
-
+                                                    "S1AX_continuous_an_nn_pred_ffp00_ftp00_stacked_BP0mmBP5mm",
+                                                    "MLEM_backproj_S1AX_continuous_an_stacked_BP0mmBP5mm_ffp00_ftp00")
 """
+
 # -----------------------------
 # CB-Reco
-list_files = ["S1AX_CB_reco_eff10_toy.npz"]
+list_files = ["S1AX_CB_reco_tp00_toy.npz",
+              "S1AX_CB_reco_fp00_toy.npz"]
 
-list_labels = ["fS = 0.0"]
+list_labels = ["ftp = 0.0",
+               "ffp = 0.0"]
 
 n = 30000
 list_images_0mm = []
@@ -285,7 +279,7 @@ for i in range(len(list_files)):
     list_images_5mm.append(image_5mm)
 
 MLEMBackprojection.plot_backprojection_stacked_dual(list_images_0mm, list_images_5mm, list_labels,
-                                                    "DNN S1AX CB Reco fPur stacked",
-                                                    "MLEM_backproj_S1AX_cb_reco_stacked_feff00")
+                                                    "S1AX_continuous_an_cb_reco_ffp00_ftp00_stacked_BP0mmBP5mm",
+                                                    "MLEM_backproj_S1AX_cb_reco_stacked_BP0mmBP5mm_ffp00_ftp00")
 
-"""
+

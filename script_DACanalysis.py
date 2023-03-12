@@ -17,9 +17,9 @@ dir_results = dir_main + "/results/"
 # Data read-in
 
 npz_nn_0mm = np.load(
-    dir_results + "DNN_S1AX_continuous_master/OptimisedGeometry_BP0mm_2e10protons_withTimestamps_DNN_S1AX/OptimisedGeometry_BP0mm_2e10protons_withTimestamps_DNN_S1AX.npz")
+    dir_results + "DNN_S1AX_continuous_an/OptimisedGeometry_BP0mm_2e10protons_withTimestamps_DNN_S1AX/OptimisedGeometry_BP0mm_2e10protons_withTimestamps_DNN_S1AX.npz")
 npz_nn_5mm = np.load(
-    dir_results + "DNN_S1AX_continuous_master/OptimisedGeometry_BP5mm_4e9protons_withTimestamps_DNN_S1AX/OptimisedGeometry_BP5mm_4e9protons_withTimestamps_DNN_S1AX.npz")
+    dir_results + "DNN_S1AX_continuous_an/OptimisedGeometry_BP5mm_4e9protons_withTimestamps_DNN_S1AX/OptimisedGeometry_BP5mm_4e9protons_withTimestamps_DNN_S1AX.npz")
 
 ary_nn_0mm = npz_nn_0mm["NN_PRED"]
 ary_nn_5mm = npz_nn_5mm["NN_PRED"]
@@ -85,8 +85,8 @@ plt.plot([0.0, 100.0], [0.0, 100.0], color="red", linestyle="--")
 plt.legend()
 plt.tight_layout()
 plt.show()
-
-bins = np.arange(0.0, 500.0, 1.0)
+"""
+bins = np.arange(0.0, 100.0, 1.0)
 plt.figure()
 plt.xlabel("DCA [mm]")
 plt.ylabel("counts")
@@ -98,5 +98,4 @@ plt.yscale('log')
 plt.grid()
 plt.legend()
 plt.tight_layout()
-plt.show()
-"""
+plt.savefig("DCA_analysis.png")
