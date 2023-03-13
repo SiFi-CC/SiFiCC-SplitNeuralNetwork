@@ -59,12 +59,12 @@ train_clas = False
 train_regE = False
 train_regP = False
 eval_clas = True
-eval_regE = False
-eval_regP = False
+eval_regE = True
+eval_regP = True
 eval_full = False
 
 # MLEM export setting: None (to disable export), "Reco" (for classical), "Pred" (For Neural Network predictions)
-mlemexport = "PRED"
+mlemexport = ""
 
 # ----------------------------------------------------------------------------------------------------------------------
 # define directory paths
