@@ -42,6 +42,7 @@ def plot_score_dist(y_scores, y_true, figure_name):
 
 
 def plot_history_classifier(nn_classifier, figure_name):
+    plt.rcParams.update({'font.size': 16})
     # plot model performance
     loss = nn_classifier.history['loss']
     val_loss = nn_classifier.history['val_loss']
@@ -53,7 +54,7 @@ def plot_history_classifier(nn_classifier, figure_name):
     pur = nn_classifier.history["recall"]
     val_pur = nn_classifier.history["val_recall"]
 
-    fig = plt.figure()
+    fig = plt.figure(figsize=(8,5))
     ax1 = fig.add_subplot(211)
     ax2 = fig.add_subplot(212)
 
@@ -65,8 +66,8 @@ def plot_history_classifier(nn_classifier, figure_name):
     ax1.legend()
     ax1.grid()
 
-    ax2.plot(loss, label="Training", linestyle='-', color="blue")
-    ax2.plot(val_loss, label="Validation", linestyle='--', color="orange")
+    ax2.plot(loss, label="Loss", linestyle='-', color="blue")
+    ax2.plot(val_loss, linestyle='--', color="blue")
     ax2.set_xlabel("epoch")
     ax2.set_ylabel("loss")
     ax2.legend()
@@ -77,27 +78,22 @@ def plot_history_classifier(nn_classifier, figure_name):
 
 
 def plot_history_regression(nn_regression, figure_name):
+    plt.rcParams.update({'font.size': 16})
+
     loss = nn_regression.history['loss']
     val_loss = nn_regression.history['val_loss']
     mse = nn_regression.history["mean_absolute_error"]
     val_mse = nn_regression.history["val_mean_absolute_error"]
 
-    fig = plt.figure()
-    ax1 = fig.add_subplot(211)
-    ax2 = fig.add_subplot(212)
-
-    ax1.plot(mse, label="Training", linestyle='--', color="blue")
-    ax1.plot(val_mse, label="Validation", linestyle='-', color="red")
-    ax1.set_ylabel("mean_absolute_error")
-    ax1.legend()
-    ax1.grid()
-
-    ax2.plot(loss, label="Training", linestyle='--', color="blue")
-    ax2.plot(val_loss, label="Validation", linestyle='-', color="red")
-    ax2.set_xlabel("epoch")
-    ax2.set_ylabel("loss")
-    ax2.legend()
-    ax2.grid()
+    plt.figure(figsize=(8, 5))
+    plt.plot(loss, label="Loss", linestyle='-', color="blue")
+    plt.plot(val_loss, linestyle='--', color="blue")
+    plt.plot(mse, label="MAE", linestyle='-', color="red")
+    plt.plot(val_mse, linestyle='--', color="red")
+    plt.xlabel("epoch")
+    plt.ylabel("loss")
+    plt.legend()
+    plt.grid()
     plt.tight_layout()
     plt.savefig(figure_name + ".png")
     plt.close()
