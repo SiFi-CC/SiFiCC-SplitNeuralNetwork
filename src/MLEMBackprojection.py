@@ -194,6 +194,28 @@ def plot_backprojection(image, figure_title, figure_name):
     plt.savefig(figure_name + ".png")
 
 
+def plot_backprojection_image(image, figure_title, figure_name):
+    plt.rcParams.update({'font.size': 14})
+    # rotate original image by 90 degrees
+    image = np.rot90(image)
+    proj = np.sum(image, axis=0)
+
+    xticks = np.arange(0, image.shape[1] + 10.0 + 0.1, 10.0) - 0.5
+    xlabels = xticks - image.shape[1] / 2 + 0.5
+    yticks = np.arange(0, image.shape[0] + 5.0 + 1.0, 5.0) - 0.5
+    ylabels = yticks - image.shape[0] / 2 + 0.5
+
+    plt.figure(figsize=(8, 4))
+    plt.title(figure_title)
+    plt.xticks(xticks, xlabels)
+    plt.yticks(yticks, ylabels)
+    plt.xlabel("z-position [mm]")
+    plt.ylabel("y-position [mm]")
+    plt.imshow(image)
+    plt.tight_layout()
+    plt.savefig(figure_name + ".png")
+
+
 def plot_backprojection_dual(image_0mm, image_5mm, figure_title, figure_name):
     # rotate original image by 90 degrees
     image_0mm = np.rot90(image_0mm)
@@ -266,6 +288,7 @@ def plot_backprojection_stacked(list_image, list_labels, figure_title, figure_na
 
     plt.tight_layout()
     plt.savefig(figure_name + ".png")
+
 
 def plot_backprojection_stacked_dual(list_image_0mm, list_image_5mm, list_labels, figure_title, figure_name):
     list_proj_0mm = []
