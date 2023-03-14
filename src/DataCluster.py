@@ -72,12 +72,18 @@ class DataCluster:
         list_mean = []
         list_std = []
 
-        for i in range(self.features.shape[1]):
-            list_mean.append(np.mean(self.features[:, i]))
-            list_std.append(np.std(self.features[:, i]))
+        list_idx = np.arange(0, 6 * 10, 10)
+
+        for i in range(10):
+            # print(np.array(list_idx) + i)
+            ary_con = np.reshape(self.features[:, np.array(list_idx) + i], (self.features.shape[0] * 6,))
+            list_mean.append(np.mean(ary_con))
+            list_std.append(np.std(ary_con))
+
+        list_mean = list_mean * 6
+        list_std = list_std * 6
 
         return list_mean, list_std
-
     def get_standardize_alt(self, ary_padding):
         # save mean and std of every feature
         list_mean = []
