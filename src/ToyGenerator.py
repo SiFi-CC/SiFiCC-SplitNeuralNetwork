@@ -20,6 +20,8 @@ def create_toy_set(FILE_NAME,
                    f_reg_zp=1.0,
                    f_tp=1.0,
                    f_fp=1.0,
+                   f_tn=1.0,
+                   f_fn=1.0,
                    mod_bg=False):
     # define directory paths
     dir_main = os.getcwd()
@@ -74,18 +76,15 @@ def create_toy_set(FILE_NAME,
                 continue
 
     # -----------------------------------------------------------------------------
-    # efficiency and purity manipulation
-    # First sort all events by score. Count number of FP and TP events. Scale number
-    # of FP/TP events and remove (my modifying score) until scaled number is matched
+    # Score manipulation
+    # First events are sorted by score. Afterwards the ratio of TP, TN, FP, FN
+    # events are removed till factors are  matched
     ary_idx_0mm = np.arange(0.0, len(ary_nn_pred_0mm), 1.0, dtype=int)
     ary_idx_5mm = np.arange(0.0, len(ary_nn_pred_5mm), 1.0, dtype=int)
     ary_scores_0mm = ary_nn_pred_0mm[:, 0]
     ary_scores_5mm = ary_nn_pred_5mm[:, 0]
-
     ary_idx_0mm = np.flip(ary_idx_0mm[ary_scores_0mm.argsort()])
     ary_idx_5mm = np.flip(ary_idx_5mm[ary_scores_5mm.argsort()])
-    ary_scores_0mm = np.flip(ary_scores_0mm[ary_scores_0mm.argsort()])
-    ary_scores_5mm = np.flip(ary_scores_5mm[ary_scores_5mm.argsort()])
 
     if f_fp != 1.0:
 
@@ -141,6 +140,16 @@ def create_toy_set(FILE_NAME,
                 counter += 1
             if counter >= n_tp * (1 - f_tp):
                 break
+
+    # TODO: TN and FN manipulation
+
+    # -----------------------------------------------------------------------------
+    # TN and FN manipulation
+    # Mostly to create a working Monte-Carlo sample
+    ary_idx_0mm = np.arange(0.0, len(ary_nn_pred_0mm), 1.0, dtype=int)
+    ary_idx_5mm = np.arange(0.0, len(ary_nn_pred_5mm), 1.0, dtype=int)
+    ary_scores_0mm = ary_nn_pred_0mm[:, 0]
+    ary_scores_5mm = ary_nn_pred_5mm[:, 0]
 
     # --------------------------------------------------------------
     # Control plot generation
