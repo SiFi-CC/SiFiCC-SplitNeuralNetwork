@@ -43,7 +43,7 @@ NPZ_LOOKUP_5MM = "OptimisedGeometry_BP5mm_4e9protons_withTimestamps_S1AX_lookup.
 LOOK_UP_FILES = [NPZ_LOOKUP_0MM, NPZ_LOOKUP_5MM]
 
 # GLOBAL SETTINGS
-RUN_NAME = "DNN_S1AX_continuous_an"
+RUN_NAME = "DNN_S1AX_continuous_an_oldstd"
 
 # Neural Network settings
 epochs_clas = 50
@@ -61,7 +61,7 @@ train_regP = False
 eval_clas = True
 eval_regE = True
 eval_regP = True
-eval_full = False
+eval_full = True
 
 # MLEM export setting: None (to disable export), "Reco" (for classical), "Pred" (For Neural Network predictions)
 mlemexport = ""
@@ -156,14 +156,27 @@ os.chdir(dir_results + RUN_NAME + "/" + NPZ_FILE_TRAIN[:-4] + "/")
 if eval_clas:
     data_cluster = NPZParser.wrapper(dir_npz + NPZ_FILE_TRAIN, set_testall=False)
     NNEvaluation.training_clas(neuralnetwork_clas, data_cluster, theta)
-    data_cluster = NPZParser.wrapper(dir_npz + NPZ_FILE_TRAIN, set_testall=False)
-    NNEvaluation.evaluate_classifier(neuralnetwork_clas, data_cluster, theta)
 if eval_regE:
     data_cluster = NPZParser.wrapper(dir_npz + NPZ_FILE_TRAIN, set_testall=False)
     NNEvaluation.training_regE(neuralnetwork_regE, data_cluster)
 if eval_regP:
     data_cluster = NPZParser.wrapper(dir_npz + NPZ_FILE_TRAIN, set_testall=False)
     NNEvaluation.training_regP(neuralnetwork_regP, data_cluster)
+
+if eval_full:
+    os.chdir(dir_results + RUN_NAME + "/")
+    neuralnetwork_clas.load()
+    neuralnetwork_regE.load()
+    neuralnetwork_regP.load()
+    os.chdir(dir_results + RUN_NAME + "/" + NPZ_FILE_TRAIN[:-4] + "/")
+
+    data_cluster = NPZParser.wrapper(dir_npz + NPZ_FILE_TRAIN, set_testall=True)
+    NNEvaluation.export_training(neuralnetwork_clas,
+                                 neuralnetwork_regE,
+                                 neuralnetwork_regP,
+                                 data_cluster,
+                                 file_name=NPZ_FILE_TRAIN[:-4],
+                                 export_npz=True)
 
 # Evaluation of test dataset
 for i, file in enumerate([NPZ_FILE_EVAL_0MM, NPZ_FILE_EVAL_5MM]):
