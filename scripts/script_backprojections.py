@@ -44,9 +44,9 @@ def backproj_neuralnetwork_bias(run_name,
     idx_pos_bp0mm = idx_pos_bp0mm[:n]
     idx_pos_bp5mm = idx_pos_bp5mm[:n]
 
-    idx_pos_cont = idx_pos_cont[ary_nn_pred_cont[idx_pos_cont, 0] < 0.5]
-    idx_pos_bp0mm = idx_pos_bp0mm[ary_nn_pred_bp0mm[idx_pos_bp0mm, 0] < 0.5]
-    idx_pos_bp5mm = idx_pos_bp5mm[ary_nn_pred_bp5mm[idx_pos_bp5mm, 0] < 0.5]
+    idx_pos_cont = idx_pos_cont[ary_nn_pred_cont[idx_pos_cont, 0] > 0.5]
+    idx_pos_bp0mm = idx_pos_bp0mm[ary_nn_pred_bp0mm[idx_pos_bp0mm, 0] > 0.5]
+    idx_pos_bp5mm = idx_pos_bp5mm[ary_nn_pred_bp5mm[idx_pos_bp5mm, 0] > 0.5]
 
     print(len(idx_pos_cont))
     print(len(idx_pos_bp0mm))
@@ -191,7 +191,7 @@ MLEMBackprojection.plot_backprojection(image, "",
 
 # ----------------------------------------------------------------------------------------------------------------------
 
-backproj_neuralnetwork_bias("DNN_S1AX_continuous_an",
-                            "MLEMBackproj_DNN_S1AX_continuous_an_stackedbias",
+backproj_neuralnetwork_bias("DNN_S1AX_oldnorm",
+                            "MLEMBackproj_DNN_S1AX_oldnorm_stackedbias",
                             "",
                             n=40000)
