@@ -46,7 +46,6 @@ def return_model(input_dim):
     # add first dense layer with predefined input dimension
     model.add(tf.keras.layers.Dense(128, input_dim=input_dim, activation="relu"))
     model.add(tf.keras.layers.Dense(32, activation="relu"))
-    model.add(tf.keras.layers.Dropout(0.1))
     model.add(tf.keras.layers.Dense(2, activation="linear"))
     model.compile(loss="mean_absolute_error", optimizer="Adam", metrics=["mean_absolute_error"])
     return model
