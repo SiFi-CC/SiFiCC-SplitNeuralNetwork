@@ -23,6 +23,10 @@ class DataCluster:
         self.p_test = 0.1
         self.p_valid = 0.4
 
+        # padding, standard values are pre-set
+        # updating needs to be done manually later on
+        self.padding = [0.0, -1.0, -1.0, 0.0, -55.0, -55.0, 0.0, 0.0, 0.0, 0.0]
+
         self.entries = len(ary_targets_clas)
 
         # generate shuffled indices with a random generator
@@ -67,18 +71,7 @@ class DataCluster:
     def num_features(self):
         return self.features.shape[1]
 
-    def get_standardize(self):
-        # save mean and std of every feature
-        list_mean = []
-        list_std = []
-
-        for i in range(self.features.shape[1]):
-            list_mean.append(np.mean(self.features[:, i]))
-            list_std.append(np.std(self.features[:, i]))
-
-        return list_mean, list_std
-
-    def get_standardize_alt(self, ary_padding):
+    def get_standardization(self, filter_padding=True):
         # save mean and std of every feature
         list_mean = []
         list_std = []
@@ -88,7 +81,8 @@ class DataCluster:
         for i in range(10):
             # print(np.array(list_idx) + i)
             ary_con = np.reshape(self.features[:, np.array(list_idx) + i], (self.features.shape[0] * 6,))
-            ary_con = ary_con[ary_con != ary_padding[i]]
+            if filter_padding:
+                ary_con = ary_con[ary_con != self.padding[i]]
             list_mean.append(np.mean(ary_con))
             list_std.append(np.std(ary_con))
 

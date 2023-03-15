@@ -92,6 +92,7 @@ def plot_history_regression(nn_regression, figure_name):
     # plt.plot(val_mse, linestyle='--', color="red")
     plt.xlabel("epoch")
     plt.ylabel("loss")
+    plt.xlim(-5, 100)
     plt.legend()
     plt.grid()
     plt.tight_layout()

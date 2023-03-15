@@ -8,93 +8,6 @@ from src import MLEMBackprojection
 from src import MLEMExport
 
 
-def write_metrics_classifier(y_scores, y_true):
-    acc_base, eff_base, pur_base, conf_base = NNAnalysis.get_classifier_metrics(y_scores, y_true, threshold=0.5)
-    acc_weight, _, _, _ = NNAnalysis.get_classifier_metrics(y_scores, y_true, threshold=0.5, weighted=True)
-    print("\nMetrics base threshold: ")
-    print("Threshold: {:.3f}".format(0.5))
-    print("Baseline accuracy: {:.3f}".format(1 - (np.sum(y_true) / len(y_true))))
-    print("Accuracy: {:.1f}%".format(acc_base * 100))
-    print("Accuracy (weighted): {:.1f}%".format(acc_weight * 100))
-    print("Efficiency: {:.1f}%".format(eff_base * 100))
-    print("Purity: {:.1f}%".format(pur_base * 100))
-    print("TP: {} | FP: {} | TN: {} | FN: {}".format(*conf_base))
-
-    # run ROC curve and AUC score analysis
-    auc, theta = fastROCAUC.fastROCAUC(y_scores, y_true, return_score=True)
-    acc_opt, eff_opt, pur_opt, conf_opt = NNAnalysis.get_classifier_metrics(y_scores, y_true, threshold=theta)
-    acc_opt_weight, _, _, _ = NNAnalysis.get_classifier_metrics(y_scores, y_true, threshold=theta, weighted=True)
-    print("\nMetrics base threshold: ")
-    print("AUC Score: {:.3f}".format(auc))
-    print("Threshold: {:.3f}".format(theta))
-    print("Baseline accuracy: {:.3f}".format(1 - (np.sum(y_true) / len(y_true))))
-    print("Accuracy: {:.1f}%".format(acc_opt * 100))
-    print("Accuracy (weighted): {:.1f}%".format(acc_opt_weight * 100))
-    print("Efficiency: {:.1f}%".format(eff_opt * 100))
-    print("Purity: {:.1f}%".format(pur_opt * 100))
-    print("TP: {} | FP: {} | TN: {} | FN: {}".format(*conf_opt))
-
-    with open("metrics.txt", 'w') as f:
-        f.write("### AnalysisMetric results:\n")
-        f.write("\nBaseline accuracy: {:.3f}\n".format(1 - (np.sum(y_true) / len(y_true))))
-
-        f.write("Metrics base threshold:\n")
-        f.write("Threshold: {:.3f}\n".format(0.5))
-        f.write("Accuracy: {:.1f}%\n".format(acc_base * 100))
-        f.write("Accuracy (weighted)%: {:.1f}\n".format(acc_weight * 100))
-        f.write("Efficiency: {:.1f}%\n".format(eff_base * 100))
-        f.write("Purity: {:.1f}%\n".format(pur_base * 100))
-        f.write("TP: {} | FP: {} | TN: {} | FN: {}\n".format(*conf_base))
-
-        f.write("Metrics base threshold\n")
-        f.write("AUC Score: {:.3f}\n".format(auc))
-        f.write("Threshold: {:.3f}\n".format(theta))
-        f.write("Accuracy: {:.1f}%\n".format(acc_opt * 100))
-        f.write("Accuracy (weighted): {:.1f}%\n".format(acc_opt_weight * 100))
-        f.write("Efficiency: {:.1f}%\n".format(eff_opt * 100))
-        f.write("Purity: {:.1f}%\n".format(pur_opt * 100))
-        f.write("TP: {} | FP: {} | TN: {} | FN: {}\n".format(*conf_opt))
-        f.close()
-
-
-########################################################################################################################
-
-def dist_primaryenergy(y_scores, y_true, y_primary_energy, theta, figure_name):
-    """
-    Grab primary energy arrays of all positive, signal and total events
-    """
-    # neural network positive events
-    ary_pe_pos = [y_primary_energy[i] for i in range(len(y_scores))
-                  if (y_scores[i] > theta and y_primary_energy[i] != 0.0)]
-    # all signal events
-    ary_pe_tp = [y_primary_energy[i] for i in range(len(y_true)) if y_true[i] == 1]
-    # total events with condition that primary energy cannot be zero
-    ary_pe_tot = [y_primary_energy[i] for i in range(len(y_true)) if y_primary_energy[i] != 0.0]
-    Plotter.plot_primary_energy_dist(ary_pe_pos,
-                                     ary_pe_tp,
-                                     ary_pe_tot,
-                                     figure_name)
-
-
-def dist_sourceposition(y_scores, y_true, y_source_pos, theta, figure_name):
-    """
-    Grab source positions arrays of all positive, signal and total events
-    """
-    # neural network positive events
-    ary_sp_pos = [y_source_pos[i] for i in range(len(y_scores))
-                  if (y_scores[i] > theta and y_source_pos[i] != 0.0)]
-    # all signal events
-    ary_sp_tp = [y_source_pos[i] for i in range(len(y_true)) if y_true[i] == 1]
-    # total events with condition that source position cannot be zero
-    ary_sp_tot = [y_source_pos[i] for i in range(len(y_true)) if y_source_pos[i] != 0.0]
-    Plotter.plot_source_position(ary_sp_pos,
-                                 ary_sp_tp,
-                                 ary_sp_tot,
-                                 figure_name)
-
-
-########################################################################################################################
-
 # ----------------------------------------------------------------------------------------------------------------------
 # Evaluation of Neural Networks for training set
 
@@ -113,6 +26,10 @@ def training_clas(NeuralNetwork, DataCluster, theta=0.5):
     # Generate efficiency map
     NNAnalysis.efficiency_map_sourceposition(y_scores, y_true, DataCluster.meta[DataCluster.idx_test(), 2], theta=theta)
 
+    # classic evaluation of classification
+    DataCluster.de_standardize(NeuralNetwork.norm_mean, NeuralNetwork.norm_std)
+    evaluate_classifier(NeuralNetwork, DataCluster, theta=theta)
+
 
 def training_regE(NeuralNetwork, DataCluster):
     # Plot training history
@@ -128,11 +45,39 @@ def training_regP(NeuralNetwork, DataCluster):
                                     NeuralNetwork.model_name + "_" + NeuralNetwork.model_tag + "_history_training")
     evaluate_regression_position(NeuralNetwork, DataCluster)
 
+
 def training_full(NeuralNetwork, DataCluster):
     # Plot training history
     Plotter.plot_history_regression(NeuralNetwork,
                                     NeuralNetwork.model_name + "_" + NeuralNetwork.model_tag + "_history_training")
     evaluate_regression_position(NeuralNetwork, DataCluster)
+
+
+def export_training(NeuralNetwork_clas,
+                    NeuralNetwork_regE,
+                    NeuralNetwork_regP,
+                    DataCluster,
+                    file_name="",
+                    theta=0.5,
+                    export_npz=False):
+    # Normalize the evaluation data
+    DataCluster.standardize(NeuralNetwork_clas.norm_mean, NeuralNetwork_clas.norm_std)
+
+    # grab all positive identified events by the neural network
+    y_scores = NeuralNetwork_clas.predict(DataCluster.features)
+    y_pred_energy = NeuralNetwork_regE.predict(DataCluster.features)
+    y_pred_position = NeuralNetwork_regP.predict(DataCluster.features)
+
+    # create an array containing full neural network prediction
+    ary_nn_pred = np.zeros(shape=(DataCluster.entries, 9))
+    ary_nn_pred[:, 0] = np.reshape(y_scores, newshape=(len(y_scores),))
+    ary_nn_pred[:, 1:3] = np.reshape(y_pred_energy, newshape=(y_pred_energy.shape[0], y_pred_energy.shape[1]))
+    ary_nn_pred[:, 3:] = np.reshape(y_pred_position, newshape=(y_pred_position.shape[0], y_pred_position.shape[1]))
+
+    if export_npz:
+        # export prediction to a usable npz file
+        with open(file_name + ".npz", 'wb') as f_output:
+            np.savez_compressed(f_output, NN_PRED=ary_nn_pred)
 
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -151,7 +96,7 @@ def evaluate_classifier(NeuralNetwork, DataCluster, theta=0.5):
     y_true = DataCluster.y_test()
 
     # write general binary classifier metrics into console and .txt file
-    write_metrics_classifier(y_scores, y_true)
+    NNAnalysis.write_metrics_classifier(y_scores, y_true)
     # Plotting of score distributions and ROC-analysis
     # grab optimal threshold from ROC-analysis
     Plotter.plot_score_dist(y_scores, y_true, "score_dist")
@@ -159,20 +104,20 @@ def evaluate_classifier(NeuralNetwork, DataCluster, theta=0.5):
     _, theta_opt = fastROCAUC.fastROCAUC(y_scores, y_true, return_score=True)
 
     # evaluate source position spectrum for baseline and optimal threshold
-    dist_sourceposition(y_scores, y_true, DataCluster.meta[DataCluster.idx_test(), 2], 0.3,
-                        "dist_sourceposition_theta03")
-    dist_sourceposition(y_scores, y_true, DataCluster.meta[DataCluster.idx_test(), 2], 0.5,
-                        "dist_sourceposition_theta05")
-    dist_sourceposition(y_scores, y_true, DataCluster.meta[DataCluster.idx_test(), 2], theta_opt,
-                        "dist_sourceposition_thetaOPT")
+    NNAnalysis.dist_sourceposition(y_scores, y_true, DataCluster.meta[DataCluster.idx_test(), 2], 0.3,
+                                   "dist_sourceposition_theta03")
+    NNAnalysis.dist_sourceposition(y_scores, y_true, DataCluster.meta[DataCluster.idx_test(), 2], 0.5,
+                                   "dist_sourceposition_theta05")
+    NNAnalysis.dist_sourceposition(y_scores, y_true, DataCluster.meta[DataCluster.idx_test(), 2], theta_opt,
+                                   "dist_sourceposition_thetaOPT")
 
     # evaluate primary energy spectrum
-    dist_primaryenergy(y_scores, y_true, DataCluster.meta[DataCluster.idx_test(), 1], 0.3,
-                       "dist_primaryenergy_theta03")
-    dist_primaryenergy(y_scores, y_true, DataCluster.meta[DataCluster.idx_test(), 1], 0.5,
-                       "dist_primaryenergy_theta05")
-    dist_primaryenergy(y_scores, y_true, DataCluster.meta[DataCluster.idx_test(), 1], theta_opt,
-                       "dist_primaryenergy_thetaOPT")
+    NNAnalysis.dist_primaryenergy(y_scores, y_true, DataCluster.meta[DataCluster.idx_test(), 1], 0.3,
+                                  "dist_primaryenergy_theta03")
+    NNAnalysis.dist_primaryenergy(y_scores, y_true, DataCluster.meta[DataCluster.idx_test(), 1], 0.5,
+                                  "dist_primaryenergy_theta05")
+    NNAnalysis.dist_primaryenergy(y_scores, y_true, DataCluster.meta[DataCluster.idx_test(), 1], theta_opt,
+                                  "dist_primaryenergy_thetaOPT")
 
     # score distributions as 2d-historgrams
     y_scores_pos = y_scores[y_true == 1]
