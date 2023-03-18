@@ -88,6 +88,64 @@ def backproj_neuralnetwork_bias(run_name,
                                                    dir_plots + file_name)
 
 
+def toyset_stacked(toy_name,
+                   plot_title,
+                   plot_name,
+                   list_files,
+                   list_labels,
+                   n=100):
+    list_images_0mm = []
+    list_images_5mm = []
+
+    for i in range(len(list_files)):
+        # load toy dataset
+        npz_toy = np.load(dir_toy + toy_name + "/" + list_files[i])
+
+        ary_toy_0mm = npz_toy["NN_PRED_0MM"]
+        ary_toy_5mm = npz_toy["NN_PRED_5MM"]
+
+        rng = np.random.default_rng()
+        ary_idx_0mm = np.arange(0, len(ary_toy_0mm), 1.0, dtype=int)
+        ary_idx_5mm = np.arange(0, len(ary_toy_5mm), 1.0, dtype=int)
+        rng.shuffle(ary_idx_0mm)
+        rng.shuffle(ary_idx_5mm)
+        ary_toy_0mm = ary_toy_0mm[ary_idx_0mm, :]
+        ary_toy_5mm = ary_toy_5mm[ary_idx_5mm, :]
+
+        ary_toy_0mm = ary_toy_0mm[:n, :]
+        ary_toy_5mm = ary_toy_5mm[:n, :]
+
+        idx_pos_0mm = ary_toy_0mm[:, 0] > 0.5
+        idx_pos_5mm = ary_toy_5mm[:, 0] > 0.5
+
+        image_0mm = MLEMBackprojection.reconstruct_image(ary_toy_0mm[idx_pos_0mm, 1],
+                                                         ary_toy_0mm[idx_pos_0mm, 2],
+                                                         ary_toy_0mm[idx_pos_0mm, 3],
+                                                         ary_toy_0mm[idx_pos_0mm, 4],
+                                                         ary_toy_0mm[idx_pos_0mm, 5],
+                                                         ary_toy_0mm[idx_pos_0mm, 6],
+                                                         ary_toy_0mm[idx_pos_0mm, 7],
+                                                         ary_toy_0mm[idx_pos_0mm, 8],
+                                                         apply_filter=True)
+
+        image_5mm = MLEMBackprojection.reconstruct_image(ary_toy_5mm[idx_pos_5mm, 1],
+                                                         ary_toy_5mm[idx_pos_5mm, 2],
+                                                         ary_toy_5mm[idx_pos_5mm, 3],
+                                                         ary_toy_5mm[idx_pos_5mm, 4],
+                                                         ary_toy_5mm[idx_pos_5mm, 5],
+                                                         ary_toy_5mm[idx_pos_5mm, 6],
+                                                         ary_toy_5mm[idx_pos_5mm, 7],
+                                                         ary_toy_5mm[idx_pos_5mm, 8],
+                                                         apply_filter=True)
+
+        print("Image created for : ", list_files[i])
+        list_images_0mm.append(image_0mm)
+        list_images_5mm.append(image_5mm)
+
+    MLEMBackprojection.plot_backprojection_stacked_dual(list_images_0mm, list_images_5mm, list_labels,
+                                                        plot_title, plot_name)
+
+
 # ----------------------------------------------------------------------------------------------------------------------
 # Base image back-projection of Monte-Carlo truth
 """
@@ -190,8 +248,18 @@ MLEMBackprojection.plot_backprojection(image, "",
 """
 
 # ----------------------------------------------------------------------------------------------------------------------
-
+"""
 backproj_neuralnetwork_bias("DNN_S1AX_oldnorm",
                             "MLEMBackproj_DNN_S1AX_oldnorm_stackedbias",
                             "",
                             n=40000)
+"""
+
+"""
+toyset_stacked("S1AX_continuous_an",
+               "",
+               dir_plots + "MLEMbackproj_S1AX_continuous_an_tn00_fn00_stacked",
+               ["S1AX_continuous_an_base_toy.npz", "S1AX_continuous_an_tn00_toy.npz", "S1AX_continuous_an_fn00_toy.npz"],
+               ["base", "ftn = 0.0", "ffn = 0.0"],
+               n=40000)
+"""

@@ -56,35 +56,38 @@ def create_toy_set(FILE_NAME,
     for i in range(len(ary_nn_pred_0mm)):
         for j in range(len(list_f)):
             if ary_mc_truth_0mm[i, 0] == 1.0:
-                ary_nn_pred_0mm[i, j] = ary_mc_truth_0mm[i, j] + list_f[j] * (
-                        ary_nn_pred_0mm[i, j] - ary_mc_truth_0mm[i, j])
+                ary_nn_pred_0mm[i, j + 1] = ary_mc_truth_0mm[i, j + 1] + list_f[j] * (
+                        ary_nn_pred_0mm[i, j + 1] - ary_mc_truth_0mm[i, j + 1])
             else:
                 if mod_bg:
-                    ary_nn_pred_0mm[i, j] = ary_mc_truth_0mm[i, j] + list_f[j] * (
-                            ary_nn_pred_0mm[i, j] - ary_mc_truth_0mm[i, j])
+                    ary_nn_pred_0mm[i, j + 1] = ary_mc_truth_0mm[i, j + 1] + list_f[j] * (
+                            ary_nn_pred_0mm[i, j + 1] - ary_mc_truth_0mm[i, j + 1])
                 continue
 
     for i in range(len(ary_nn_pred_5mm)):
         for j in range(len(list_f)):
             if ary_mc_truth_5mm[i, 0] == 1.0:
-                ary_nn_pred_5mm[i, j] = ary_mc_truth_5mm[i, j] + list_f[j] * (
-                        ary_nn_pred_5mm[i, j] - ary_mc_truth_5mm[i, j])
+                ary_nn_pred_5mm[i, j + 1] = ary_mc_truth_5mm[i, j + 1] + list_f[j] * (
+                        ary_nn_pred_5mm[i, j + 1] - ary_mc_truth_5mm[i, j + 1])
             else:
                 if mod_bg:
-                    ary_nn_pred_5mm[i, j] = ary_mc_truth_5mm[i, j] + list_f[j] * (
-                            ary_nn_pred_5mm[i, j] - ary_mc_truth_5mm[i, j])
+                    ary_nn_pred_5mm[i, j + 1] = ary_mc_truth_5mm[i, j + 1] + list_f[j] * (
+                            ary_nn_pred_5mm[i, j + 1] - ary_mc_truth_5mm[i, j] + 1)
                 continue
 
     # -----------------------------------------------------------------------------
-    # Score manipulation
-    # First events are sorted by score. Afterwards the ratio of TP, TN, FP, FN
-    # events are removed till factors are  matched
+    # efficiency and purity manipulation
+    # First sort all events by score. Count number of FP and TP events. Scale number
+    # of FP/TP events and remove (my modifying score) until scaled number is matched
     ary_idx_0mm = np.arange(0.0, len(ary_nn_pred_0mm), 1.0, dtype=int)
     ary_idx_5mm = np.arange(0.0, len(ary_nn_pred_5mm), 1.0, dtype=int)
     ary_scores_0mm = ary_nn_pred_0mm[:, 0]
     ary_scores_5mm = ary_nn_pred_5mm[:, 0]
+
     ary_idx_0mm = np.flip(ary_idx_0mm[ary_scores_0mm.argsort()])
     ary_idx_5mm = np.flip(ary_idx_5mm[ary_scores_5mm.argsort()])
+    ary_scores_0mm = np.flip(ary_scores_0mm[ary_scores_0mm.argsort()])
+    ary_scores_5mm = np.flip(ary_scores_5mm[ary_scores_5mm.argsort()])
 
     if f_fp != 1.0:
 
@@ -141,15 +144,59 @@ def create_toy_set(FILE_NAME,
             if counter >= n_tp * (1 - f_tp):
                 break
 
-    # TODO: TN and FN manipulation
+    if f_tn != 1.0:
+        n_tn = 0
+        for i in range(len(ary_nn_pred_0mm)):
+            if ary_mc_truth_0mm[i, 0] == 0.0 and ary_nn_pred_0mm[i, 0] < theta:
+                n_tn += 1
 
-    # -----------------------------------------------------------------------------
-    # TN and FN manipulation
-    # Mostly to create a working Monte-Carlo sample
-    ary_idx_0mm = np.arange(0.0, len(ary_nn_pred_0mm), 1.0, dtype=int)
-    ary_idx_5mm = np.arange(0.0, len(ary_nn_pred_5mm), 1.0, dtype=int)
-    ary_scores_0mm = ary_nn_pred_0mm[:, 0]
-    ary_scores_5mm = ary_nn_pred_5mm[:, 0]
+        counter = 0
+        for i in range(len(ary_idx_0mm)):
+            if ary_mc_truth_0mm[ary_idx_0mm[i], 0] == 0.0 and ary_nn_pred_0mm[ary_idx_0mm[i], 0] < theta:
+                ary_nn_pred_0mm[ary_idx_0mm[i], 0] = 1.0
+                counter += 1
+            if counter >= n_tn * (1 - f_tn):
+                break
+
+        n_tn = 0
+        for i in range(len(ary_nn_pred_5mm)):
+            if ary_mc_truth_5mm[i, 0] == 0.0 and ary_nn_pred_5mm[i, 0] < theta:
+                n_tn += 1
+
+        counter = 0
+        for i in range(len(ary_idx_5mm)):
+            if ary_mc_truth_5mm[ary_idx_5mm[i], 0] == 0.0 and ary_nn_pred_5mm[ary_idx_5mm[i], 0] < theta:
+                ary_nn_pred_5mm[ary_idx_5mm[i], 0] = 1.0
+                counter += 1
+            if counter >= n_tn * (1 - f_tn):
+                break
+
+    if f_fn != 1.0:
+        n_fn = 0
+        for i in range(len(ary_nn_pred_0mm)):
+            if ary_mc_truth_0mm[i, 0] == 1.0 and ary_nn_pred_0mm[i, 0] < theta:
+                n_fn += 1
+
+        counter = 0
+        for i in range(len(ary_idx_0mm)):
+            if ary_mc_truth_0mm[ary_idx_0mm[i], 0] == 1.0 and ary_nn_pred_0mm[ary_idx_0mm[i], 0] < theta:
+                ary_nn_pred_0mm[ary_idx_0mm[i], 0] = 1.0
+                counter += 1
+            if counter >= n_fn * (1 - f_fn):
+                break
+
+        n_fn = 0
+        for i in range(len(ary_nn_pred_5mm)):
+            if ary_mc_truth_5mm[i, 0] == 1.0 and ary_nn_pred_5mm[i, 0] < theta:
+                n_fn += 1
+
+        counter = 0
+        for i in range(len(ary_idx_5mm)):
+            if ary_mc_truth_5mm[ary_idx_5mm[i], 0] == 1.0 and ary_nn_pred_5mm[ary_idx_5mm[i], 0] < theta:
+                ary_nn_pred_5mm[ary_idx_5mm[i], 0] = 1.0
+                counter += 1
+            if counter >= n_fn * (1 - f_fn):
+                break
 
     # --------------------------------------------------------------
     # Control plot generation
@@ -169,7 +216,7 @@ def create_toy_set(FILE_NAME,
         Plotter.plot_position_error(ary_nn_pred_5mm[idx_pos_5mm, 3:], ary_mc_truth_5mm[idx_pos_5mm, 3:],
                                     TAG + "_position")
 
-    if f_fp != 1.0 or f_tp != 1.0:
+    if f_fp != 1.0 or f_tp != 1.0 or f_tn != 1.0 or f_fn != 1.0:
         Plotter.plot_score_dist(ary_nn_pred_0mm[:, 0], ary_mc_truth_0mm[:, 0], TAG + "_score")
         Plotter.plot_score_dist(ary_nn_pred_5mm[:, 0], ary_mc_truth_5mm[:, 0], TAG + "_score")
 

@@ -18,6 +18,10 @@ def lorentzian(x, mu, sigma, A):
     return A / np.pi * (1 / 2 * sigma) / ((x - mu) ** 2 + (1 / 2 * sigma) ** 2)
 
 
+def max_super_function(x):
+    return (0.1 + np.exp((0.5 * (x + 3)) / 2))/(1+np.exp((8*x+5)/3))/6
+
+
 def plot_score_dist(y_scores, y_true, figure_name):
     plt.rcParams.update({'font.size': 16})
 
@@ -155,7 +159,7 @@ def plot_energy_error(y_pred, y_true, figure_name):
     plt.ylabel("counts")
     plt.hist(y_pred[:, 0] - y_true[:, 0], bins=bins_err, histtype=u"step", color="blue")
     plt.plot(ary_x, gaussian(ary_x, *popt0), color="orange",
-             label=r"$\mu$ = {:.2f}""\n"r"$FWHM$ = {:.2f}".format(popt0[0], popt0[1] * 2.354))
+             label=r"$\mu$ = {:.2f}""\n"r"$\sigma$ = {:.2f}".format(popt0[0], popt0[1]))
     plt.legend()
     plt.grid()
     plt.tight_layout()
@@ -235,7 +239,7 @@ def plot_position_error(y_pred, y_true, figure_name):
     plt.ylabel("counts")
     plt.hist(y_pred[:, 0] - y_true[:, 0], bins=bins_err_x, histtype=u"step", color="blue")
     plt.plot(ary_x, gaussian(ary_x, *popt0), color="orange",
-             label=r"$\mu$ = {:.2f}""\n"r"$FWHM$ = {:.2f}".format(popt0[0], popt0[1] * 2.354))
+             label=r"$\mu$ = {:.2f}""\n"r"$\sigma$ = {:.2f}".format(popt0[0], popt0[1]))
     plt.legend()
     plt.grid()
     plt.tight_layout()
@@ -261,7 +265,7 @@ def plot_position_error(y_pred, y_true, figure_name):
     plt.ylabel("counts")
     plt.hist(y_pred[:, 1] - y_true[:, 1], bins=bins_err_y, histtype=u"step", color="blue")
     plt.plot(ary_y, gaussian(ary_y, *popt1), color="orange",
-             label=r"$\mu$ = {:.2f}""\n"r"$FWHM$ = {:.2f}".format(popt1[0], popt1[1] * 2.354))
+             label=r"$\mu$ = {:.2f}""\n"r"$\sigma$ = {:.2f}".format(popt1[0], popt1[1]))
     plt.legend()
     plt.grid()
     plt.tight_layout()
@@ -286,7 +290,7 @@ def plot_position_error(y_pred, y_true, figure_name):
     plt.ylabel("counts")
     plt.hist(y_pred[:, 2] - y_true[:, 2], bins=bins_err_z, histtype=u"step", color="blue")
     plt.plot(ary_z, gaussian(ary_z, *popt2), color="orange",
-             label=r"$\mu$ = {:.2f}""\n"r"$FWHM$ = {:.2f}".format(popt2[0], popt2[1] * 2.354))
+             label=r"$\mu$ = {:.2f}""\n"r"$\sigma$ = {:.2f}".format(popt2[0], popt2[1]))
     plt.legend()
     plt.grid()
     plt.tight_layout()
@@ -313,7 +317,7 @@ def plot_position_error(y_pred, y_true, figure_name):
     plt.ylabel("counts")
     plt.hist(y_pred[:, 3] - y_true[:, 3], bins=bins_err_x, histtype=u"step", color="blue")
     plt.plot(ary_x, gaussian(ary_x, *popt3), color="orange",
-             label=r"$\mu$ = {:.2f}""\n"r"$FWHM$ = {:.2f}".format(popt3[0], popt3[1] * 2.354))
+             label=r"$\mu$ = {:.2f}""\n"r"$\sigma$ = {:.2f}".format(popt3[0], popt3[1]))
     plt.legend()
     plt.grid()
     plt.tight_layout()
@@ -339,7 +343,7 @@ def plot_position_error(y_pred, y_true, figure_name):
     plt.ylabel("counts")
     plt.hist(y_pred[:, 4] - y_true[:, 4], bins=bins_err_y, histtype=u"step", color="blue")
     plt.plot(ary_y, gaussian(ary_y, *popt4), color="orange",
-             label=r"$\mu$ = {:.2f}""\n"r"$FWHM$ = {:.2f}".format(popt4[0], popt4[1] * 2.354))
+             label=r"$\mu$ = {:.2f}""\n"r"$\sigma$ = {:.2f}".format(popt4[0], popt4[1]))
     plt.legend()
     plt.grid()
     plt.tight_layout()
@@ -364,7 +368,7 @@ def plot_position_error(y_pred, y_true, figure_name):
     plt.ylabel("counts")
     plt.hist(y_pred[:, 5] - y_true[:, 5], bins=bins_err_z, histtype=u"step", color="blue")
     plt.plot(ary_z, gaussian(ary_z, *popt5), color="orange",
-             label=r"$\mu$ = {:.2f}""\n"r"$FWHM$ = {:.2f}".format(popt5[0], popt5[1] * 2.354))
+             label=r"$\mu$ = {:.2f}""\n"r"$\sigma$ = {:.2f}".format(popt5[0], popt5[1]))
     plt.legend()
     plt.grid()
     plt.tight_layout()
@@ -477,6 +481,8 @@ def plot_primary_energy_dist(ary_pe_pos, ary_pe_tp, ary_pe_tot, figure_name):
 
 
 def plot_2dhist_score_sourcepos(ary_score, ary_sp, figure_name):
+    plot_bragg = True
+
     plt.rcParams.update({'font.size': 16})
     bin_score = np.arange(0.0, 1.0, 0.01)
     bin_sp = np.arange(-80.0, 20.0, 1.0)
@@ -491,7 +497,15 @@ def plot_2dhist_score_sourcepos(ary_score, ary_sp, figure_name):
     plt.figure(figsize=(8, 6))
     plt.xlabel("Signal score")
     plt.ylabel("True source position z-axis [mm]")
-    h0 = plt.hist2d(list_sp, list_score, bins=[bin_sp, bin_score], norm=LogNorm())
+    h0 = plt.hist2d(list_sp, list_score, bins=[bin_sp, bin_score])
+    if plot_bragg:
+        x = np.linspace(-80.0, 5.0, 1000)
+        mu = -2.5
+        sigma = 1.5
+        A = 0.8
+        B = 0.2
+        plt.plot(x, max_super_function(x), color="red", linestyle="--")
+
     plt.colorbar(h0[3])
     plt.tight_layout()
     plt.savefig(figure_name + ".png")
