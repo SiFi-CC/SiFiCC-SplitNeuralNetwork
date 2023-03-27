@@ -4,7 +4,7 @@ import numpy as np
 class DataCluster:
 
     def __init__(self, ary_meta, ary_features, ary_targets_clas, ary_targets_reg1, ary_targets_reg2, ary_weights,
-                 ary_theta):
+                 ary_theta, ary_tags):
         # all core features of the DataCluster class
         self.meta = ary_meta
         self.features = ary_features
@@ -13,10 +13,11 @@ class DataCluster:
         self.targets_reg1 = ary_targets_reg1
         self.targets_reg2 = ary_targets_reg2
         self.theta = ary_theta
+        self.tags = ary_tags
 
         # legacy feature
         # can still be used as final targets for whatever
-        self.targets = ary_targets_clas
+        self.targets = ary_tags[:, 2]
 
         # Train-Test-Valid split
         self.p_train = 0.5

@@ -168,6 +168,7 @@ class RootParser:
         ary_meta = np.zeros(shape=(self.events_entries, 4))
         ary_mc = np.zeros(shape=(self.events_entries, 10))
         ary_cb = np.zeros(shape=(self.events_entries, 10))
+        ary_tags = np.zeros(shape=(self.events_entries, 5))
 
         # Fill Meta-data, Monte-Carlo data and Cluster data into empty arrays
         # Cut-based reco data is not iterable since uproot can't handle the reco data stored in branches
@@ -212,6 +213,10 @@ class RootParser:
                                   p2.z,
                                   event.calculate_theta(e1, e2)]
 
+            ary_tags[counter, :] = [event.is_compton * 1, event.is_complete_compton * 1,
+                                    event.is_complete_distributed_compton * 1, event.is_ideal_compton * 1,
+                                    event.is_fullcompton * 1]
+
             counter += 1
 
         # resize arrays
@@ -224,6 +229,7 @@ class RootParser:
             np.savez_compressed(file,
                                 META=ary_meta,
                                 MC_TRUTH=ary_mc,
-                                CB_RECO=ary_cb)
+                                CB_RECO=ary_cb,
+                                TAGS=ary_tags)
 
         print("file saved: ", self.file_name + "_lookup.npz")

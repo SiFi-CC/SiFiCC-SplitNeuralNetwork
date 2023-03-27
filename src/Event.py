@@ -106,23 +106,53 @@ class Event:
         self.scatterer = scatterer
         self.absorber = absorber
 
-        # event identification steps
-        # positive events are described as ideal compton events
-        # the needed tags will be defined below
-        # TODO: check if Awals event tags are correct
-
-        # check if the event is a valid event by considering the clusters associated with it
-        # the event is considered distributed if there is at least one cluster within each module of the SiFiCC
-        if (len(self.RecoClusterEnergies_values) >= 2
-                and scatterer.is_vec_in_module(self.RecoClusterPosition)
-                and absorber.is_vec_in_module(self.RecoClusterPosition)):
-            self.is_distributed = True
-        else:
-            self.is_distributed = False
+        # ---------------------------------------------------------------------------------------------
+        # Event tagging
+        # event identification steps:
+        #
+        # - compton event: A compton event took place on Monte Carlo level
+        # - full compton event: A compton event with Monte Carlo entries of electron in scatterer and
+        #                       absorber entries of scattered photon
+        # - ideal compton event: Full compton event, with single scattering in scatterer and next interaction in
+        #                        absorber
 
         # check if the event is a Compton event
         # Compton events have a positive MC electron energy
         self.is_compton = True if self.MCEnergy_e != 0 else False
+
+        # check if the event is a full compton event
+        # TODO: need to do this nicer
+        self.e_pos = False
+        self.p_pos = False
+        self.MCPosition_p_first = TVector3(0, 0, 0)
+        self.MCPosition_e_first = TVector3(0, 0, 0)
+
+        if self.is_compton:
+            # check if enough interaction of electron and photon took place
+            if len(self.MCPosition_p) >= 2 and len(self.MCPosition_e) >= 1:
+                # check for the correct type of events
+                if ((self.MCInteractions_p[1:] > 0) & (self.MCInteractions_p[1:] < 10)).any() and (
+                        (self.MCInteractions_e[0] >= 10) & (self.MCInteractions_e[0] < 20)):
+                    # initialize the compton scattering and photon absorption interation positions
+                    # condition on first interaction position initialization:
+                    # - electron interaction is in scatterer
+                    # - photon interaction is in absorber
+                    for idx in range(0, len(self.MCInteractions_e)):
+                        if 10 <= self.MCInteractions_e[idx] < 20 and scatterer.is_vec_in_module(self.MCPosition_e[idx]):
+                            self.MCPosition_e_first = self.MCPosition_e[idx]
+                            self.e_pos = True
+                            break
+
+                    for idx in range(1, len(self.MCInteractions_p)):
+                        if 0 < self.MCInteractions_p[idx] < 10 and absorber.is_vec_in_module(self.MCPosition_p[idx]):
+                            self.MCPosition_p_first = self.MCPosition_p[idx]
+                            self.p_pos = True
+                            break
+
+        if self.e_pos and self.p_pos:
+            self.is_fullcompton = True
+        else:
+            self.is_fullcompton = False
 
         # check if the event is a complete Compton event
         # complete Compton event= Compton event + both e and p go through a second interation in which

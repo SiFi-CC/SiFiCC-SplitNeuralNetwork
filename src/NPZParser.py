@@ -27,6 +27,7 @@ def parse(npz_file):
     ary_targets_reg2 = npz_data["targets_reg2"]
     ary_weights = npz_data["weights"]
     ary_theta = npz_data["theta"]
+    ary_tags = npz_data["tags"]
 
     return DataCluster.DataCluster(ary_meta=ary_meta,
                                    ary_features=ary_features,
@@ -34,7 +35,8 @@ def parse(npz_file):
                                    ary_targets_reg1=ary_targets_reg1,
                                    ary_targets_reg2=ary_targets_reg2,
                                    ary_weights=ary_weights,
-                                   ary_theta=ary_theta)
+                                   ary_theta=ary_theta,
+                                   ary_tags=ary_tags)
 
 
 def wrapper(npz_file,
