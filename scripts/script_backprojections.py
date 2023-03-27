@@ -146,6 +146,62 @@ def toyset_stacked(toy_name,
                                                         plot_title, plot_name)
 
 
+def cut_based_tagging(plot_title,
+                      plot_name,
+                      list_labels,
+                      n=100):
+    list_images_0mm = []
+    list_images_5mm = []
+
+    for i in [0, 1, 2, 3, 4]:
+        # load toy dataset
+        npz_lookup_0mm = np.load(dir_npz + "OptimisedGeometry_BP0mm_2e10protons_withTimestamps_S1AX_lookup.npz")
+        npz_lookup_5mm = np.load(dir_npz + "OptimisedGeometry_BP5mm_4e9protons_withTimestamps_S1AX_lookup.npz")
+
+        ary_tag_0mm = npz_lookup_0mm["TAGS"]
+        ary_tag_5mm = npz_lookup_5mm["TAGS"]
+        ary_cb_0mm = npz_lookup_0mm["CB_RECO"]
+        ary_cb_5mm = npz_lookup_5mm["CB_RECO"]
+
+        # index selection
+        rng = np.random.default_rng()
+        ary_idx_0mm = np.arange(0, len(ary_cb_0mm), 1.0, dtype=int)
+        ary_idx_5mm = np.arange(0, len(ary_cb_5mm), 1.0, dtype=int)
+        rng.shuffle(ary_idx_0mm)
+        rng.shuffle(ary_idx_5mm)
+        ary_idx_0mm = ary_idx_0mm[:n]
+        ary_idx_5mm = ary_idx_5mm[:n]
+
+        idx_pos_0mm = ary_idx_0mm[ary_tag_0mm[ary_idx_0mm, i] == 1]
+        idx_pos_5mm = ary_idx_5mm[ary_tag_5mm[ary_idx_5mm, i] == 1]
+
+        image_0mm = MLEMBackprojection.reconstruct_image(ary_cb_0mm[idx_pos_0mm, 1],
+                                                         ary_cb_0mm[idx_pos_0mm, 2],
+                                                         ary_cb_0mm[idx_pos_0mm, 3],
+                                                         ary_cb_0mm[idx_pos_0mm, 4],
+                                                         ary_cb_0mm[idx_pos_0mm, 5],
+                                                         ary_cb_0mm[idx_pos_0mm, 6],
+                                                         ary_cb_0mm[idx_pos_0mm, 7],
+                                                         ary_cb_0mm[idx_pos_0mm, 8],
+                                                         apply_filter=True)
+
+        image_5mm = MLEMBackprojection.reconstruct_image(ary_cb_5mm[idx_pos_5mm, 1],
+                                                         ary_cb_5mm[idx_pos_5mm, 2],
+                                                         ary_cb_5mm[idx_pos_5mm, 3],
+                                                         ary_cb_5mm[idx_pos_5mm, 4],
+                                                         ary_cb_5mm[idx_pos_5mm, 5],
+                                                         ary_cb_5mm[idx_pos_5mm, 6],
+                                                         ary_cb_5mm[idx_pos_5mm, 7],
+                                                         ary_cb_5mm[idx_pos_5mm, 8],
+                                                         apply_filter=True)
+
+        print("Image created for tag 0{}".format(i))
+        list_images_0mm.append(image_0mm)
+        list_images_5mm.append(image_5mm)
+
+    MLEMBackprojection.plot_backprojection_stacked_dual(list_images_0mm, list_images_5mm, list_labels,
+                                                        plot_title, plot_name)
+
 # ----------------------------------------------------------------------------------------------------------------------
 # Base image back-projection of Monte-Carlo truth
 """
@@ -263,3 +319,7 @@ toyset_stacked("S1AX_continuous_an",
                ["base", "ftn = 0.0", "ffn = 0.0"],
                n=40000)
 """
+cut_based_tagging("",
+                  dir_plots + "MLEMbackproj_cb_reco_tagging_stacked",
+                  ["Compton", "Complete Compton", "Complete dist. Compton", "Ideal Compton", "Full Compton**"],
+                  n=40000)
