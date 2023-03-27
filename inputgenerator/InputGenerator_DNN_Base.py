@@ -26,7 +26,7 @@ def gen_input(RootParser):
     # global settings for easier on the fly changes
     NAME_TAG = "DNN_Base"
     n_cluster_scatterer = 2
-    n_cluster_absorber = 6
+    n_cluster_absorber = 4
 
     n_features = 10 * (n_cluster_scatterer + n_cluster_absorber)
     n_cluster = n_cluster_scatterer + n_cluster_absorber

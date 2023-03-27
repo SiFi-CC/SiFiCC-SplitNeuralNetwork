@@ -68,6 +68,7 @@ def gen_input(RootParser):
     ary_w = np.zeros(shape=(n_events,), dtype=np.float32)
     ary_meta = np.zeros(shape=(n_events, 6), dtype=np.float32)
     ary_theta = np.zeros(shape=(n_events,), dtype=np.float32)
+    ary_tags = np.zeros(shape=(n_events, 4), dtype=np.float32)
     # legacy targets
     ary_targets = np.zeros(shape=(n_events,), dtype=np.float32)
 
@@ -149,6 +150,10 @@ def gen_input(RootParser):
                                     event.RecoClusterEnergies_values[idx_scatterer[0]],
                                     np.sum(event.RecoClusterEnergies_values[idx_absorber])]
 
+            # write tags
+            ary_tags[idx_pos, :] = [event.is_compton * 1, event.is_complete_compton * 1,
+                                    event.is_complete_distributed_compton * 1, event.is_ideal_compton * 1]
+
             idx_pos += 1
 
     # save final output file
@@ -166,4 +171,5 @@ def gen_input(RootParser):
                             targets_reg1=ary_targets_reg1,
                             targets_reg2=ary_targets_reg2,
                             weights=ary_w,
-                            META=ary_meta)
+                            META=ary_meta,
+                            tags=ary_tags)

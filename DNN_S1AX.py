@@ -43,10 +43,10 @@ NPZ_LOOKUP_5MM = "OptimisedGeometry_BP5mm_4e9protons_withTimestamps_S1AX_lookup.
 LOOK_UP_FILES = [NPZ_LOOKUP_0MM, NPZ_LOOKUP_5MM]
 
 # GLOBAL SETTINGS
-RUN_NAME = "DNN_S1AX_continuous_an_oldstd"
+RUN_NAME = "DNN_S1AX_continuous_tag03"
 
 # Neural Network settings
-epochs_clas = 50
+epochs_clas = 40
 epochs_regE = 100
 epochs_regP = 300
 batchsize_clas = 64
@@ -55,13 +55,13 @@ batchsize_regP = 64
 theta = 0.5
 
 # Global switches to turn on/off training or analysis steps
-train_clas = False
+train_clas = True
 train_regE = False
 train_regP = False
 eval_clas = True
-eval_regE = True
-eval_regP = True
-eval_full = True
+eval_regE = False
+eval_regP = False
+eval_full = False
 
 # MLEM export setting: None (to disable export), "Reco" (for classical), "Pred" (For Neural Network predictions)
 mlemexport = ""
