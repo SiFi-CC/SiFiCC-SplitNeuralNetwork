@@ -213,8 +213,10 @@ class RootParser:
                                   p2.z,
                                   event.calculate_theta(e1, e2)]
 
-            ary_tags[counter, :] = [event.is_compton * 1, event.is_complete_compton * 1,
-                                    event.is_complete_distributed_compton * 1, event.is_ideal_compton * 1,
+            ary_tags[counter, :] = [event.is_compton * 1,
+                                    event.is_complete_compton * 1,
+                                    event.is_complete_distributed_compton * 1,
+                                    event.is_ideal_compton * 1,
                                     event.is_fullcompton * 1]
 
             counter += 1
