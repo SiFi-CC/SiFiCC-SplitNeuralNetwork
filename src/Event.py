@@ -116,6 +116,90 @@ class Event:
         # - ideal compton event: Full compton event, with single scattering in scatterer and next interaction in
         #                        absorber
 
+        # check if simulated event type is a real coincidence ( + pileup)
+        self.is_real_coincidence = True if self.MCSimulatedEventType in [2, 5] else False
+
+        # check if the event is a Compton event
+        # Compton events have a positive MC electron energy
+        self.is_compton = False
+        if self.is_real_coincidence:
+            if self.MCEnergy_e != 0:
+                self.is_compton = True
+
+        # check if event is distributed
+        # distributed = electron interaction in scatterer and photon interaction in absorber
+        self.is_compton_distributed = False
+        self.is_compton_pseudo_distributed = False
+        self.is_compton_pseudo_complete = False
+        self.MCPosition_p_first = TVector3(0, 0, 0)
+        self.MCPosition_e_first = TVector3(0, 0, 0)
+
+        # compton distributed
+        if self.is_compton:
+            if len(self.MCPosition_p) >= 2 and len(self.MCPosition_e) >= 1:
+                if (self.MCInteractions_e[0] >= 10) & (self.MCInteractions_e[0] < 20):
+                    if scatterer.is_vec_in_module(self.MCPosition_e):
+                        if ((self.MCInteractions_p[1:] > 0) & (self.MCInteractions_p[1:] < 10)).any():
+                            if scatterer.is_vec_in_module(self.MCPosition_p[0]) \
+                                    and absorber.is_vec_in_module(self.MCPosition_p[1]):
+                                self.is_compton_distributed = True
+                                for idx in range(0, len(self.MCInteractions_e)):
+                                    if 10 <= self.MCInteractions_e[idx] < 20 and scatterer.is_vec_in_module(
+                                            self.MCPosition_e[idx]):
+                                        self.MCPosition_e_first = self.MCPosition_e[idx]
+                                        break
+
+                                for idx in range(1, len(self.MCInteractions_p)):
+                                    if 0 < self.MCInteractions_p[idx] < 10 and absorber.is_vec_in_module(
+                                            self.MCPosition_p[idx]):
+                                        self.MCPosition_p_first = self.MCPosition_p[idx]
+                                        break
+
+        # compton pseudo distributed
+        if self.is_compton:
+            if len(self.MCPosition_p) >= 2 and len(self.MCPosition_e) >= 1:
+                if (self.MCInteractions_e[0] >= 10) & (self.MCInteractions_e[0] < 20):
+                    if scatterer.is_vec_in_module(self.MCPosition_e):
+                        if ((self.MCInteractions_p[1:] > 0) & (self.MCInteractions_p[1:] < 10)).any():
+                            if scatterer.is_vec_in_module(self.MCPosition_p[0]) \
+                                    and absorber.is_vec_in_module(self.MCPosition_p[1:]):
+                                self.is_compton_pseudo_distributed = True
+                                for idx in range(0, len(self.MCInteractions_e)):
+                                    if 10 <= self.MCInteractions_e[idx] < 20 and scatterer.is_vec_in_module(
+                                            self.MCPosition_e[idx]):
+                                        self.MCPosition_e_first = self.MCPosition_e[idx]
+                                        break
+
+                                for idx in range(1, len(self.MCInteractions_p)):
+                                    if 0 < self.MCInteractions_p[idx] < 10 and absorber.is_vec_in_module(
+                                            self.MCPosition_p[idx]):
+                                        self.MCPosition_p_first = self.MCPosition_p[idx]
+                                        break
+
+        # compton pseudo complete
+        if self.is_compton:
+            if len(self.MCPosition_p) >= 2 and len(self.MCPosition_e) >= 1:
+                if (self.MCInteractions_e[0] >= 10) & (self.MCInteractions_e[0] < 20):
+                    if scatterer.is_vec_in_module(self.MCPosition_e):
+                        if scatterer.is_vec_in_module(self.MCPosition_p[0]) \
+                                and absorber.is_vec_in_module(self.MCPosition_p[1:]):
+                            self.is_compton_pseudo_complete = True
+                            for idx in range(0, len(self.MCInteractions_e)):
+                                if 10 <= self.MCInteractions_e[idx] < 20 and scatterer.is_vec_in_module(
+                                        self.MCPosition_e[idx]):
+                                    self.MCPosition_e_first = self.MCPosition_e[idx]
+                                    break
+
+                            for idx in range(1, len(self.MCInteractions_p)):
+                                if 0 < self.MCInteractions_p[idx] < 10 and absorber.is_vec_in_module(
+                                        self.MCPosition_p[idx]):
+                                    self.MCPosition_p_first = self.MCPosition_p[idx]
+                                    break
+
+        # legacy ideal compton
+        self.is_ideal_compton = self.is_compton_distributed
+
+        """
         # check if the event is a Compton event
         # Compton events have a positive MC electron energy
         self.is_compton = True if self.MCEnergy_e != 0 else False
@@ -213,6 +297,7 @@ class Event:
             self.is_ideal_compton = False
             self.is_ep = False
             self.is_pe = False
+        """
 
     ####################################################################################################################
 

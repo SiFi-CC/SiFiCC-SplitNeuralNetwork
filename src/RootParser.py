@@ -213,11 +213,11 @@ class RootParser:
                                   p2.z,
                                   event.calculate_theta(e1, e2)]
 
-            ary_tags[counter, :] = [event.is_compton * 1,
-                                    event.is_complete_compton * 1,
-                                    event.is_complete_distributed_compton * 1,
-                                    event.is_ideal_compton * 1,
-                                    event.is_fullcompton * 1]
+            ary_tags[counter, :] = [event.is_real_coincidence * 1,
+                                    event.is_compton * 1,
+                                    event.is_compton_pseudo_complete * 1,
+                                    event.is_compton_pseudo_distributed * 1,
+                                    event.is_compton_distributed * 1]
 
             counter += 1
 
@@ -225,6 +225,7 @@ class RootParser:
         ary_meta = ary_meta[:counter, :]
         ary_mc = ary_mc[:counter, :]
         ary_cb = ary_cb[:counter, :]
+        ary_tags = ary_tags[:counter, :]
 
         # export dataframe to compressed .npz
         with open(self.file_name + "_lookup.npz", 'wb') as file:

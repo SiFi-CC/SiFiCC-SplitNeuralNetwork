@@ -23,33 +23,34 @@ root_con = RootParser(dir_main + root_files.OptimisedGeometry_Continuous_2e10pro
 
 def tagging_statistics(root_file, n):
     n_events = 0
+    n_real_coincidence = 0
     n_compton = 0
-    n_fullcompton = 0
-    n_completecompton = 0
-    n_completedistributedcomtpon = 0
-    n_ideal_comtpon = 0
+    n_compton_distributed = 0
+    n_compton_pseudo_distributed = 0
+    n_compton_pseudo_complete = 0
 
     for i, event in enumerate(root_file.iterate_events(n=n)):
         n_events += 1
+        if event.is_real_coincidence:
+            n_real_coincidence += 1
         if event.is_compton:
             n_compton += 1
-        if event.is_fullcompton:
-            n_fullcompton += 1
-        if event.is_complete_compton:
-            n_completecompton += 1
-        if event.is_complete_distributed_compton:
-            n_completedistributedcomtpon += 1
-        if event.is_ideal_compton:
-            n_ideal_comtpon += 1
+        if event.is_compton_distributed:
+            n_compton_distributed += 1
+        if event.is_compton_pseudo_distributed:
+            n_compton_pseudo_distributed += 1
+        if event.is_compton_pseudo_complete:
+            n_compton_pseudo_complete += 1
 
     print("### Tagging statistics:")
     print("Total events: {}".format(n_events))
+    print("RealCoincidence: {} ({:.1f}%)".format(n_real_coincidence, n_real_coincidence / n_events * 100))
     print("Compton: {} ({:.1f}%)".format(n_compton, n_compton / n_events * 100))
-    print("Full Compton: {} ({:.1f}%)".format(n_fullcompton, n_fullcompton / n_events * 100))
-    print("Complete Compton: {} ({:.1f}%)".format(n_completecompton, n_completecompton / n_events * 100))
-    print("Complete distributed Compton: {} ({:.1f}%)".format(n_completedistributedcomtpon,
-                                                              n_completedistributedcomtpon / n_events * 100))
-    print("Ideal Compton: {} ({:.1f}%)".format(n_ideal_comtpon, n_ideal_comtpon / n_events * 100))
+    print("ComptonPseudoComplete: {} ({:.1f}%)".format(n_compton_pseudo_complete,
+                                                       n_compton_pseudo_complete / n_events * 100))
+    print("ComptonPseudoDistributed: {} ({:.1f}%)".format(n_compton_pseudo_distributed,
+                                                          n_compton_pseudo_distributed / n_events * 100))
+    print("ComptonDistributed: {} ({:.1f}%)".format(n_compton_distributed, n_compton_distributed / n_events * 100))
 
 
 tagging_statistics(root_file=root_0mm, n=100000)
