@@ -191,8 +191,7 @@ class Event:
                                     break
 
                             for idx in range(1, len(self.MCInteractions_p)):
-                                if 0 < self.MCInteractions_p[idx] < 10 and absorber.is_vec_in_module(
-                                        self.MCPosition_p[idx]):
+                                if absorber.is_vec_in_module(self.MCPosition_p[idx]):
                                     self.MCPosition_p_first = self.MCPosition_p[idx]
                                     break
 
