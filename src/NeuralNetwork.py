@@ -5,9 +5,11 @@ from tensorflow import keras
 
 def lr_scheduler(epoch):
     if epoch < 50:
-        return 1e-4
+        return 1e-3
+    if epoch < 75:
+        return 5e-4
     if epoch < 100:
-        return 5e-5
+        return 1e-5
     return 1e-5
 
 

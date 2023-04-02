@@ -196,7 +196,7 @@ class Event:
                                     break
 
         # legacy ideal compton
-        self.is_ideal_compton = self.is_compton_distributed
+        self.is_ideal_compton = self.is_compton_pseudo_complete
 
         """
         # check if the event is a Compton event
