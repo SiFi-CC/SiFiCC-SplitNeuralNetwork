@@ -1,8 +1,10 @@
 import numpy as np
-from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.pyplot as plt
-from itertools import product, combinations
+
 from src.utilities import print_event_summary
+
+from scipy.spatial.transform import Rotation as R
+from uproot_methods.classes.TVector3 import TVector3
 
 
 def get_digits(number):
@@ -41,6 +43,31 @@ def surface_list(x, y, z, xdim, ydim, zdim):
                     [(x - xdim / 2) * one, [y - ydim / 2, y + ydim / 2], [z - zdim / 2, z + zdim / 2]],
                     [(x + xdim / 2) * one, [y - ydim / 2, y + ydim / 2], [z - zdim / 2, z + zdim / 2]]]
     return list_surface
+
+
+def cone_point(vec_ax1, vec_ax2, theta, sr=8):
+    # define rotation axis in reference system of compton scattering (vec_ax1) as origin
+    rot_axis = np.array([vec_ax2.x - vec_ax1.x, vec_ax2.y - vec_ax1.y, vec_ax2.z - vec_ax1.z])
+
+    # rotate reference vector around scattering angle theta
+    ref_vec = np.array([-1, 0, 0])
+    rotation_x = R.from_rotvec(np.radians(theta) * np.array([0, 1, 0]))
+    ref_vec = rotation_x.apply(ref_vec)
+
+    # phi angle sampling (not the same as scattering angle theta!)
+    list_phi = np.linspace(0, 360, sr)
+
+
+def define_cone_points(vec_init, axis, sr=8):
+    list_angles = np.linspace(0, 360, sr)
+    list_points = []
+    for angle in list_angles:
+        vec = vec_init
+        rot_vec = np.radians(angle) * axis / np.sqrt(np.dot(axis, axis))
+        rotation = R.from_rotvec(rot_vec)
+        rotated_vec = rotation.apply(vec)
+        list_points.append(rotated_vec)
+    return list_points
 
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -190,6 +217,48 @@ def event_display(RootParser, event_position=None, event_id=None):
               "x", color="red", markersize=event.MCEnergy_e * b)
     ax.plot3D(event.MCPosition_p_first.x, event.MCPosition_p_first.y, event.MCPosition_p_first.z,
               "x", color="red", markersize=event.MCEnergy_p * b)
+    ax.plot3D(event.MCPosition_source.x, event.MCPosition_source.y, event.MCPosition_source.z,
+              "o", color="red", markersize=14)
+
+    # cone plotting
+    vec_init = np.array([event.MCPosition_source.x - event.MCComptonPosition.x,
+                         event.MCPosition_source.y - event.MCComptonPosition.y,
+                         event.MCPosition_source.z - event.MCComptonPosition.z])
+    rot_axis = np.array([event.MCPosition_p_first.x - event.MCPosition_e_first.x,
+                         event.MCPosition_p_first.y - event.MCPosition_e_first.y,
+                         event.MCPosition_p_first.z - event.MCPosition_e_first.z])
+    # cone definition
+    mc_cone_points = define_cone_points(vec_init=vec_init, axis=rot_axis, sr=64)
+    for i in range(1, len(mc_cone_points)):
+        ax.plot3D([mc_cone_points[i - 1][0], mc_cone_points[i][0]],
+                  [mc_cone_points[i - 1][1], mc_cone_points[i][1]],
+                  [mc_cone_points[i - 1][2], mc_cone_points[i][2]],
+                  color="black")
+    ax.plot3D([0, rot_axis[0]],
+              [0, rot_axis[1]],
+              [0, rot_axis[2]],
+              color="pink")
+    ax.plot3D([0, vec_init[0]],
+              [0, vec_init[1]],
+              [0, vec_init[2]],
+              color="green")
+
+    # REFERENCE VECTOR
+    vec_ax1 = event.MCPosition_e_first
+    vec_ax2 = event.MCPosition_p_first
+    rot_axis = vec_ax2 - vec_ax1
+    # rotate reference vector around scattering angle theta
+    ref_vec = np.array([50, 0, 0])
+    rotation_y = R.from_rotvec(event.theta * np.array([0, 1, 0]))
+    rotation_z = R.from_rotvec(rot_axis.phi * np.array([0, 0, 1]))
+    rotation_y2 = R.from_rotvec(rot_axis.theta+np.pi/2 * np.array([0, 1, 0]))
+    ref_vec = rotation_y2.apply(ref_vec)
+    #ref_vec = rotation_z.apply(ref_vec)
+
+    ax.plot3D([0, ref_vec[0]],
+              [0, ref_vec[1]],
+              [0, ref_vec[2]],
+              color="blue")
 
     # title string
     dict_type = {2: "Real Coincidence",
