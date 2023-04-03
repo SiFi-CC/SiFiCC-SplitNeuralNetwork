@@ -54,16 +54,15 @@ def vec_angle(vec1, vec2):
 
 
 def cone_point(vec_ax1, vec_ax2, theta, offset, sr=8):
-    print(theta*360/2/np.pi)
+    # correct angle theta
     theta = np.pi - theta
-    print(theta*360/2/np.pi)
+
     # define rotation axis in reference system of compton scattering (vec_ax1) as origin
     rot_axis = vec_ax2 - vec_ax1
 
     # rotate reference vector around scattering angle theta
     ref_vec = np.array([1, 0, 0])
-
-    rotation_y = R.from_rotvec((rot_axis.phi - np.pi / 2 - theta) * np.array([0, 1, 0]))
+    rotation_y = R.from_rotvec((rot_axis.theta - np.pi / 2 - theta) * np.array([0, 1, 0]))
     rotation_z = R.from_rotvec(rot_axis.phi * np.array([0, 0, 1]))
     ref_vec = rotation_y.apply(ref_vec)
     ref_vec = rotation_z.apply(ref_vec)
@@ -78,14 +77,14 @@ def cone_point(vec_ax1, vec_ax2, theta, offset, sr=8):
         rot_vec = np.radians(angle) * rot_axis_ary / np.sqrt(np.dot(rot_axis_ary, rot_axis_ary))
         rot_M = R.from_rotvec(rot_vec)
         vec_temp = rot_M.apply(vec_temp)
-        list_cone_vec.append(vec_temp * (-1))
+        list_cone_vec.append(vec_temp)
 
     # scale each cone vector to hit the final canvas
     # shift them to correct final position
 
     for i in range(len(list_cone_vec)):
         a = -offset / list_cone_vec[i][0]
-        list_cone_vec[i] *= -150
+        list_cone_vec[i] *= a
         list_cone_vec[i] = np.array([list_cone_vec[i][0] + vec_ax1.x,
                                      list_cone_vec[i][1] + vec_ax1.y,
                                      list_cone_vec[i][2] + vec_ax1.z])
@@ -266,7 +265,7 @@ def event_display(RootParser, event_position=None, event_id=None):
     rot_axis = vec_ax2 - vec_ax1
     offset = event.MCPosition_e_first.x - event.MCPosition_source.x
 
-    list_cone = cone_point(vec_ax1, vec_ax2, event.theta, offset, sr=128)
+    list_cone = cone_point(vec_ax1, vec_ax2, event.theta, offset, sr=64)
     for i in range(1, len(list_cone)):
         ax.plot3D([list_cone[i - 1][0], list_cone[i][0]],
                   [list_cone[i - 1][1], list_cone[i][1]],

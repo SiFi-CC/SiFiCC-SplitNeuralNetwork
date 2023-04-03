@@ -38,13 +38,13 @@ ax.plot3D([0, 0], [10, -10], [0, 0], color="black")
 ax.plot3D([0, 0], [0, 0], [10, -10], color="black")
 
 # set the baseline vectors
-vec_axis = np.array([0.93781446, 0.23619839, -0.25439018])*10
-vec_src = np.array([0.9905789, -0.12525081, -0.05536714])*10
+vec_axis = np.array([0.80828536, -0.55013407, 0.2098268]) * 10
+vec_src = np.array([-0.96579858, - 0.23791328, - 0.10310367]) * 10
 ax.plot3D([0, vec_axis[0]], [0, vec_axis[1]], [0, vec_axis[2]], color="blue", linestyle="--")
 ax.plot3D([0, vec_src[0]], [0, vec_src[1]], [0, vec_src[2]], color="green", linestyle="--")
 
 # calculate angle between vectors
-angle1 = 2.303
+angle1 = 2.307
 print("Angle: {:.3f} [rad]".format(angle1))
 print("Angle: {:.1f}".format(angle1 * 360 / 2 / np.pi))
 
@@ -60,7 +60,7 @@ ax.plot3D([0, vec_ref[0] * 10], [0, vec_ref[1] * 10], [0, vec_ref[2] * 10], colo
 print("\nAngle: {:.3f} [rad]".format(vec_angle(vec_axis, vec_ref)))
 
 # build cone via axis rotation
-list_phi = np.linspace(0, 360, 8)
+list_phi = np.linspace(0, 360, 64)
 a = np.sqrt(np.dot(vec_src, vec_src))
 for angle in list_phi:
     vec_temp = vec_ref
