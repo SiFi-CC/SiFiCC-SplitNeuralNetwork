@@ -45,17 +45,52 @@ def surface_list(x, y, z, xdim, ydim, zdim):
     return list_surface
 
 
-def cone_point(vec_ax1, vec_ax2, theta, sr=8):
+def unit_vec(vec):
+    return vec / np.sqrt(np.dot(vec, vec))
+
+
+def vec_angle(vec1, vec2):
+    return np.arccos(np.clip(np.dot(unit_vec(vec1), unit_vec(vec2)), -1.0, 1.0))
+
+
+def cone_point(vec_ax1, vec_ax2, theta, offset, sr=8):
+    print(theta*360/2/np.pi)
+    theta = np.pi - theta
+    print(theta*360/2/np.pi)
     # define rotation axis in reference system of compton scattering (vec_ax1) as origin
-    rot_axis = np.array([vec_ax2.x - vec_ax1.x, vec_ax2.y - vec_ax1.y, vec_ax2.z - vec_ax1.z])
+    rot_axis = vec_ax2 - vec_ax1
 
     # rotate reference vector around scattering angle theta
-    ref_vec = np.array([-1, 0, 0])
-    rotation_x = R.from_rotvec(np.radians(theta) * np.array([0, 1, 0]))
-    ref_vec = rotation_x.apply(ref_vec)
+    ref_vec = np.array([1, 0, 0])
 
+    rotation_y = R.from_rotvec((rot_axis.phi - np.pi / 2 - theta) * np.array([0, 1, 0]))
+    rotation_z = R.from_rotvec(rot_axis.phi * np.array([0, 0, 1]))
+    ref_vec = rotation_y.apply(ref_vec)
+    ref_vec = rotation_z.apply(ref_vec)
+
+    # rotate reference vector around axis vector to sample cone edges
+    list_cone_vec = []
+    rot_axis_ary = np.array([rot_axis.x, rot_axis.y, rot_axis.z])
     # phi angle sampling (not the same as scattering angle theta!)
     list_phi = np.linspace(0, 360, sr)
+    for angle in list_phi:
+        vec_temp = ref_vec
+        rot_vec = np.radians(angle) * rot_axis_ary / np.sqrt(np.dot(rot_axis_ary, rot_axis_ary))
+        rot_M = R.from_rotvec(rot_vec)
+        vec_temp = rot_M.apply(vec_temp)
+        list_cone_vec.append(vec_temp * (-1))
+
+    # scale each cone vector to hit the final canvas
+    # shift them to correct final position
+
+    for i in range(len(list_cone_vec)):
+        a = -offset / list_cone_vec[i][0]
+        list_cone_vec[i] *= -150
+        list_cone_vec[i] = np.array([list_cone_vec[i][0] + vec_ax1.x,
+                                     list_cone_vec[i][1] + vec_ax1.y,
+                                     list_cone_vec[i][2] + vec_ax1.z])
+
+    return list_cone_vec
 
 
 def define_cone_points(vec_init, axis, sr=8):
@@ -114,9 +149,9 @@ def event_display(RootParser, event_position=None, event_id=None):
     # plotting
     fig = plt.figure(figsize=(12, 12))
     ax = fig.add_subplot(111, projection='3d')
-    ax.set_xlim(-10, 300)
-    ax.set_ylim(-60, 60)
-    ax.set_zlim(-60, 60)
+    ax.set_xlim(-300, 300)
+    ax.set_ylim(-300, 300)
+    ax.set_zlim(-300, 300)
     ax.set_xlabel("x-axis [mm]")
     ax.set_ylabel("y-axis [mm]")
     ax.set_zlabel("z-axis [mm]")
@@ -218,47 +253,55 @@ def event_display(RootParser, event_position=None, event_id=None):
     ax.plot3D(event.MCPosition_p_first.x, event.MCPosition_p_first.y, event.MCPosition_p_first.z,
               "x", color="red", markersize=event.MCEnergy_p * b)
     ax.plot3D(event.MCPosition_source.x, event.MCPosition_source.y, event.MCPosition_source.z,
-              "o", color="red", markersize=14)
+              "o", color="red", markersize=4)
 
-    # cone plotting
-    vec_init = np.array([event.MCPosition_source.x - event.MCComptonPosition.x,
-                         event.MCPosition_source.y - event.MCComptonPosition.y,
-                         event.MCPosition_source.z - event.MCComptonPosition.z])
-    rot_axis = np.array([event.MCPosition_p_first.x - event.MCPosition_e_first.x,
-                         event.MCPosition_p_first.y - event.MCPosition_e_first.y,
-                         event.MCPosition_p_first.z - event.MCPosition_e_first.z])
-    # cone definition
-    mc_cone_points = define_cone_points(vec_init=vec_init, axis=rot_axis, sr=64)
-    for i in range(1, len(mc_cone_points)):
-        ax.plot3D([mc_cone_points[i - 1][0], mc_cone_points[i][0]],
-                  [mc_cone_points[i - 1][1], mc_cone_points[i][1]],
-                  [mc_cone_points[i - 1][2], mc_cone_points[i][2]],
-                  color="black")
-    ax.plot3D([0, rot_axis[0]],
-              [0, rot_axis[1]],
-              [0, rot_axis[2]],
-              color="pink")
-    ax.plot3D([0, vec_init[0]],
-              [0, vec_init[1]],
-              [0, vec_init[2]],
-              color="green")
-
+    # Compton cone definition
     # REFERENCE VECTOR
+    v1_u = np.array([event.MCDirection_source.x, event.MCDirection_source.y, event.MCDirection_source.z])
+    v2_u = np.array([event.MCDirection_scatter.x, event.MCDirection_scatter.y, event.MCDirection_scatter.z])
+    dir_angle = np.arccos(np.clip(np.dot(v1_u, v2_u), -1.0, 1.0))
+
     vec_ax1 = event.MCPosition_e_first
     vec_ax2 = event.MCPosition_p_first
     rot_axis = vec_ax2 - vec_ax1
-    # rotate reference vector around scattering angle theta
-    ref_vec = np.array([50, 0, 0])
-    rotation_y = R.from_rotvec(event.theta * np.array([0, 1, 0]))
-    rotation_z = R.from_rotvec(rot_axis.phi * np.array([0, 0, 1]))
-    rotation_y2 = R.from_rotvec(rot_axis.theta+np.pi/2 * np.array([0, 1, 0]))
-    ref_vec = rotation_y2.apply(ref_vec)
-    #ref_vec = rotation_z.apply(ref_vec)
+    offset = event.MCPosition_e_first.x - event.MCPosition_source.x
 
-    ax.plot3D([0, ref_vec[0]],
-              [0, ref_vec[1]],
-              [0, ref_vec[2]],
-              color="blue")
+    list_cone = cone_point(vec_ax1, vec_ax2, event.theta, offset, sr=128)
+    for i in range(1, len(list_cone)):
+        ax.plot3D([list_cone[i - 1][0], list_cone[i][0]],
+                  [list_cone[i - 1][1], list_cone[i][1]],
+                  [list_cone[i - 1][2], list_cone[i][2]],
+                  color="black")
+    for i in [8, 16, 32, 64]:
+        ax.plot3D([vec_ax1.x, list_cone[i - 1][0]],
+                  [vec_ax1.y, list_cone[i - 1][1]],
+                  [vec_ax1.z, list_cone[i - 1][2]],
+                  color="black")
+
+    # Compton cone definition, defined by reco cluster positions
+    vec_ax1, _ = event.get_electron_position()
+    vec_ax2, _ = event.get_photon_position()
+    e1, _ = event.get_electron_energy()
+    e2, _ = event.get_photon_energy()
+    reco_theta = event.calculate_theta(e1, e2)
+    rot_axis = vec_ax2 - vec_ax1
+    offset = vec_ax1.x
+
+    list_cone = cone_point(vec_ax1, vec_ax2, reco_theta, offset, sr=64)
+    for i in range(1, len(list_cone)):
+        ax.plot3D([list_cone[i - 1][0], list_cone[i][0]],
+                  [list_cone[i - 1][1], list_cone[i][1]],
+                  [list_cone[i - 1][2], list_cone[i][2]],
+                  color="orange", linestyle="--")
+    for i in [8, 16, 32, 64]:
+        ax.plot3D([vec_ax1.x, list_cone[i - 1][0]],
+                  [vec_ax1.y, list_cone[i - 1][1]],
+                  [vec_ax1.z, list_cone[i - 1][2]],
+                  color="orange", linestyle="--")
+    ax.plot3D([vec_ax1.x, vec_ax2.x],
+              [vec_ax1.y, vec_ax2.y],
+              [vec_ax1.z, vec_ax2.z],
+              color="orange", linestyle="--")
 
     # title string
     dict_type = {2: "Real Coincidence",

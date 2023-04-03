@@ -198,6 +198,9 @@ class Event:
         # legacy ideal compton
         self.is_ideal_compton = self.is_compton_pseudo_complete
 
+        # OVERWRITING TRUE ELECTRON POSITION WITH THE TRUE COMPTON SCATTERING POSITION
+        self.MCPosition_e_first = self.MCComptonPosition
+
         """
         # check if the event is a Compton event
         # Compton events have a positive MC electron energy
