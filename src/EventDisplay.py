@@ -148,9 +148,9 @@ def event_display(RootParser, event_position=None, event_id=None):
     # plotting
     fig = plt.figure(figsize=(12, 12))
     ax = fig.add_subplot(111, projection='3d')
-    ax.set_xlim(-300, 300)
-    ax.set_ylim(-300, 300)
-    ax.set_zlim(-300, 300)
+    ax.set_xlim(-10, 300)
+    ax.set_ylim(-155, 155)
+    ax.set_zlim(-155, 155)
     ax.set_xlabel("x-axis [mm]")
     ax.set_ylabel("y-axis [mm]")
     ax.set_zlabel("z-axis [mm]")
@@ -265,7 +265,7 @@ def event_display(RootParser, event_position=None, event_id=None):
     rot_axis = vec_ax2 - vec_ax1
     offset = event.MCPosition_e_first.x - event.MCPosition_source.x
 
-    list_cone = cone_point(vec_ax1, vec_ax2, event.theta, offset, sr=64)
+    list_cone = cone_point(vec_ax1, vec_ax2, dir_angle, offset, sr=128)
     for i in range(1, len(list_cone)):
         ax.plot3D([list_cone[i - 1][0], list_cone[i][0]],
                   [list_cone[i - 1][1], list_cone[i][1]],
@@ -286,7 +286,7 @@ def event_display(RootParser, event_position=None, event_id=None):
     rot_axis = vec_ax2 - vec_ax1
     offset = vec_ax1.x
 
-    list_cone = cone_point(vec_ax1, vec_ax2, reco_theta, offset, sr=64)
+    list_cone = cone_point(vec_ax1, vec_ax2, reco_theta, offset, sr=128)
     for i in range(1, len(list_cone)):
         ax.plot3D([list_cone[i - 1][0], list_cone[i][0]],
                   [list_cone[i - 1][1], list_cone[i][1]],
@@ -307,11 +307,15 @@ def event_display(RootParser, event_position=None, event_id=None):
                  3: "Random Coincidence",
                  5: "Real Coincidence + Pile-Up",
                  6: "Random Coincidence + Pile-Up"}
+    str_tagging = str(event.is_real_coincidence * 1) + str(event.is_compton * 1) + str(
+        event.is_compton_pseudo_complete * 1) + str(event.is_compton_pseudo_distributed * 1) + str(
+        event.is_compton_distributed * 1)
 
     ax.set_title(
         "Display: Event {} (Id: {})\nType: {}, {}\nEnergy e/p: {:.2f} MeV / {:.2f} MeV\nPrimary Energy: {:.2f} MeV\nTotal cluster energy: {:.2f} MeV".format(
             event_position,
-            event.EventNumber, dict_type[event.MCSimulatedEventType], "TAGGING",
+            event.EventNumber, dict_type[event.MCSimulatedEventType], str_tagging,
             event.MCEnergy_e, event.MCEnergy_p, event.MCEnergy_Primary, np.sum(event.RecoClusterEnergies_values)))
     # plt.legend()
+    plt.tight_layout()
     plt.show()

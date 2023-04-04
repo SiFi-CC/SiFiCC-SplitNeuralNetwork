@@ -195,11 +195,36 @@ class Event:
                                     self.MCPosition_p_first = self.MCPosition_p[idx]
                                     break
 
-        # legacy ideal compton
-        self.is_ideal_compton = self.is_compton_pseudo_complete
-
         # OVERWRITING TRUE ELECTRON POSITION WITH THE TRUE COMPTON SCATTERING POSITION
         self.MCPosition_e_first = self.MCComptonPosition
+
+        # new better super optimal tagging
+        self.is_ideal_compton = False
+        if self.is_compton:
+            # baseline conditions:
+            # - event is a compton event
+            # - at least 2 photon interactions, first one in scatterer, at least one in absorber
+            # - at least 1 electron interaction, in scatterer
+            if len(self.MCPosition_p) >= 2:
+                # set compton scattering position
+                if ((self.MCInteractions_p > 0) & (self.MCInteractions_p < 10)).any():
+                    for idx in range(0, len(self.MCInteractions_p)):
+                        if 0 <= self.MCInteractions_p[idx] < 10 and scatterer.is_vec_in_module(
+                                self.MCPosition_p[idx]):
+                            self.MCPosition_e_first = self.MCComptonPosition
+                            break
+                # set absorption position
+                for idx in range(0, len(self.MCInteractions_p)):
+                    if 0 <= self.MCInteractions_p[idx] < 20 and absorber.is_vec_in_module(
+                            self.MCPosition_p[idx]):
+                        # check additionally if the interaction is in the scattering direction
+                        tmp_vec = self.MCPosition_p[idx] - self.MCComptonPosition
+                        tmp_angle = self.vec_angle(self.MCDirection_scatter, self.unit_vec(tmp_vec))
+                        if tmp_angle < 0.01:
+                            self.MCPosition_p_first = self.MCPosition_p[idx]
+                            self.is_ideal_compton = True
+                            break
+                        break
 
         """
         # check if the event is a Compton event
@@ -302,6 +327,12 @@ class Event:
         """
 
     ####################################################################################################################
+
+    def unit_vec(self, vec):
+        return vec / np.sqrt(np.dot(vec, vec))
+
+    def vec_angle(self, vec1, vec2):
+        return np.arccos(np.clip(np.dot(self.unit_vec(vec1), self.unit_vec(vec2)), -1.0, 1.0))
 
     def calculate_theta(self, e1, e2):
         """
