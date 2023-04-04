@@ -106,6 +106,14 @@ class Event:
         self.scatterer = scatterer
         self.absorber = absorber
 
+        # correction of MCDirection_source quantity
+        vec_ref = self.MCComptonPosition - self.MCPosition_source
+        # print(vec_ref.theta, self.MCDirection_source.theta)
+        if not abs(vec_ref.phi - self.MCDirection_source.phi) < 0.1 or not abs(
+                vec_ref.theta - self.MCDirection_source.theta) < 0.1:
+            self.MCDirection_source = self.MCComptonPosition - self.MCPosition_source
+            self.MCDirection_source /= self.MCDirection_source.mag
+
         # ---------------------------------------------------------------------------------------------
         # Event tagging
         # event identification steps:
@@ -218,8 +226,13 @@ class Event:
                     if 0 <= self.MCInteractions_p[idx] < 20 and absorber.is_vec_in_module(
                             self.MCPosition_p[idx]):
                         # check additionally if the interaction is in the scattering direction
-                        tmp_vec = self.MCPosition_p[idx] - self.MCComptonPosition
-                        tmp_angle = self.vec_angle(self.MCDirection_scatter, self.unit_vec(tmp_vec))
+                        vec1 = np.array([self.MCPosition_p.x[idx] - self.MCComptonPosition.x,
+                                         self.MCPosition_p.y[idx] - self.MCComptonPosition.y,
+                                         self.MCPosition_p.z[idx] - self.MCComptonPosition.z])
+                        vec2 = np.array([self.MCDirection_scatter.x,
+                                         self.MCDirection_scatter.y,
+                                         self.MCDirection_scatter.z])
+                        tmp_angle = self.vec_angle(vec1, vec2)
                         if tmp_angle < 0.01:
                             self.MCPosition_p_first = self.MCPosition_p[idx]
                             self.is_ideal_compton = True

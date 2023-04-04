@@ -108,6 +108,7 @@ def define_cone_points(vec_init, axis, sr=8):
 # Main event display
 
 def event_display(RootParser, event_position=None, event_id=None):
+    # -------------------------------------------------------------------------
     # grab event from either root file position or event number (might be slow)
     if event_position is not None:
         event = RootParser.get_event(position=event_position)
@@ -121,6 +122,19 @@ def event_display(RootParser, event_position=None, event_id=None):
         print("Invalid event position/ID!")
         return
 
+    # ------------------------------------------------------------------------------------------------------------------
+    # Main plotting, general settings of 3D plot
+    fig = plt.figure(figsize=(12, 12))
+    ax = fig.add_subplot(111, projection='3d')
+    ax.set_xlim(-10, 300)
+    ax.set_ylim(-155, 155)
+    ax.set_zlim(-155, 155)
+    ax.set_xlabel("x-axis [mm]")
+    ax.set_ylabel("y-axis [mm]")
+    ax.set_zlabel("z-axis [mm]")
+
+    # ------------------------------------------------------------------------------------------------------------------
+    # detector edges, orientation axis, (fiber hits)
     # get detector edges
     list_edge_scatterer = edge_list(RootParser.scatterer.pos.x,
                                     RootParser.scatterer.pos.y,
@@ -128,14 +142,12 @@ def event_display(RootParser, event_position=None, event_id=None):
                                     RootParser.scatterer.dimx,
                                     RootParser.scatterer.dimy,
                                     RootParser.scatterer.dimz)
-
     list_edge_absorber = edge_list(RootParser.absorber.pos.x,
                                    RootParser.absorber.pos.y,
                                    RootParser.absorber.pos.z,
                                    RootParser.absorber.dimx,
                                    RootParser.absorber.dimy,
                                    RootParser.absorber.dimz)
-
     # get detector hits
     list_cluster_x = []
     list_cluster_y = []
@@ -145,16 +157,6 @@ def event_display(RootParser, event_position=None, event_id=None):
         list_cluster_y.append(cl.y)
         list_cluster_z.append(cl.z)
 
-    # plotting
-    fig = plt.figure(figsize=(12, 12))
-    ax = fig.add_subplot(111, projection='3d')
-    ax.set_xlim(-10, 300)
-    ax.set_ylim(-155, 155)
-    ax.set_zlim(-155, 155)
-    ax.set_xlabel("x-axis [mm]")
-    ax.set_ylabel("y-axis [mm]")
-    ax.set_zlabel("z-axis [mm]")
-    # plot detector edges
     for i in range(len(list_edge_scatterer)):
         ax.plot3D(list_edge_scatterer[i][0], list_edge_scatterer[i][1], list_edge_scatterer[i][2], color="blue")
         ax.plot3D(list_edge_absorber[i][0], list_edge_absorber[i][1], list_edge_absorber[i][2], color="blue")
@@ -173,16 +175,25 @@ def event_display(RootParser, event_position=None, event_id=None):
         ax.plot3D(list_cluster_x[i], list_cluster_y[i], list_cluster_z[i],
                   "X", color="orange", markersize=event.RecoClusterEnergies_values[i] * b)
 
+    # ------------------------------------------------------------------------------------------------------------------
     # plot primary gamma trajectory
+    a = 250
     ax.plot3D([event.MCPosition_source.x, event.MCComptonPosition.x],
               [event.MCPosition_source.y, event.MCComptonPosition.y],
               [event.MCPosition_source.z, event.MCComptonPosition.z],
               color="red")
-    a = 250
     ax.plot3D([event.MCComptonPosition.x, event.MCComptonPosition.x + a * event.MCDirection_scatter.x],
               [event.MCComptonPosition.y, event.MCComptonPosition.y + a * event.MCDirection_scatter.y],
               [event.MCComptonPosition.z, event.MCComptonPosition.z + a * event.MCDirection_scatter.z],
               color="red")
+    # True source direction as control plot
+
+    ax.plot3D([event.MCPosition_source.x, event.MCPosition_source.x + a * event.MCDirection_source.x],
+              [event.MCPosition_source.y, event.MCPosition_source.y + a * event.MCDirection_source.y],
+              [event.MCPosition_source.z, event.MCPosition_source.z + a * event.MCDirection_source.z],
+              color="pink")
+
+    # ------------------------------------------------------------------------------------------------------------------
     # electron interaction plotting
     list_e_interaction = [[]]
     counter = 0
@@ -246,7 +257,8 @@ def event_display(RootParser, event_position=None, event_id=None):
                 [event.MCPosition_p.z[list_p_interaction[i][j - 1]], event.MCPosition_p.z[list_p_interaction[i][j]]],
                 color="purple", linestyle="--")
 
-    # plot compton event
+    # ------------------------------------------------------------------------------------------------------------------
+    # Marker for MC-Truth (Later definition standard for Neural Network)
     ax.plot3D(event.MCPosition_e_first.x, event.MCPosition_e_first.y, event.MCPosition_e_first.z,
               "x", color="red", markersize=event.MCEnergy_e * b)
     ax.plot3D(event.MCPosition_p_first.x, event.MCPosition_p_first.y, event.MCPosition_p_first.z,
@@ -254,15 +266,17 @@ def event_display(RootParser, event_position=None, event_id=None):
     ax.plot3D(event.MCPosition_source.x, event.MCPosition_source.y, event.MCPosition_source.z,
               "o", color="red", markersize=4)
 
-    # Compton cone definition
-    # REFERENCE VECTOR
+    # ------------------------------------------------------------------------------------------------------------------
+    # MC-Truth and CB-Reco compton cone
+    # Grab Compton scattering angle from source and scattering directions as energy calculations are not good enough
+    # on MC-Truth level
     v1_u = np.array([event.MCDirection_source.x, event.MCDirection_source.y, event.MCDirection_source.z])
     v2_u = np.array([event.MCDirection_scatter.x, event.MCDirection_scatter.y, event.MCDirection_scatter.z])
     dir_angle = np.arccos(np.clip(np.dot(v1_u, v2_u), -1.0, 1.0))
 
+    # Main vectors needed for cone calculations
     vec_ax1 = event.MCPosition_e_first
     vec_ax2 = event.MCPosition_p_first
-    rot_axis = vec_ax2 - vec_ax1
     offset = event.MCPosition_e_first.x - event.MCPosition_source.x
 
     list_cone = cone_point(vec_ax1, vec_ax2, dir_angle, offset, sr=128)
@@ -283,7 +297,6 @@ def event_display(RootParser, event_position=None, event_id=None):
     e1, _ = event.get_electron_energy()
     e2, _ = event.get_photon_energy()
     reco_theta = event.calculate_theta(e1, e2)
-    rot_axis = vec_ax2 - vec_ax1
     offset = vec_ax1.x
 
     list_cone = cone_point(vec_ax1, vec_ax2, reco_theta, offset, sr=128)
@@ -302,6 +315,11 @@ def event_display(RootParser, event_position=None, event_id=None):
               [vec_ax1.z, vec_ax2.z],
               color="orange", linestyle="--")
 
+    # ------------------------------------------------------------------------------------------------------------------
+    # Control prints
+    print("\nControl: ")
+
+    # ------------------------------------------------------------------------------------------------------------------
     # title string
     dict_type = {2: "Real Coincidence",
                  3: "Random Coincidence",
@@ -309,7 +327,7 @@ def event_display(RootParser, event_position=None, event_id=None):
                  6: "Random Coincidence + Pile-Up"}
     str_tagging = str(event.is_real_coincidence * 1) + str(event.is_compton * 1) + str(
         event.is_compton_pseudo_complete * 1) + str(event.is_compton_pseudo_distributed * 1) + str(
-        event.is_compton_distributed * 1)
+        event.is_compton_distributed * 1) + str(event.is_ideal_compton * 1)
 
     ax.set_title(
         "Display: Event {} (Id: {})\nType: {}, {}\nEnergy e/p: {:.2f} MeV / {:.2f} MeV\nPrimary Energy: {:.2f} MeV\nTotal cluster energy: {:.2f} MeV".format(
