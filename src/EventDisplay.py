@@ -187,12 +187,12 @@ def event_display(RootParser, event_position=None, event_id=None):
               [event.MCComptonPosition.z, event.MCComptonPosition.z + a * event.MCDirection_scatter.z],
               color="red")
     # True source direction as control plot
-
+    """
     ax.plot3D([event.MCPosition_source.x, event.MCPosition_source.x + a * event.MCDirection_source.x],
               [event.MCPosition_source.y, event.MCPosition_source.y + a * event.MCDirection_source.y],
               [event.MCPosition_source.z, event.MCPosition_source.z + a * event.MCDirection_source.z],
               color="pink")
-
+    """
     # ------------------------------------------------------------------------------------------------------------------
     # electron interaction plotting
     list_e_interaction = [[]]
@@ -276,7 +276,7 @@ def event_display(RootParser, event_position=None, event_id=None):
 
     # Main vectors needed for cone calculations
     vec_ax1 = event.MCPosition_e_first
-    vec_ax2 = event.MCPosition_p_first
+    vec_ax2 = event.MCPosition_p_first  # TVector3(274.240, 48.257, -3.024)
     offset = event.MCPosition_e_first.x - event.MCPosition_source.x
 
     list_cone = cone_point(vec_ax1, vec_ax2, dir_angle, offset, sr=128)
@@ -318,6 +318,15 @@ def event_display(RootParser, event_position=None, event_id=None):
     # ------------------------------------------------------------------------------------------------------------------
     # Control prints
     print("\nControl: ")
+    print("True E Position: ({:.3f}, {:.3f}, {:.3f})".format(event.MCPosition_e_first.x,
+                                                             event.MCPosition_e_first.y,
+                                                             event.MCPosition_e_first.z))
+    print("True P Position: ({:.3f}, {:.3f}, {:.3f})".format(event.MCPosition_p_first.x,
+                                                             event.MCPosition_p_first.y,
+                                                             event.MCPosition_p_first.z))
+    print("\nCompton Scattering Angle theta:")
+    print("theta (Energy):", "{:5.3f} [rad] | {:5.1f} [deg]".format(event.theta, event.theta*360/2/np.pi))
+    print("theta (Vector):", "{:5.3f} [rad] | {:5.1f} [deg]".format(dir_angle, dir_angle*360/2/np.pi))
 
     # ------------------------------------------------------------------------------------------------------------------
     # title string

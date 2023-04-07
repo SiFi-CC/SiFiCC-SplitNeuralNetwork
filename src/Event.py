@@ -208,6 +208,7 @@ class Event:
 
         # new better super optimal tagging
         self.is_ideal_compton = False
+        self.ideal_compton_con = 0
         if self.is_compton:
             # baseline conditions:
             # - event is a compton event
@@ -220,6 +221,7 @@ class Event:
                         if 0 <= self.MCInteractions_p[idx] < 10 and scatterer.is_vec_in_module(
                                 self.MCPosition_p[idx]):
                             self.MCPosition_e_first = self.MCComptonPosition
+                            self.ideal_compton_con += 1
                             break
                 # set absorption position
                 for idx in range(0, len(self.MCInteractions_p)):
@@ -235,9 +237,10 @@ class Event:
                         tmp_angle = self.vec_angle(vec1, vec2)
                         if tmp_angle < 0.01:
                             self.MCPosition_p_first = self.MCPosition_p[idx]
-                            self.is_ideal_compton = True
+                            self.ideal_compton_con += 1
                             break
-                        break
+        if self.ideal_compton_con == 2:
+            self.is_ideal_compton = True
 
         """
         # check if the event is a Compton event
