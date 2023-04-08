@@ -9,7 +9,7 @@ def lr_scheduler(epoch):
     if epoch < 75:
         return 5e-4
     if epoch < 100:
-        return 1e-5
+        return 1e-4
     return 1e-5
 
 
