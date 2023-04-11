@@ -24,11 +24,13 @@ def parse(npz_file):
     ary_targets_clas = npz_data["targets_clas"]
     ary_targets_reg1 = npz_data["targets_reg1"]
     ary_targets_reg2 = npz_data["targets_reg2"]
+    ary_weights = npz_data["weights"]
 
     return DataCluster.DataCluster(ary_features=ary_features,
                                    ary_targets_clas=ary_targets_clas,
                                    ary_targets_reg1=ary_targets_reg1,
-                                   ary_targets_reg2=ary_targets_reg2)
+                                   ary_targets_reg2=ary_targets_reg2,
+                                   ary_weights=ary_weights)
 
 
 def wrapper(npz_file,

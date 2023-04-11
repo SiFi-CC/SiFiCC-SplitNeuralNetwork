@@ -3,13 +3,13 @@ import numpy as np
 
 class DataCluster:
 
-    def __init__(self, ary_meta, ary_features, ary_targets_clas, ary_targets_reg1, ary_targets_reg2):
+    def __init__(self, ary_features, ary_targets_clas, ary_targets_reg1, ary_targets_reg2, ary_weights):
         # all core features of the DataCluster class
-        self.meta = ary_meta
         self.features = ary_features
         self.targets_clas = ary_targets_clas
         self.targets_reg1 = ary_targets_reg1
         self.targets_reg2 = ary_targets_reg2
+        self.weights = ary_weights
 
         # legacy feature
         # can still be used as final targets for whatever
