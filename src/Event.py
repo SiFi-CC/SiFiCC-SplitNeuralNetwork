@@ -96,15 +96,14 @@ class Event:
 
         # timing information
         self.RecoClusterTimestamps = RecoClusterTimestamps
-        # get position sorted indices
-        idx_position = self.sort_clusters_position()
         self.RecoClusterTimestamps_relative = RecoClusterTimestamps - min(RecoClusterTimestamps)
 
-        # scattering angle
-        self.theta = self.calculate_theta(self.MCEnergy_e, self.MCEnergy_p)
-
+        # Detector modules
         self.scatterer = scatterer
         self.absorber = absorber
+
+        # --------------------------------------------------------------------------------------------------------------
+        # Temporary corrections to MC-Truth with additional control tagging
 
         # correction of MCDirection_source quantity
         vec_ref = self.MCComptonPosition - self.MCPosition_source
@@ -114,7 +113,14 @@ class Event:
             self.MCDirection_source = self.MCComptonPosition - self.MCPosition_source
             self.MCDirection_source /= self.MCDirection_source.mag
 
-        # ---------------------------------------------------------------------------------------------
+        # scattering angle
+        # calculated from energy and vector dot product of direction vectors given by simulation output
+        self.theta_energy = self.calc_theta_energy(self.MCEnergy_e, self.MCEnergy_p)
+        self.theta_dotvec = self.calc_theta_dotvec(self.MCDirection_source, self.MCDirection_scatter)
+
+        # correction of photon absorber position
+
+        # --------------------------------------------------------------------------------------------------------------
         # Event tagging
         # event identification steps:
         #
@@ -228,13 +234,8 @@ class Event:
                     if 0 <= self.MCInteractions_p[idx] < 20 and absorber.is_vec_in_module(
                             self.MCPosition_p[idx]):
                         # check additionally if the interaction is in the scattering direction
-                        vec1 = np.array([self.MCPosition_p.x[idx] - self.MCComptonPosition.x,
-                                         self.MCPosition_p.y[idx] - self.MCComptonPosition.y,
-                                         self.MCPosition_p.z[idx] - self.MCComptonPosition.z])
-                        vec2 = np.array([self.MCDirection_scatter.x,
-                                         self.MCDirection_scatter.y,
-                                         self.MCDirection_scatter.z])
-                        tmp_angle = self.vec_angle(vec1, vec2)
+                        tmp_angle = self.calc_theta_dotvec(self.MCPosition_p[idx] - self.MCComptonPosition,
+                                                           self.MCDirection_scatter)
                         if tmp_angle < 0.01:
                             self.MCPosition_p_first = self.MCPosition_p[idx]
                             self.ideal_compton_con += 1
@@ -342,17 +343,11 @@ class Event:
             self.is_pe = False
         """
 
-    ####################################################################################################################
+    # ------------------------------------------------------------------------------------------------------------------
 
-    def unit_vec(self, vec):
-        return vec / np.sqrt(np.dot(vec, vec))
-
-    def vec_angle(self, vec1, vec2):
-        return np.arccos(np.clip(np.dot(self.unit_vec(vec1), self.unit_vec(vec2)), -1.0, 1.0))
-
-    def calculate_theta(self, e1, e2):
+    def calc_theta_energy(self, e1, e2):
         """
-        Calculate scattering angle theta in radiants.
+        Calculate scattering angle theta in radiant from Compton scattering formula.
 
         Args:
              e1 (double): Initial gamma energy
@@ -369,6 +364,25 @@ class Event:
         else:
             theta = np.arccos(costheta)  # rad
             return theta
+
+    def calc_theta_dotvec(self, vec1, vec2):
+        """
+        Calculate scattering angle theta in radiant from the dot product of 2 vectors.
+
+        Args:
+             vec1 (TVector3): 3-dim origin vector, direction vector of source
+             vec2 (TVector3): 3-dim origin vector, direction vector of compton scattering
+        """
+        if vec1.mag == 0 or vec2.mag == 0:
+            return 0.0
+
+        ary_vec1 = np.array([vec1.x, vec1.y, vec1.z])
+        ary_vec2 = np.array([vec2.x, vec2.y, vec2.z])
+
+        ary_vec1 /= np.sqrt(np.dot(ary_vec1, ary_vec1))
+        ary_vec2 /= np.sqrt(np.dot(ary_vec2, ary_vec2))
+
+        return np.arccos(np.clip(np.dot(ary_vec1, ary_vec2), -1.0, 1.0))
 
     def get_electron_energy(self):
         idx_scatterer, _ = self.sort_clusters_by_module(use_energy=True)
@@ -481,4 +495,27 @@ class Event:
 
         return tvec3
 
-    ####################################################################################################################
+    # ------------------------------------------------------------------------------------------------------------------
+    # correction functions
+
+    def correction_zpos(self):
+
+        for i in range(len(self.MCInteractions_p)):
+            if self.absorber.is_vec_in_module(self.MCPosition_p[i]):
+                # check if the primary photon has a correct interaction position
+                if 0 <= self.MCInteractions_p[i] < 10:
+                    print("DO STUFF")
+            else:
+                continue
+
+        """
+        for idx in range(0, len(self.MCInteractions_p)):
+            if 0 <= self.MCInteractions_p[idx] < 20 and absorber.is_vec_in_module(
+                    self.MCPosition_p[idx]):
+                # check additionally if the interaction is in the scattering direction
+                tmp_angle = self.calc_theta_dotvec(self.MCPosition_p[idx] - self.MCComptonPosition,
+                                                   self.MCDirection_scatter)
+                if tmp_angle < 0.01:
+                    self.MCPosition_p_first = self.MCPosition_p[idx]
+                    self.ideal_compton_con += 1
+        """
