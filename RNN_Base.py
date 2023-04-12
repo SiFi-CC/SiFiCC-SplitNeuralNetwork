@@ -46,7 +46,7 @@ LOOK_UP_FILES = [NPZ_LOOKUP_0MM, NPZ_LOOKUP_5MM]
 RUN_NAME = "RNN_Base"
 
 # Neural Network settings
-epochs_clas = 100
+epochs_clas = 10
 epochs_regE = 100
 epochs_regP = 100
 batchsize_clas = 64
@@ -55,7 +55,7 @@ batchsize_regP = 64
 theta = 0.5
 
 # Global switches to turn on/off training or analysis steps
-train_clas = True
+train_clas = False
 train_regE = False
 train_regP = False
 eval_clas = True
@@ -101,9 +101,10 @@ neuralnetwork_clas = NeuralNetwork.NeuralNetwork(model=tfmodel_clas,
 os.chdir(dir_results + RUN_NAME + "/")
 
 # generate DataCluster object from npz file
-data_cluster = NPZParser.wrapper(dir_npz + NPZ_FILE_TRAIN,
-                                 set_classweights=True)
-"""
+data_cluster = NPZParser.parse(dir_npz + NPZ_FILE_TRAIN,
+                               frac=0.1,
+                               set_classweights=True)
+
 if train_clas:
     NNTraining.train_clas(neuralnetwork_clas,
                           data_cluster,
@@ -113,16 +114,13 @@ if train_clas:
 if eval_clas:
     neuralnetwork_clas.load()
 
-# generate DataCluster object from npz file
-data_cluster = NPZParser.wrapper(dir_npz + NPZ_FILE_TRAIN,
-                                 set_classweights=False)
 # ----------------------------------------------------------------------------------------------------------------------
 # Evaluation schedule
 
 # evaluation of training data
 os.chdir(dir_results + RUN_NAME + "/" + NPZ_FILE_TRAIN[:-4] + "/")
 if eval_clas:
-    data_cluster = NPZParser.wrapper(dir_npz + NPZ_FILE_TRAIN, set_testall=False)
+    data_cluster = NPZParser.parse(dir_npz + NPZ_FILE_TRAIN, set_testall=False)
     NNEvaluation.training_clas(neuralnetwork_clas, data_cluster, theta)
 
 # Evaluation of test dataset
@@ -131,7 +129,5 @@ for i, file in enumerate([NPZ_FILE_EVAL_0MM, NPZ_FILE_EVAL_5MM]):
     # npz wrapper
 
     if train_clas or eval_clas:
-        data_cluster = NPZParser.wrapper(dir_npz + file, set_testall=True)
+        data_cluster = NPZParser.parse(dir_npz + file, set_testall=True)
         NNEvaluation.evaluate_classifier(neuralnetwork_clas, DataCluster=data_cluster)
-
-"""

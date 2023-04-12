@@ -296,7 +296,7 @@ def event_display(RootParser, event_position=None, event_id=None):
     vec_ax2, _ = event.get_photon_position()
     e1, _ = event.get_electron_energy()
     e2, _ = event.get_photon_energy()
-    reco_theta = event.calculate_theta(e1, e2)
+    reco_theta = event.calc_theta_energy(e1, e2)
     offset = vec_ax1.x
 
     list_cone = cone_point(vec_ax1, vec_ax2, reco_theta, offset, sr=128)
@@ -325,8 +325,10 @@ def event_display(RootParser, event_position=None, event_id=None):
                                                              event.MCPosition_p_first.y,
                                                              event.MCPosition_p_first.z))
     print("\nCompton Scattering Angle theta:")
-    print("theta (Energy):", "{:5.3f} [rad] | {:5.1f} [deg]".format(event.theta, event.theta*360/2/np.pi))
+    print("theta (Energy):", "{:5.3f} [rad] | {:5.1f} [deg]".format(event.theta_energy, event.theta_energy*360/2/np.pi))
     print("theta (Vector):", "{:5.3f} [rad] | {:5.1f} [deg]".format(dir_angle, dir_angle*360/2/np.pi))
+
+    # print("RETURNER:", event.check_absorber_interaction())
 
     # ------------------------------------------------------------------------------------------------------------------
     # title string

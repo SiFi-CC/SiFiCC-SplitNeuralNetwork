@@ -36,12 +36,15 @@ def gen_input(RootParser):
     ary_targets_clas = np.zeros(shape=(n_samples,), dtype=np.float32)
     ary_targets_reg1 = np.zeros(shape=(n_samples, 2), dtype=np.float32)
     ary_targets_reg2 = np.zeros(shape=(n_samples, 6), dtype=np.float32)
+    ary_meta = np.zeros(shape=(n_samples, 6), dtype=np.float32)
     ary_w = np.zeros(shape=(n_samples,), dtype=np.float32)
     # legacy targets
     ary_targets = np.zeros(shape=(n_samples,), dtype=np.float32)
 
     # main iteration over root file
-    for i, event in enumerate(RootParser.iterate_events(n=10000)):
+    for i, event in enumerate(RootParser.iterate_events(n=None)):
+        # get indices of clusters sorted by highest energy and module
+        idx_scatterer, idx_absorber = event.sort_clusters_by_module(use_energy=True)
 
         # get indices of clusters sorted x-axis position (Detector depth)
         ary_idx = np.flip(np.arange(0.0, len(event.RecoClusterEntries), 1.0, dtype=int))
@@ -72,6 +75,14 @@ def gen_input(RootParser):
                                            event.MCPosition_p_first.y,
                                            event.MCPosition_p_first.z])
 
+        # write meta data
+        ary_meta[i, :] = [event.EventNumber,
+                          event.MCEnergy_Primary,
+                          event.MCPosition_source.z,
+                          event.MCPosition_source.y,
+                          event.RecoClusterEnergies_values[idx_scatterer[0]],
+                          np.sum(event.RecoClusterEnergies_values[idx_absorber])]
+
         # write weighting
         ary_w[i] = 1.0
 
@@ -84,4 +95,5 @@ def gen_input(RootParser):
                             targets_clas=ary_targets_clas,
                             targets_reg1=ary_targets_reg1,
                             targets_reg2=ary_targets_reg2,
-                            weights=ary_w)
+                            weights=ary_w,
+                            meta=ary_meta)

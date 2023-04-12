@@ -359,6 +359,43 @@ def get_backprojection_cbreco_optimized(ary_cb_reco, ary_tagging, f_sample=1.0, 
     return ary_proj
 
 
+def get_backprojection_nnpred_optimized(ary_nn_pred, ary_score, theta=0.5, f_sample=1.0, n_subsample=1,
+                                        scatz=100.0, scaty=40.0,
+                                        verbose=0):
+    # Grab the total number of positive events
+    # Apply the scaling factor to the positive events to generate a sub-sample
+    # repeat for n_subsample  and average the back-projection of every sub-sample
+    n_pos = np.sum((ary_score > theta) * 1)
+    n_pos_subsample = int(n_pos * f_sample)
+    ary_proj = np.zeros(shape=(int(scatz),))
+
+    for i in range(n_subsample):
+        ary_idx = np.arange(0, len(ary_nn_pred), 1.0, dtype=int)
+        ary_idx_pos = ary_idx[ary_score > theta]
+
+        rng = np.random.default_rng(42)
+        rng.shuffle(ary_idx_pos)
+
+        # generate back-projection image
+        ary_image = reconstruct_image_optimized(ary_nn_pred[ary_idx_pos[:n_pos_subsample], 1],
+                                                ary_nn_pred[ary_idx_pos[:n_pos_subsample], 2],
+                                                ary_nn_pred[ary_idx_pos[:n_pos_subsample], 3],
+                                                ary_nn_pred[ary_idx_pos[:n_pos_subsample], 4],
+                                                ary_nn_pred[ary_idx_pos[:n_pos_subsample], 5],
+                                                ary_nn_pred[ary_idx_pos[:n_pos_subsample], 6],
+                                                ary_nn_pred[ary_idx_pos[:n_pos_subsample], 7],
+                                                ary_nn_pred[ary_idx_pos[:n_pos_subsample], 8],
+                                                scatz=scatz, scaty=scaty,
+                                                apply_filter=True)
+        ary_proj += get_projection(ary_image)
+        if verbose == 1:
+            print("Back-projection done for {} events of sub-sample {}".format(n_pos_subsample, i))
+
+    # mean value of all sub-samples
+    ary_proj /= n_subsample
+    return ary_proj
+
+
 # ----------------------------------------------------------------------------------------------------------------------
 # plotting
 
@@ -438,6 +475,7 @@ def plot_backprojection_image(image, figure_title, figure_name):
     plt.tight_layout()
     plt.savefig(figure_name + ".png")
 
+
 """
 def plot_backprojection_dual(image_0mm, image_5mm, figure_title, figure_name):
     plt.rcParams.update({'font.size': 14})
@@ -476,6 +514,7 @@ def plot_backprojection_dual(image_0mm, image_5mm, figure_title, figure_name):
     plt.tight_layout()
     plt.savefig(figure_name + ".png")
 """
+
 
 def plot_backprojection_stacked(list_image, list_labels, figure_title, figure_name):
     list_proj = []

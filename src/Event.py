@@ -498,24 +498,42 @@ class Event:
     # ------------------------------------------------------------------------------------------------------------------
     # correction functions
 
-    def correction_zpos(self):
+    def check_absorber_interaction(self):
+        """
+        Checks the type of interaction in the absorber
 
+        return: (int) based on results
+            0 - check failed
+            1 - intended interaction
+            2 - no correct interaction found
+            3 - delayed correct interaction
+            4 - non-primary correct interaction
+        """
+        list_interact = []
+        returner = 0
         for i in range(len(self.MCInteractions_p)):
             if self.absorber.is_vec_in_module(self.MCPosition_p[i]):
-                # check if the primary photon has a correct interaction position
-                if 0 <= self.MCInteractions_p[i] < 10:
-                    print("DO STUFF")
+                if 0 < self.MCInteractions_p[i] < 10:
+                    tmp_angle = self.calc_theta_dotvec(self.MCPosition_p[i] - self.MCComptonPosition,
+                                                       self.MCDirection_scatter)
+                    if tmp_angle < 0.01:
+                        if returner in [2, 4]:
+                            returner = 3
+                        else:
+                            returner = 1
+                        break
+
+                    else:
+                        returner = 2
+                if 10 <= self.MCInteractions_p[i]:
+                    tmp_angle = self.calc_theta_dotvec(self.MCPosition_p[i] - self.MCComptonPosition,
+                                                       self.MCDirection_scatter)
+                    if tmp_angle < 0.01:
+                        returner = 4
+                    else:
+                        returner = 2
+                # print("DEBUG: RETURNER", returner, self.MCInteractions_p[i], tmp_angle)
             else:
                 continue
 
-        """
-        for idx in range(0, len(self.MCInteractions_p)):
-            if 0 <= self.MCInteractions_p[idx] < 20 and absorber.is_vec_in_module(
-                    self.MCPosition_p[idx]):
-                # check additionally if the interaction is in the scattering direction
-                tmp_angle = self.calc_theta_dotvec(self.MCPosition_p[idx] - self.MCComptonPosition,
-                                                   self.MCDirection_scatter)
-                if tmp_angle < 0.01:
-                    self.MCPosition_p_first = self.MCPosition_p[idx]
-                    self.ideal_compton_con += 1
-        """
+        return returner

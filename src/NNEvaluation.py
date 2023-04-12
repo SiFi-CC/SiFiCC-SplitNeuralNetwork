@@ -24,7 +24,7 @@ def training_clas(NeuralNetwork, DataCluster, theta=0.5):
     Plotter.plot_history_classifier(NeuralNetwork,
                                     NeuralNetwork.model_name + "_" + NeuralNetwork.model_tag + "_history_training")
     # Generate efficiency map
-    NNAnalysis.efficiency_map_sourceposition(y_scores, y_true, DataCluster.meta[DataCluster.idx_test(), 2], theta=theta)
+    # NNAnalysis.efficiency_map_sourceposition(y_scores, y_true, DataCluster.meta[DataCluster.idx_test(), 2], theta=theta)
 
     # classic evaluation of classification
     DataCluster.de_standardize(NeuralNetwork.norm_mean, NeuralNetwork.norm_std)
@@ -102,7 +102,7 @@ def evaluate_classifier(NeuralNetwork, DataCluster, theta=0.5):
     Plotter.plot_score_dist(y_scores, y_true, "score_dist")
     fastROCAUC.fastROCAUC(y_scores, y_true, save_fig="ROCAUC")
     _, theta_opt = fastROCAUC.fastROCAUC(y_scores, y_true, return_score=True)
-
+    """
     # evaluate source position spectrum for baseline and optimal threshold
     NNAnalysis.dist_sourceposition(y_scores, y_true, DataCluster.meta[DataCluster.idx_test(), 2], 0.3,
                                    "dist_sourceposition_theta03")
@@ -127,7 +127,7 @@ def evaluate_classifier(NeuralNetwork, DataCluster, theta=0.5):
     y_sourcepos = y_sourcepos[y_true == 1]
     Plotter.plot_2dhist_score_sourcepos(y_scores_pos, y_sourcepos, "hist2d_score_sourcepos")
     Plotter.plot_2dhist_score_eprimary(y_scores_pos, y_eprimary, "hist2d_score_eprimary")
-
+    """
     # saliency maps for the first 10 entries of the data sample
     """
     # TODO: prob needs an update

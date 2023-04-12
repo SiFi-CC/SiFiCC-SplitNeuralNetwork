@@ -16,6 +16,244 @@ dir_plots = dir_main + "/plots/"
 # ----------------------------------------------------------------------------------------------------------------------
 
 
+def cut_based_new():
+    npz_lookup_0mm = np.load(dir_npz + "OptimisedGeometry_BP0mm_2e10protons_withTimestamps_S1AX_lookup.npz")
+    npz_lookup_5mm = np.load(dir_npz + "OptimisedGeometry_BP5mm_4e9protons_withTimestamps_S1AX_lookup.npz")
+
+    ary_meta_0mm = npz_lookup_0mm["META"]
+    ary_meta_5mm = npz_lookup_5mm["META"]
+    ary_tag_0mm = npz_lookup_0mm["TAGS"]
+    ary_tag_5mm = npz_lookup_5mm["TAGS"]
+    ary_cb_0mm = npz_lookup_0mm["CB_RECO"]
+    ary_cb_5mm = npz_lookup_5mm["CB_RECO"]
+
+    ary_tag_realcoinc_0mm = np.zeros(shape=(len(ary_meta_0mm, )))
+    ary_tag_realcoinc_5mm = np.zeros(shape=(len(ary_meta_5mm, )))
+    ary_tag_compton_0mm = np.zeros(shape=(len(ary_meta_0mm, )))
+    ary_tag_compton_5mm = np.zeros(shape=(len(ary_meta_5mm, )))
+    ary_tag_pseudocomplete_0mm = np.zeros(shape=(len(ary_meta_0mm, )))
+    ary_tag_pseudocomplete_5mm = np.zeros(shape=(len(ary_meta_5mm, )))
+    ary_tag_pseudodist_0mm = np.zeros(shape=(len(ary_meta_0mm, )))
+    ary_tag_pseudodist_5mm = np.zeros(shape=(len(ary_meta_5mm, )))
+    ary_tag_dist_0mm = np.zeros(shape=(len(ary_meta_0mm, )))
+    ary_tag_dist_5mm = np.zeros(shape=(len(ary_meta_5mm, )))
+
+    for i in range(len(ary_meta_0mm)):
+        if ary_tag_0mm[i, 0] == 1 and ary_tag_0mm[i, 1] == 0:
+            ary_tag_realcoinc_0mm[i] = 1
+        if ary_tag_0mm[i, 1] == 1 and ary_tag_0mm[i, 2] == 0:
+            ary_tag_compton_0mm[i] = 1
+        if ary_tag_0mm[i, 2] == 1 and ary_tag_0mm[i, 3] == 0:
+            ary_tag_pseudocomplete_0mm[i] = 1
+        if ary_tag_0mm[i, 3] == 1 and ary_tag_0mm[i, 4] == 0:
+            ary_tag_pseudodist_0mm[i] = 1
+
+    for i in range(len(ary_meta_5mm)):
+        if ary_tag_5mm[i, 0] == 1 and ary_tag_5mm[i, 1] == 0:
+            ary_tag_realcoinc_5mm[i] = 1
+        if ary_tag_5mm[i, 1] == 1 and ary_tag_5mm[i, 2] == 0:
+            ary_tag_compton_5mm[i] = 1
+        if ary_tag_5mm[i, 2] == 1 and ary_tag_5mm[i, 3] == 0:
+            ary_tag_pseudocomplete_5mm[i] = 1
+        if ary_tag_5mm[i, 3] == 1 and ary_tag_5mm[i, 4] == 0:
+            ary_tag_pseudodist_5mm[i] = 1
+
+    f_sample_0mm = 0.025
+    f_sample_5mm = 0.125
+
+    proj0 = MLEMBackprojection.get_backprojection_cbreco_optimized(ary_cb_0mm, ary_tag_realcoinc_0mm,
+                                                                   f_sample=f_sample_0mm, n_subsample=5, scatz=60.0,
+                                                                   verbose=1)
+    proj1 = MLEMBackprojection.get_backprojection_cbreco_optimized(ary_cb_5mm, ary_tag_realcoinc_5mm,
+                                                                   f_sample=f_sample_5mm, n_subsample=5, scatz=60.0,
+                                                                   verbose=1)
+    proj2 = MLEMBackprojection.get_backprojection_cbreco_optimized(ary_cb_0mm, ary_tag_compton_0mm,
+                                                                   f_sample=f_sample_0mm, n_subsample=5, scatz=60.0,
+                                                                   verbose=1)
+    proj3 = MLEMBackprojection.get_backprojection_cbreco_optimized(ary_cb_5mm, ary_tag_compton_5mm,
+                                                                   f_sample=f_sample_5mm, n_subsample=5, scatz=60.0,
+                                                                   verbose=1)
+    proj4 = MLEMBackprojection.get_backprojection_cbreco_optimized(ary_cb_0mm, ary_tag_pseudocomplete_0mm,
+                                                                   f_sample=f_sample_0mm, n_subsample=5, scatz=60.0,
+                                                                   verbose=1)
+    proj5 = MLEMBackprojection.get_backprojection_cbreco_optimized(ary_cb_5mm, ary_tag_pseudocomplete_5mm,
+                                                                   f_sample=f_sample_5mm, n_subsample=5, scatz=60.0,
+                                                                   verbose=1)
+    proj6 = MLEMBackprojection.get_backprojection_cbreco_optimized(ary_cb_0mm, ary_tag_pseudodist_0mm,
+                                                                   f_sample=f_sample_0mm, n_subsample=5, scatz=60.0,
+                                                                   verbose=1)
+    proj7 = MLEMBackprojection.get_backprojection_cbreco_optimized(ary_cb_5mm, ary_tag_pseudodist_5mm,
+                                                                   f_sample=f_sample_5mm, n_subsample=5, scatz=60.0,
+                                                                   verbose=1)
+
+    MLEMBackprojection.plot_backprojection_dual([proj0, proj2, proj4, proj6],
+                                                [proj1, proj3, proj5, proj7],
+                                                ["Real Coincidence",
+                                                 "Compton",
+                                                 "Compton pseudo complete",
+                                                 "Compton pseudo distributed"],
+                                                "",
+                                                dir_plots + "MLEM_backproj_cbreco_id_tagging_inclusive_5e8")
+
+
+def backprojection_neuralnetwork(run_name):
+    str_npz = dir_results + run_name
+    npz_data_cont = np.load(
+        str_npz + "/OptimisedGeometry_Continuous_2e10protons_DNN_S1AX/OptimisedGeometry_Continuous_2e10protons_DNN_S1AX.npz")
+    npz_data_bp0mm = np.load(
+        str_npz + "/OptimisedGeometry_BP0mm_2e10protons_withTimestamps_DNN_S1AX/OptimisedGeometry_BP0mm_2e10protons_withTimestamps_DNN_S1AX.npz")
+    npz_data_bp5mm = np.load(
+        str_npz + "/OptimisedGeometry_BP5mm_4e9protons_withTimestamps_DNN_S1AX/OptimisedGeometry_BP5mm_4e9protons_withTimestamps_DNN_S1AX.npz")
+
+    ary_nn_pred_cont = npz_data_cont["NN_PRED"]
+    ary_nn_pred_bp0mm = npz_data_bp0mm["NN_PRED"]
+    ary_nn_pred_bp5mm = npz_data_bp5mm["NN_PRED"]
+
+    f_sample_0mm = 0.01
+    f_sample_5mm = 0.05
+
+    proj_0mm = MLEMBackprojection.get_backprojection_nnpred_optimized(ary_nn_pred_bp0mm, ary_nn_pred_bp0mm[:, 0],
+                                                                      theta=0.5,
+                                                                      f_sample=f_sample_0mm, n_subsample=5, scatz=100.0,
+                                                                      verbose=1)
+    proj_5mm = MLEMBackprojection.get_backprojection_nnpred_optimized(ary_nn_pred_bp5mm, ary_nn_pred_bp5mm[:, 0],
+                                                                      theta=0.5,
+                                                                      f_sample=f_sample_5mm, n_subsample=5, scatz=100.0,
+                                                                      verbose=1)
+
+    MLEMBackprojection.plot_backprojection_dual([proj_0mm],
+                                                [proj_5mm],
+                                                ["DNN S1AX"],
+                                                "",
+                                                dir_plots + "IRBP_nnpred_test_2e8protons")
+
+backprojection_neuralnetwork("DNN_S1AX_newtagging")
+
+# ----------------------------------------------------------------------------------------------------------------------
+# Base image back-projection of Monte-Carlo truth
+"""
+npz_lookup_0mm = np.load(dir_npz + "OptimisedGeometry_BP0mm_2e10protons_withTimestamps_S1AX_lookup.npz")
+npz_lookup_5mm = np.load(dir_npz + "OptimisedGeometry_BP5mm_4e9protons_withTimestamps_S1AX_lookup.npz")
+
+ary_mc_0mm = npz_lookup_0mm["MC_TRUTH"]
+ary_mc_5mm = npz_lookup_5mm["MC_TRUTH"]
+
+ary_mc_0mm = ary_mc_0mm[ary_mc_0mm[:, 0] == 1, :]
+ary_mc_5mm = ary_mc_5mm[ary_mc_5mm[:, 0] == 1, :]
+
+n = 100000
+image_0mm = MLEMBackprojection.reconstruct_image(ary_mc_0mm[:n, 1],
+                                                 ary_mc_0mm[:n, 2],
+                                                 ary_mc_0mm[:n, 3],
+                                                 ary_mc_0mm[:n, 4],
+                                                 ary_mc_0mm[:n, 5],
+                                                 ary_mc_0mm[:n, 6],
+                                                 ary_mc_0mm[:n, 7],
+                                                 ary_mc_0mm[:n, 8],
+                                                 apply_filter=True)
+
+image_5mm = MLEMBackprojection.reconstruct_image(ary_mc_5mm[:n, 1],
+                                                 ary_mc_5mm[:n, 2],
+                                                 ary_mc_5mm[:n, 3],
+                                                 ary_mc_5mm[:n, 4],
+                                                 ary_mc_5mm[:n, 5],
+                                                 ary_mc_5mm[:n, 6],
+                                                 ary_mc_5mm[:n, 7],
+                                                 ary_mc_5mm[:n, 8],
+                                                 apply_filter=True)
+
+MLEMBackprojection.plot_backprojection_dual(image_0mm, image_5mm, "", dir_plots + "MLEM_backproj_S1AX_MC_truth_BP0MMBP5MM")
+"""
+# ----------------------------------------------------------------------------------------------------------------------
+# Example
+"""
+npz_nn_0mm = np.load(
+    dir_results + "DNN_S1AX_continuous_an/OptimisedGeometry_BP0mm_2e10protons_withTimestamps_DNN_S1AX/OptimisedGeometry_BP0mm_2e10protons_withTimestamps_DNN_S1AX.npz")
+npz_nn_5mm = np.load(
+    dir_results + "DNN_S1AX_continuous_an/OptimisedGeometry_BP5mm_4e9protons_withTimestamps_DNN_S1AX/OptimisedGeometry_BP5mm_4e9protons_withTimestamps_DNN_S1AX.npz")
+
+ary_nn_0mm = npz_nn_0mm["NN_PRED"]
+ary_nn_5mm = npz_nn_5mm["NN_PRED"]
+
+n = 30000
+
+ary_nn_0mm = ary_nn_0mm[:n]
+ary_nn_5mm = ary_nn_5mm[:n]
+idx_pos_0mm = ary_nn_0mm[:, 0] > 0.5
+idx_pos_5mm = ary_nn_5mm[:, 0] > 0.5
+
+image_0mm = MLEMBackprojection.reconstruct_image(ary_nn_0mm[idx_pos_0mm, 1],
+                                                 ary_nn_0mm[idx_pos_0mm, 2],
+                                                 ary_nn_0mm[idx_pos_0mm, 3],
+                                                 ary_nn_0mm[idx_pos_0mm, 4],
+                                                 ary_nn_0mm[idx_pos_0mm, 5],
+                                                 ary_nn_0mm[idx_pos_0mm, 6],
+                                                 ary_nn_0mm[idx_pos_0mm, 7],
+                                                 ary_nn_0mm[idx_pos_0mm, 8],
+                                                 apply_filter=True)
+
+image_5mm = MLEMBackprojection.reconstruct_image(ary_nn_5mm[idx_pos_5mm, 1],
+                                                 ary_nn_5mm[idx_pos_5mm, 2],
+                                                 ary_nn_5mm[idx_pos_5mm, 3],
+                                                 ary_nn_5mm[idx_pos_5mm, 4],
+                                                 ary_nn_5mm[idx_pos_5mm, 5],
+                                                 ary_nn_5mm[idx_pos_5mm, 6],
+                                                 ary_nn_5mm[idx_pos_5mm, 7],
+                                                 ary_nn_5mm[idx_pos_5mm, 8],
+                                                 apply_filter=True)
+MLEMBackprojection.plot_backprojection_dual(image_0mm, image_5mm,
+                                            "",
+                                            dir_plots + "MLEMbackproj_S1AX_continuous_an")
+"""
+# ----------------------------------------------------------------------------------------------------------------------
+# Example Continuous source distribution analysis
+# Continuous source position back-projection
+"""
+n = 100000
+
+npz_data = np.load(
+    dir_results + "DNN_S1AX_continuous_an/OptimisedGeometry_Continuous_2e10protons_DNN_S1AX/OptimisedGeometry_Continuous_2e10protons_DNN_S1AX.npz")
+ary_nn_pred = npz_data["NN_PRED"]
+ary_nn_pred = ary_nn_pred[:n]
+idx_pos = ary_nn_pred[:, 0] > 0.5
+
+image = MLEMBackprojection.reconstruct_image(ary_nn_pred[idx_pos, 1],
+                                             ary_nn_pred[idx_pos, 2],
+                                             ary_nn_pred[idx_pos, 3],
+                                             ary_nn_pred[idx_pos, 4],
+                                             ary_nn_pred[idx_pos, 5],
+                                             ary_nn_pred[idx_pos, 6],
+                                             ary_nn_pred[idx_pos, 7],
+                                             ary_nn_pred[idx_pos, 8],
+                                             apply_filter=True)
+MLEMBackprojection.plot_backprojection(image, "",
+                                       dir_plots + "MLEMbackproj_S1AX_continuous_an_nnpred_continuous")
+"""
+
+# ----------------------------------------------------------------------------------------------------------------------
+"""
+backproj_neuralnetwork_bias("DNN_S1AX_oldnorm",
+                            "MLEMBackproj_DNN_S1AX_oldnorm_stackedbias",
+                            "",
+                            n=40000)
+"""
+
+"""
+toyset_stacked("S1AX_continuous_an",
+               "",
+               dir_plots + "MLEMbackproj_S1AX_continuous_an_tn00_fn00_stacked",
+               ["S1AX_continuous_an_base_toy.npz", "S1AX_continuous_an_tn00_toy.npz", "S1AX_continuous_an_fn00_toy.npz"],
+               ["base", "ftn = 0.0", "ffn = 0.0"],
+               n=40000)
+"""
+"""
+cut_based_tagging("",
+                  dir_plots + "MLEMbackproj_cb_reco_tagging_stacked",
+                  ["Compton", "Complete Compton", "Complete dist. Compton", "Ideal Compton", "Full Compton**"],
+                  n=100000)
+"""
+"""
+
 # ----------------------------------------------------------------------------------------------------------------------
 
 def backproj_neuralnetwork_bias(run_name,
@@ -207,285 +445,5 @@ def cut_based_tagging(plot_title,
                                                         plot_title, plot_name)
 
 
-def cut_based_new():
-    npz_lookup_0mm = np.load(dir_npz + "OptimisedGeometry_BP0mm_2e10protons_withTimestamps_S1AX_lookup.npz")
-    npz_lookup_5mm = np.load(dir_npz + "OptimisedGeometry_BP5mm_4e9protons_withTimestamps_S1AX_lookup.npz")
 
-    ary_meta_0mm = npz_lookup_0mm["META"]
-    ary_meta_5mm = npz_lookup_5mm["META"]
-    ary_tag_0mm = npz_lookup_0mm["TAGS"]
-    ary_tag_5mm = npz_lookup_5mm["TAGS"]
-    ary_cb_0mm = npz_lookup_0mm["CB_RECO"]
-    ary_cb_5mm = npz_lookup_5mm["CB_RECO"]
-
-    ary_tag_realcoinc_0mm = np.zeros(shape=(len(ary_meta_0mm, )))
-    ary_tag_realcoinc_5mm = np.zeros(shape=(len(ary_meta_5mm, )))
-    ary_tag_compton_0mm = np.zeros(shape=(len(ary_meta_0mm, )))
-    ary_tag_compton_5mm = np.zeros(shape=(len(ary_meta_5mm, )))
-    ary_tag_pseudocomplete_0mm = np.zeros(shape=(len(ary_meta_0mm, )))
-    ary_tag_pseudocomplete_5mm = np.zeros(shape=(len(ary_meta_5mm, )))
-    ary_tag_pseudodist_0mm = np.zeros(shape=(len(ary_meta_0mm, )))
-    ary_tag_pseudodist_5mm = np.zeros(shape=(len(ary_meta_5mm, )))
-    ary_tag_dist_0mm = np.zeros(shape=(len(ary_meta_0mm, )))
-    ary_tag_dist_5mm = np.zeros(shape=(len(ary_meta_5mm, )))
-
-    for i in range(len(ary_meta_0mm)):
-        if ary_tag_0mm[i, 0] == 1 and ary_tag_0mm[i, 1] == 0:
-            ary_tag_realcoinc_0mm[i] = 1
-        if ary_tag_0mm[i, 1] == 1 and ary_tag_0mm[i, 2] == 0:
-            ary_tag_compton_0mm[i] = 1
-        if ary_tag_0mm[i, 2] == 1 and ary_tag_0mm[i, 3] == 0:
-            ary_tag_pseudocomplete_0mm[i] = 1
-        if ary_tag_0mm[i, 3] == 1 and ary_tag_0mm[i, 4] == 0:
-            ary_tag_pseudodist_0mm[i] = 1
-
-    for i in range(len(ary_meta_5mm)):
-        if ary_tag_5mm[i, 0] == 1 and ary_tag_5mm[i, 1] == 0:
-            ary_tag_realcoinc_5mm[i] = 1
-        if ary_tag_5mm[i, 1] == 1 and ary_tag_5mm[i, 2] == 0:
-            ary_tag_compton_5mm[i] = 1
-        if ary_tag_5mm[i, 2] == 1 and ary_tag_5mm[i, 3] == 0:
-            ary_tag_pseudocomplete_5mm[i] = 1
-        if ary_tag_5mm[i, 3] == 1 and ary_tag_5mm[i, 4] == 0:
-            ary_tag_pseudodist_5mm[i] = 1
-
-    f_sample_0mm = 0.025
-    f_sample_5mm = 0.125
-
-    proj0 = MLEMBackprojection.get_backprojection_cbreco_optimized(ary_cb_0mm, ary_tag_realcoinc_0mm,
-                                                                   f_sample=f_sample_0mm, n_subsample=5, scatz=60.0,
-                                                                   verbose=1)
-    proj1 = MLEMBackprojection.get_backprojection_cbreco_optimized(ary_cb_5mm, ary_tag_realcoinc_5mm,
-                                                                   f_sample=f_sample_5mm, n_subsample=5, scatz=60.0,
-                                                                   verbose=1)
-    proj2 = MLEMBackprojection.get_backprojection_cbreco_optimized(ary_cb_0mm, ary_tag_compton_0mm,
-                                                                   f_sample=f_sample_0mm, n_subsample=5, scatz=60.0,
-                                                                   verbose=1)
-    proj3 = MLEMBackprojection.get_backprojection_cbreco_optimized(ary_cb_5mm, ary_tag_compton_5mm,
-                                                                   f_sample=f_sample_5mm, n_subsample=5, scatz=60.0,
-                                                                   verbose=1)
-    proj4 = MLEMBackprojection.get_backprojection_cbreco_optimized(ary_cb_0mm, ary_tag_pseudocomplete_0mm,
-                                                                   f_sample=f_sample_0mm, n_subsample=5, scatz=60.0,
-                                                                   verbose=1)
-    proj5 = MLEMBackprojection.get_backprojection_cbreco_optimized(ary_cb_5mm, ary_tag_pseudocomplete_5mm,
-                                                                   f_sample=f_sample_5mm, n_subsample=5, scatz=60.0,
-                                                                   verbose=1)
-    proj6 = MLEMBackprojection.get_backprojection_cbreco_optimized(ary_cb_0mm, ary_tag_pseudodist_0mm,
-                                                                   f_sample=f_sample_0mm, n_subsample=5, scatz=60.0,
-                                                                   verbose=1)
-    proj7 = MLEMBackprojection.get_backprojection_cbreco_optimized(ary_cb_5mm, ary_tag_pseudodist_5mm,
-                                                                   f_sample=f_sample_5mm, n_subsample=5, scatz=60.0,
-                                                                   verbose=1)
-
-    MLEMBackprojection.plot_backprojection_dual([proj0, proj2, proj4, proj6],
-                                                [proj1, proj3, proj5, proj7],
-                                                ["Real Coincidence",
-                                                 "Compton",
-                                                 "Compton pseudo complete",
-                                                 "Compton pseudo distributed"],
-                                                "",
-                                                dir_plots + "MLEM_backproj_cbreco_id_tagging_inclusive_5e8")
-
-
-def cut_based_new():
-    npz_lookup_0mm = np.load(dir_npz + "OptimisedGeometry_BP0mm_2e10protons_withTimestamps_S1AX_lookup.npz")
-    npz_lookup_5mm = np.load(dir_npz + "OptimisedGeometry_BP5mm_4e9protons_withTimestamps_S1AX_lookup.npz")
-
-    ary_meta_0mm = npz_lookup_0mm["META"]
-    ary_meta_5mm = npz_lookup_5mm["META"]
-    ary_tag_0mm = npz_lookup_0mm["TAGS"]
-    ary_tag_5mm = npz_lookup_5mm["TAGS"]
-    ary_cb_0mm = npz_lookup_0mm["CB_RECO"]
-    ary_cb_5mm = npz_lookup_5mm["CB_RECO"]
-
-    ary_tag_realcoinc_0mm = np.zeros(shape=(len(ary_meta_0mm, )))
-    ary_tag_realcoinc_5mm = np.zeros(shape=(len(ary_meta_5mm, )))
-    ary_tag_compton_0mm = np.zeros(shape=(len(ary_meta_0mm, )))
-    ary_tag_compton_5mm = np.zeros(shape=(len(ary_meta_5mm, )))
-    ary_tag_pseudocomplete_0mm = np.zeros(shape=(len(ary_meta_0mm, )))
-    ary_tag_pseudocomplete_5mm = np.zeros(shape=(len(ary_meta_5mm, )))
-    ary_tag_pseudodist_0mm = np.zeros(shape=(len(ary_meta_0mm, )))
-    ary_tag_pseudodist_5mm = np.zeros(shape=(len(ary_meta_5mm, )))
-    ary_tag_dist_0mm = np.zeros(shape=(len(ary_meta_0mm, )))
-    ary_tag_dist_5mm = np.zeros(shape=(len(ary_meta_5mm, )))
-
-    for i in range(len(ary_meta_0mm)):
-        if ary_tag_0mm[i, 0] == 1 and ary_tag_0mm[i, 1] == 0:
-            ary_tag_realcoinc_0mm[i] = 1
-        if ary_tag_0mm[i, 1] == 1 and ary_tag_0mm[i, 2] == 0:
-            ary_tag_compton_0mm[i] = 1
-        if ary_tag_0mm[i, 2] == 1 and ary_tag_0mm[i, 3] == 0:
-            ary_tag_pseudocomplete_0mm[i] = 1
-        if ary_tag_0mm[i, 3] == 1 and ary_tag_0mm[i, 4] == 0:
-            ary_tag_pseudodist_0mm[i] = 1
-
-    for i in range(len(ary_meta_5mm)):
-        if ary_tag_5mm[i, 0] == 1 and ary_tag_5mm[i, 1] == 0:
-            ary_tag_realcoinc_5mm[i] = 1
-        if ary_tag_5mm[i, 1] == 1 and ary_tag_5mm[i, 2] == 0:
-            ary_tag_compton_5mm[i] = 1
-        if ary_tag_5mm[i, 2] == 1 and ary_tag_5mm[i, 3] == 0:
-            ary_tag_pseudocomplete_5mm[i] = 1
-        if ary_tag_5mm[i, 3] == 1 and ary_tag_5mm[i, 4] == 0:
-            ary_tag_pseudodist_5mm[i] = 1
-
-    f_sample_0mm = 0.025
-    f_sample_5mm = 0.125
-
-    proj0 = MLEMBackprojection.get_backprojection_cbreco_optimized(ary_cb_0mm, ary_tag_realcoinc_0mm,
-                                                                   f_sample=f_sample_0mm, n_subsample=5, scatz=60.0,
-                                                                   verbose=1)
-    proj1 = MLEMBackprojection.get_backprojection_cbreco_optimized(ary_cb_5mm, ary_tag_realcoinc_5mm,
-                                                                   f_sample=f_sample_5mm, n_subsample=5, scatz=60.0,
-                                                                   verbose=1)
-    proj2 = MLEMBackprojection.get_backprojection_cbreco_optimized(ary_cb_0mm, ary_tag_compton_0mm,
-                                                                   f_sample=f_sample_0mm, n_subsample=5, scatz=60.0,
-                                                                   verbose=1)
-    proj3 = MLEMBackprojection.get_backprojection_cbreco_optimized(ary_cb_5mm, ary_tag_compton_5mm,
-                                                                   f_sample=f_sample_5mm, n_subsample=5, scatz=60.0,
-                                                                   verbose=1)
-    proj4 = MLEMBackprojection.get_backprojection_cbreco_optimized(ary_cb_0mm, ary_tag_pseudocomplete_0mm,
-                                                                   f_sample=f_sample_0mm, n_subsample=5, scatz=60.0,
-                                                                   verbose=1)
-    proj5 = MLEMBackprojection.get_backprojection_cbreco_optimized(ary_cb_5mm, ary_tag_pseudocomplete_5mm,
-                                                                   f_sample=f_sample_5mm, n_subsample=5, scatz=60.0,
-                                                                   verbose=1)
-    proj6 = MLEMBackprojection.get_backprojection_cbreco_optimized(ary_cb_0mm, ary_tag_pseudodist_0mm,
-                                                                   f_sample=f_sample_0mm, n_subsample=5, scatz=60.0,
-                                                                   verbose=1)
-    proj7 = MLEMBackprojection.get_backprojection_cbreco_optimized(ary_cb_5mm, ary_tag_pseudodist_5mm,
-                                                                   f_sample=f_sample_5mm, n_subsample=5, scatz=60.0,
-                                                                   verbose=1)
-
-    MLEMBackprojection.plot_backprojection_dual([proj0, proj2, proj4, proj6],
-                                                [proj1, proj3, proj5, proj7],
-                                                ["Real Coincidence",
-                                                 "Compton",
-                                                 "Compton pseudo complete",
-                                                 "Compton pseudo distributed"],
-                                                "",
-                                                dir_plots + "MLEM_backproj_cbreco_id_tagging_inclusive_5e8")
-
-# ----------------------------------------------------------------------------------------------------------------------
-# Base image back-projection of Monte-Carlo truth
-"""
-npz_lookup_0mm = np.load(dir_npz + "OptimisedGeometry_BP0mm_2e10protons_withTimestamps_S1AX_lookup.npz")
-npz_lookup_5mm = np.load(dir_npz + "OptimisedGeometry_BP5mm_4e9protons_withTimestamps_S1AX_lookup.npz")
-
-ary_mc_0mm = npz_lookup_0mm["MC_TRUTH"]
-ary_mc_5mm = npz_lookup_5mm["MC_TRUTH"]
-
-ary_mc_0mm = ary_mc_0mm[ary_mc_0mm[:, 0] == 1, :]
-ary_mc_5mm = ary_mc_5mm[ary_mc_5mm[:, 0] == 1, :]
-
-n = 100000
-image_0mm = MLEMBackprojection.reconstruct_image(ary_mc_0mm[:n, 1],
-                                                 ary_mc_0mm[:n, 2],
-                                                 ary_mc_0mm[:n, 3],
-                                                 ary_mc_0mm[:n, 4],
-                                                 ary_mc_0mm[:n, 5],
-                                                 ary_mc_0mm[:n, 6],
-                                                 ary_mc_0mm[:n, 7],
-                                                 ary_mc_0mm[:n, 8],
-                                                 apply_filter=True)
-
-image_5mm = MLEMBackprojection.reconstruct_image(ary_mc_5mm[:n, 1],
-                                                 ary_mc_5mm[:n, 2],
-                                                 ary_mc_5mm[:n, 3],
-                                                 ary_mc_5mm[:n, 4],
-                                                 ary_mc_5mm[:n, 5],
-                                                 ary_mc_5mm[:n, 6],
-                                                 ary_mc_5mm[:n, 7],
-                                                 ary_mc_5mm[:n, 8],
-                                                 apply_filter=True)
-
-MLEMBackprojection.plot_backprojection_dual(image_0mm, image_5mm, "", dir_plots + "MLEM_backproj_S1AX_MC_truth_BP0MMBP5MM")
-"""
-# ----------------------------------------------------------------------------------------------------------------------
-# Example
-"""
-npz_nn_0mm = np.load(
-    dir_results + "DNN_S1AX_continuous_an/OptimisedGeometry_BP0mm_2e10protons_withTimestamps_DNN_S1AX/OptimisedGeometry_BP0mm_2e10protons_withTimestamps_DNN_S1AX.npz")
-npz_nn_5mm = np.load(
-    dir_results + "DNN_S1AX_continuous_an/OptimisedGeometry_BP5mm_4e9protons_withTimestamps_DNN_S1AX/OptimisedGeometry_BP5mm_4e9protons_withTimestamps_DNN_S1AX.npz")
-
-ary_nn_0mm = npz_nn_0mm["NN_PRED"]
-ary_nn_5mm = npz_nn_5mm["NN_PRED"]
-
-n = 30000
-
-ary_nn_0mm = ary_nn_0mm[:n]
-ary_nn_5mm = ary_nn_5mm[:n]
-idx_pos_0mm = ary_nn_0mm[:, 0] > 0.5
-idx_pos_5mm = ary_nn_5mm[:, 0] > 0.5
-
-image_0mm = MLEMBackprojection.reconstruct_image(ary_nn_0mm[idx_pos_0mm, 1],
-                                                 ary_nn_0mm[idx_pos_0mm, 2],
-                                                 ary_nn_0mm[idx_pos_0mm, 3],
-                                                 ary_nn_0mm[idx_pos_0mm, 4],
-                                                 ary_nn_0mm[idx_pos_0mm, 5],
-                                                 ary_nn_0mm[idx_pos_0mm, 6],
-                                                 ary_nn_0mm[idx_pos_0mm, 7],
-                                                 ary_nn_0mm[idx_pos_0mm, 8],
-                                                 apply_filter=True)
-
-image_5mm = MLEMBackprojection.reconstruct_image(ary_nn_5mm[idx_pos_5mm, 1],
-                                                 ary_nn_5mm[idx_pos_5mm, 2],
-                                                 ary_nn_5mm[idx_pos_5mm, 3],
-                                                 ary_nn_5mm[idx_pos_5mm, 4],
-                                                 ary_nn_5mm[idx_pos_5mm, 5],
-                                                 ary_nn_5mm[idx_pos_5mm, 6],
-                                                 ary_nn_5mm[idx_pos_5mm, 7],
-                                                 ary_nn_5mm[idx_pos_5mm, 8],
-                                                 apply_filter=True)
-MLEMBackprojection.plot_backprojection_dual(image_0mm, image_5mm,
-                                            "",
-                                            dir_plots + "MLEMbackproj_S1AX_continuous_an")
-"""
-# ----------------------------------------------------------------------------------------------------------------------
-# Example Continuous source distribution analysis
-# Continuous source position back-projection
-"""
-n = 100000
-
-npz_data = np.load(
-    dir_results + "DNN_S1AX_continuous_an/OptimisedGeometry_Continuous_2e10protons_DNN_S1AX/OptimisedGeometry_Continuous_2e10protons_DNN_S1AX.npz")
-ary_nn_pred = npz_data["NN_PRED"]
-ary_nn_pred = ary_nn_pred[:n]
-idx_pos = ary_nn_pred[:, 0] > 0.5
-
-image = MLEMBackprojection.reconstruct_image(ary_nn_pred[idx_pos, 1],
-                                             ary_nn_pred[idx_pos, 2],
-                                             ary_nn_pred[idx_pos, 3],
-                                             ary_nn_pred[idx_pos, 4],
-                                             ary_nn_pred[idx_pos, 5],
-                                             ary_nn_pred[idx_pos, 6],
-                                             ary_nn_pred[idx_pos, 7],
-                                             ary_nn_pred[idx_pos, 8],
-                                             apply_filter=True)
-MLEMBackprojection.plot_backprojection(image, "",
-                                       dir_plots + "MLEMbackproj_S1AX_continuous_an_nnpred_continuous")
-"""
-
-# ----------------------------------------------------------------------------------------------------------------------
-"""
-backproj_neuralnetwork_bias("DNN_S1AX_oldnorm",
-                            "MLEMBackproj_DNN_S1AX_oldnorm_stackedbias",
-                            "",
-                            n=40000)
-"""
-
-"""
-toyset_stacked("S1AX_continuous_an",
-               "",
-               dir_plots + "MLEMbackproj_S1AX_continuous_an_tn00_fn00_stacked",
-               ["S1AX_continuous_an_base_toy.npz", "S1AX_continuous_an_tn00_toy.npz", "S1AX_continuous_an_fn00_toy.npz"],
-               ["base", "ftn = 0.0", "ffn = 0.0"],
-               n=40000)
-"""
-"""
-cut_based_tagging("",
-                  dir_plots + "MLEMbackproj_cb_reco_tagging_stacked",
-                  ["Compton", "Complete Compton", "Complete dist. Compton", "Ideal Compton", "Full Compton**"],
-                  n=100000)
 """

@@ -56,6 +56,32 @@ def theta_compare(root_parser, n):
 
 
 # ----------------------------------------------------------------------------------------------------------------------
+# Absorber miss-identification rate
+
+def absorber_miss_identification(root_parser, n):
+    list_id_rc = []
+    list_id_ic = []
+
+    for i, event in enumerate(root_parser.iterate_events(n=n)):
+        if event.MCSimulatedEventType not in [2, 5]:
+            continue
+        list_id_rc.append(event.check_absorber_interaction())
+        if event.is_ideal_compton:
+            list_id_ic.append(event.check_absorber_interaction())
+
+    bins = np.arange(0.0, 6.0, 1.0, dtype=int) - 0.5
+    plt.figure()
+    plt.ylabel("Counts (a.u.)")
+    plt.hist(list_id_rc, bins=bins, histtype=u"step", color="black", label="Real Coincidences")
+    plt.hist(list_id_ic, bins=bins, histtype=u"step", color="red", label="ideal Compton")
+    plt.tight_layout()
+    plt.show()
+
+
+absorber_miss_identification(root_0mm, n=10000)
+
+
+# ----------------------------------------------------------------------------------------------------------------------
 # Tagging statistics
 
 
@@ -94,6 +120,7 @@ def tagging_statistics(root_file, n):
     print("ComptonDistributed: {} ({:.1f}%)".format(n_compton_distributed, n_compton_distributed / n_events * 100))
     print("ComptonIdeal: {} ({:.1f}%)".format(n_ideal_compton, n_ideal_compton / n_events * 100))
 
-tagging_statistics(root_file=root_0mm, n=10000)
+
+# tagging_statistics(root_file=root_0mm, n=10000)
 
 # ----------------------------------------------------------------------------------------------------------------------
