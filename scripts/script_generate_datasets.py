@@ -5,7 +5,7 @@ from src import RootParser
 from src import root_files
 from src import NPZParser
 
-from inputgenerator import InputGenerator_RNN_Base
+from inputgenerator import InputGenerator_DNN_Masked
 
 dir_main = os.getcwd() + "/.."
 dir_root = dir_main + "/root_files/"
@@ -23,6 +23,6 @@ root_con = RootParser(dir_main + root_files.OptimisedGeometry_Continuous_2e10pro
 # ----------------------------------------------------------------------------------------------------------------------
 
 os.chdir(dir_main)
-InputGenerator_RNN_Base.gen_input(root_0mm)
-InputGenerator_RNN_Base.gen_input(root_5mm)
-InputGenerator_RNN_Base.gen_input(root_con)
+InputGenerator_DNN_Masked.gen_input(root_0mm)
+InputGenerator_DNN_Masked.gen_input(root_5mm)
+InputGenerator_DNN_Masked.gen_input(root_con)
