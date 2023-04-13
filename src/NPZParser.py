@@ -29,6 +29,7 @@ def parse(npz_file,
     ary_targets_clas = npz_data["targets_clas"]
     ary_targets_reg1 = npz_data["targets_reg1"]
     ary_targets_reg2 = npz_data["targets_reg2"]
+    ary_targets_reg3 = npz_data["targets_reg3"]
     ary_weights = npz_data["weights"]
     ary_meta = npz_data["meta"]
 
@@ -39,6 +40,7 @@ def parse(npz_file,
         ary_targets_clas = ary_targets_clas[:n_frac]
         ary_targets_reg1 = ary_targets_reg1[:n_frac, :]
         ary_targets_reg2 = ary_targets_reg2[:n_frac, :]
+        ary_targets_reg3 = ary_targets_reg3[:n_frac]
         ary_weights = ary_weights[:n_frac]
         ary_meta = ary_meta[:n_frac]
 
@@ -46,6 +48,7 @@ def parse(npz_file,
                                            ary_targets_clas=ary_targets_clas,
                                            ary_targets_reg1=ary_targets_reg1,
                                            ary_targets_reg2=ary_targets_reg2,
+                                           ary_targets_reg3=ary_targets_reg3,
                                            ary_weights=ary_weights,
                                            ary_meta=ary_meta)
 

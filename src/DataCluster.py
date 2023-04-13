@@ -3,12 +3,14 @@ import numpy as np
 
 class DataCluster:
 
-    def __init__(self, ary_features, ary_targets_clas, ary_targets_reg1, ary_targets_reg2, ary_weights, ary_meta):
+    def __init__(self, ary_features, ary_targets_clas, ary_targets_reg1, ary_targets_reg2, ary_targets_reg3,
+                 ary_weights, ary_meta):
         # all core features of the DataCluster class
         self.features = ary_features
         self.targets_clas = ary_targets_clas
         self.targets_reg1 = ary_targets_reg1
         self.targets_reg2 = ary_targets_reg2
+        self.targets_reg3 = ary_targets_reg3
         self.weights = ary_weights
         self.meta = ary_meta
 
@@ -77,16 +79,17 @@ class DataCluster:
         if self.features.ndim == 2:
             # padding, standard values are pre-set
             # updating needs to be done manually later on
-            padding = [0.0, -1.0, -1.0, 0.0, -55.0, -55.0, 0.0, 0.0, 0.0, 0.0]
-            list_idx = np.arange(0, 6 * 10, 10)
+            # padding = [0.0, -1.0, -1.0, 0.0, -55.0, -55.0, 0.0, 0.0, 0.0, 0.0]
+
+            list_idx = np.arange(0, 10 * 10, 10)
             for i in range(len(list_idx)):
-                ary_con = np.reshape(self.features[:, np.array(list_idx) + i], (self.features.shape[0] * 6,))
-                ary_con = ary_con[ary_con != padding[i]]
+                ary_con = np.reshape(self.features[:, np.array(list_idx) + i], (self.features.shape[0] * 10,))
+                ary_con = ary_con[ary_con != 0.0]
                 list_mean.append(np.mean(ary_con))
                 list_std.append(np.std(ary_con))
 
-            list_mean = list_mean * 6
-            list_std = list_std * 6
+            list_mean = list_mean * 10
+            list_std = list_std * 10
 
         if self.features.ndim == 3:
             for i in range(10):
@@ -143,7 +146,7 @@ class DataCluster:
 
     def update_targets_theta(self):
         # set legacy targets to be module energies
-        self.targets = self.theta
+        self.targets = self.targets_reg3
 
     def get_classweights(self):
         # set sample weights to class weights
