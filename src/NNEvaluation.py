@@ -50,7 +50,7 @@ def training_regT(NeuralNetwork, DataCluster):
     # Plot training history
     Plotter.plot_history_regression(NeuralNetwork,
                                     NeuralNetwork.model_name + "_" + NeuralNetwork.model_tag + "_history_training")
-    evaluate_regression_theta(NeuralNetwork, DataCluster)
+    eval_regression_theta(NeuralNetwork, DataCluster)
 
 
 def training_full(NeuralNetwork, DataCluster):
