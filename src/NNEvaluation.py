@@ -193,6 +193,9 @@ def eval_regression_theta(NeuralNetwork, DataCluster):
     DataCluster.update_targets_theta()
     DataCluster.update_indexing_positives()
 
+    # Normalize the evaluation data
+    DataCluster.standardize(NeuralNetwork.norm_mean, NeuralNetwork.norm_std)
+
     y_pred = NeuralNetwork.predict(DataCluster.x_test())
     y_true = DataCluster.y_test()
 
