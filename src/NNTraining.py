@@ -105,7 +105,7 @@ def train_regP(NeuralNetwork,
     # save model
     NeuralNetwork.save()
 
-"""
+
 def train_regTheta(NeuralNetwork,
                    DataCluster,
                    verbose=0,
@@ -140,4 +140,3 @@ def train_regTheta(NeuralNetwork,
 
     # save model
     NeuralNetwork.save()
-"""

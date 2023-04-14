@@ -46,6 +46,13 @@ def training_regP(NeuralNetwork, DataCluster):
     evaluate_regression_position(NeuralNetwork, DataCluster)
 
 
+def training_regT(NeuralNetwork, DataCluster):
+    # Plot training history
+    Plotter.plot_history_regression(NeuralNetwork,
+                                    NeuralNetwork.model_name + "_" + NeuralNetwork.model_tag + "_history_training")
+    evaluate_regression_theta(NeuralNetwork, DataCluster)
+
+
 def training_full(NeuralNetwork, DataCluster):
     # Plot training history
     Plotter.plot_history_regression(NeuralNetwork,
@@ -181,7 +188,6 @@ def evaluate_regression_position(NeuralNetwork, DataCluster):
     Plotter.plot_position_error(y_pred, y_true, "error_regression_position")
 
 
-"""
 def eval_regression_theta(NeuralNetwork, DataCluster):
     # set regression
     DataCluster.update_targets_theta()
@@ -191,7 +197,6 @@ def eval_regression_theta(NeuralNetwork, DataCluster):
     y_true = DataCluster.y_test()
 
     Plotter.plot_theta_error(y_pred, y_true, "error_regression_theta")
-"""
 
 
 # ----------------------------------------------------------------------------------------------------------------------
