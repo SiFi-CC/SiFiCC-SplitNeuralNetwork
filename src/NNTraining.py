@@ -1,12 +1,12 @@
 from src import NPZParser
 from src import Plotter
 
+
 def train_clas(NeuralNetwork,
                DataCluster,
                verbose=0,
                epochs=50,
                batch_size=256):
-
     # update run settings
     NeuralNetwork.epochs = epochs
     NeuralNetwork.batch_size = batch_size
@@ -106,11 +106,11 @@ def train_regP(NeuralNetwork,
     NeuralNetwork.save()
 
 
-def train_regTheta(NeuralNetwork,
-                   DataCluster,
-                   verbose=0,
-                   epochs=50,
-                   batch_size=256):
+def train_regT(NeuralNetwork,
+               DataCluster,
+               verbose=0,
+               epochs=50,
+               batch_size=256):
     # set regression
     DataCluster.update_targets_theta()
     DataCluster.update_indexing_positives()
@@ -120,7 +120,7 @@ def train_regTheta(NeuralNetwork,
     NeuralNetwork.batch_size = batch_size
 
     # load normalization into Neural Network Class
-    ary_mean, ary_std = DataCluster.get_standardize()
+    ary_mean, ary_std = DataCluster.get_standardization()
     DataCluster.standardize(ary_mean, ary_std)
     NeuralNetwork.norm_mean = ary_mean
     NeuralNetwork.norm_std = ary_std

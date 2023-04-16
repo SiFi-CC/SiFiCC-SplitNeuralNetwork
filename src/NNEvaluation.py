@@ -168,7 +168,7 @@ def evaluate_regression_energy(NeuralNetwork, DataCluster):
     Plotter.plot_energy_error(y_pred, y_true, "error_regression_energy")
 
     # predicting theta
-    y_true_theta = DataCluster.theta[DataCluster.idx_test()]
+    y_true_theta = DataCluster.targets_reg3[DataCluster.idx_test()]
     y_pred_theta = [MLEMBackprojection.calculate_theta(y_pred[i, 0], y_pred[i, 1]) for i in range(len(y_pred))]
     y_pred_theta = np.array(y_pred_theta)
     Plotter.plot_theta_error(y_pred_theta, y_true_theta, "error_regression_energy_theta")
@@ -410,6 +410,103 @@ def eval_full(NeuralNetwork_clas,
                                filename=file_name,
                                verbose=1)
     """
+
+
+def eval_full_theta(NeuralNetwork_clas,
+                    NeuralNetwork_regT,
+                    NeuralNetwork_regE,
+                    NeuralNetwork_regP,
+                    DataCluster,
+                    lookup_file,
+                    file_name="",
+                    mlem_export=None,
+                    theta=0.5):
+    # Normalize the evaluation data
+    DataCluster.standardize(NeuralNetwork_clas.norm_mean, NeuralNetwork_clas.norm_std)
+
+    # load lookup file for monte carlo truth and cut-based reconstruction
+    npz_lookup = np.load(lookup_file)
+    ary_mc_truth = npz_lookup["MC_TRUTH"]
+    ary_cb_reco = npz_lookup["CB_RECO"]
+    ary_meta = npz_lookup["META"]
+
+    # grab all positive identified events by the neural network
+    y_scores = NeuralNetwork_clas.predict(DataCluster.features)
+    y_pred_theta = NeuralNetwork_regT.predict(DataCluster.features)
+    y_pred_energy = NeuralNetwork_regE.predict(DataCluster.features)
+    y_pred_position = NeuralNetwork_regP.predict(DataCluster.features)
+
+    # This is done this way cause y_scores gets a really dumb shape from tensorflow
+    idx_clas_pos = [float(y_scores[i]) > theta for i in range(len(y_scores))]
+
+    # create an array containing full neural network prediction
+    ary_nn_pred = np.zeros(shape=(DataCluster.entries, 10))
+    ary_nn_pred[:, 0] = np.reshape(y_scores, newshape=(len(y_scores),))
+    ary_nn_pred[:, 1:3] = np.reshape(y_pred_energy, newshape=(y_pred_energy.shape[0], y_pred_energy.shape[1]))
+    ary_nn_pred[:, 3:] = np.reshape(y_pred_position, newshape=(y_pred_position.shape[0], y_pred_position.shape[1]))
+    ary_nn_pred[:, -1] = np.reshape(y_pred_theta, newshape=(y_pred_theta.shape[0], y_pred_theta.shape[1]))
+
+    # plot regression neural network vs cut-based approach
+    # NNAnalysis.regression_nn_vs_cb(ary_nn_pred, ary_cb_reco, ary_mc_truth, ary_meta)
+
+    # export prediction to a usable npz file
+    with open(file_name + ".npz", 'wb') as f_output:
+        np.savez_compressed(f_output, NN_PRED=ary_nn_pred)
+
+    if mlem_export is not None:
+        if mlem_export == "PRED":
+            MLEMExport.export_mlem(ary_e=y_pred_energy[idx_clas_pos, 0],
+                                   ary_p=y_pred_energy[idx_clas_pos, 1],
+                                   ary_ex=y_pred_position[idx_clas_pos, 0],
+                                   ary_ey=y_pred_position[idx_clas_pos, 1],
+                                   ary_ez=y_pred_position[idx_clas_pos, 2],
+                                   ary_px=y_pred_position[idx_clas_pos, 3],
+                                   ary_py=y_pred_position[idx_clas_pos, 4],
+                                   ary_pz=y_pred_position[idx_clas_pos, 5],
+                                   filename=file_name,
+                                   b_comptonkinematics=True,
+                                   b_dacfilter=True,
+                                   verbose=1)
+
+        if mlem_export == "RECO":
+            # denormalize features
+            for i in range(DataCluster.features.shape[1]):
+                DataCluster.features[:, i] *= DataCluster.list_std[i]
+                DataCluster.features[:, i] += DataCluster.list_mean[i]
+
+            # grab event kinematics from feature list
+            ary_e = DataCluster.features[idx_clas_pos, 2]
+            ary_ex = DataCluster.features[idx_clas_pos, 3]
+            ary_ey = DataCluster.features[idx_clas_pos, 4]
+            ary_ez = DataCluster.features[idx_clas_pos, 5]
+
+            # select only absorber energies
+            # select only positive events
+            # replace -1. (NaN) values with 0.
+            ary_p = DataCluster.features[:, [12, 22, 32, 42, 52]]
+            ary_p = ary_p[idx_clas_pos, :]
+            for i in range(ary_p.shape[0]):
+                for j in range(ary_p.shape[1]):
+                    if ary_p[i, j] == -1.:
+                        ary_p[i, j] = 0.0
+            ary_p = np.sum(ary_p, axis=1)
+
+            ary_px = DataCluster.features[idx_clas_pos, 13]
+            ary_py = DataCluster.features[idx_clas_pos, 14]
+            ary_pz = DataCluster.features[idx_clas_pos, 15]
+
+            MLEMExport.export_mlem(ary_e,
+                                   ary_p,
+                                   ary_ex,
+                                   ary_ey,
+                                   ary_ez,
+                                   ary_px,
+                                   ary_py,
+                                   ary_pz,
+                                   filename=file_name,
+                                   b_comptonkinematics=True,
+                                   b_dacfilter=True,
+                                   verbose=1)
 
 
 def export_mlem_simpleregression(NeuralNetwork_clas,

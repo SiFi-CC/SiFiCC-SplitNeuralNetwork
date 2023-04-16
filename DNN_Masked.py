@@ -46,25 +46,29 @@ LOOK_UP_FILES = [NPZ_LOOKUP_0MM, NPZ_LOOKUP_5MM]
 RUN_NAME = "DNN_Masked"
 
 # Neural Network settings
-epochs_clas = 10
-epochs_regT = 20
+epochs_clas = 50
+epochs_regT = 100
+epochs_regE = 100
 epochs_regP = 100
 batchsize_clas = 64
 batchsize_regT = 64
+batchsize_regE = 64
 batchsize_regP = 64
 theta = 0.5
 
 # Global switches to turn on/off training or analysis steps
-train_clas = False
+train_clas = True
 train_regT = True
-train_regP = False
-eval_clas = False
+train_regE = True
+train_regP = True
+eval_clas = True
 eval_regT = True
-eval_regP = False
+eval_regE = True
+eval_regP = True
 eval_full = False
 
 # MLEM export setting: None (to disable export), "Reco" (for classical), "Pred" (For Neural Network predictions)
-mlemexport = "PRED"
+mlemexport = ""
 
 # ----------------------------------------------------------------------------------------------------------------------
 # define directory paths
@@ -91,15 +95,28 @@ if not os.path.isdir(dir_results + RUN_NAME + "/" + NPZ_FILE_TRAIN[:-4] + "/"):
 # load up the Tensorflow model
 from models import DNN_masked_classifier
 from models import DNN_masked_regression_theta
+from models import DNN_masked_regression_energy
+from models import DNN_masked_regression_position
 
 tfmodel_clas = DNN_masked_classifier.return_model(100)
 tfmodel_regT = DNN_masked_regression_theta.return_model(100)
+tfmodel_regE = DNN_masked_regression_energy.return_model(100)
+tfmodel_regP = DNN_masked_regression_position.return_model(100)
+
+tfmodel_clas.build(input_shape=(None, 100))
+
 neuralnetwork_clas = NeuralNetwork.NeuralNetwork(model=tfmodel_clas,
                                                  model_name=RUN_NAME,
                                                  model_tag="clas")
 neuralnetwork_regT = NeuralNetwork.NeuralNetwork(model=tfmodel_regT,
                                                  model_name=RUN_NAME,
+                                                 model_tag="regT")
+neuralnetwork_regE = NeuralNetwork.NeuralNetwork(model=tfmodel_regE,
+                                                 model_name=RUN_NAME,
                                                  model_tag="regE")
+neuralnetwork_regP = NeuralNetwork.NeuralNetwork(model=tfmodel_regP,
+                                                 model_name=RUN_NAME,
+                                                 model_tag="regP")
 
 # CHANGE DIRECTORY INTO THE NEWLY GENERATED RESULTS DIRECTORY
 # TODO: fix this pls
@@ -121,11 +138,11 @@ if eval_clas:
 
 # generate DataCluster object from npz file
 data_cluster = NPZParser.parse(dir_npz + NPZ_FILE_TRAIN,
-                               frac=0.5,
+                               frac=1.0,
                                set_classweights=False)
 
 if train_regT:
-    NNTraining.train_regE(neuralnetwork_regT,
+    NNTraining.train_regT(neuralnetwork_regT,
                           data_cluster,
                           verbose=1,
                           epochs=epochs_regT,
@@ -133,27 +150,78 @@ if train_regT:
 if eval_regT:
     neuralnetwork_regT.load()
 
+if train_regE:
+    NNTraining.train_regE(neuralnetwork_regE,
+                          data_cluster,
+                          verbose=1,
+                          epochs=epochs_regE,
+                          batch_size=batchsize_regE)
+if eval_regE:
+    neuralnetwork_regE.load()
+
+if train_regP:
+    NNTraining.train_regP(neuralnetwork_regP,
+                          data_cluster,
+                          verbose=1,
+                          epochs=epochs_regP,
+                          batch_size=batchsize_regP)
+if eval_regP:
+    neuralnetwork_regP.load()
+
 # ----------------------------------------------------------------------------------------------------------------------
 # Evaluation schedule
 
 # evaluation of training data
 os.chdir(dir_results + RUN_NAME + "/" + NPZ_FILE_TRAIN[:-4] + "/")
 if eval_clas:
-    data_cluster = NPZParser.parse(dir_npz + NPZ_FILE_TRAIN, frac=0.5, set_testall=False)
+    data_cluster = NPZParser.parse(dir_npz + NPZ_FILE_TRAIN, frac=1.0, set_testall=False)
     NNEvaluation.training_clas(neuralnetwork_clas, data_cluster, theta)
 if eval_regT:
-    data_cluster = NPZParser.parse(dir_npz + NPZ_FILE_TRAIN, frac=0.5,set_testall=False)
+    data_cluster = NPZParser.parse(dir_npz + NPZ_FILE_TRAIN, frac=1.0, set_testall=False)
     NNEvaluation.training_regT(neuralnetwork_regT, data_cluster)
+if eval_regE:
+    data_cluster = NPZParser.parse(dir_npz + NPZ_FILE_TRAIN, frac=1.0, set_testall=False)
+    NNEvaluation.training_regE(neuralnetwork_regE, data_cluster)
+if eval_regP:
+    data_cluster = NPZParser.parse(dir_npz + NPZ_FILE_TRAIN, frac=1.0, set_testall=False)
+    NNEvaluation.training_regP(neuralnetwork_regP, data_cluster)
 
 # Evaluation of test dataset
 for i, file in enumerate([NPZ_FILE_EVAL_0MM, NPZ_FILE_EVAL_5MM]):
     os.chdir(dir_results + RUN_NAME + "/" + file[:-4] + "/")
-    # npz wrapper
 
     if train_clas or eval_clas:
-        data_cluster = NPZParser.parse(dir_npz + file, frac=0.5, set_testall=True)
+        data_cluster = NPZParser.parse(dir_npz + file, frac=1.0, set_testall=True)
         NNEvaluation.evaluate_classifier(neuralnetwork_clas, DataCluster=data_cluster)
 
     if train_regT or eval_regT:
-        data_cluster = NPZParser.parse(dir_npz + file, frac=0.5,set_testall=True)
+        data_cluster = NPZParser.parse(dir_npz + file, frac=1.0, set_testall=True)
         NNEvaluation.eval_regression_theta(neuralnetwork_regT, DataCluster=data_cluster)
+
+    if train_regE or eval_regE:
+        data_cluster = NPZParser.parse(dir_npz + file, frac=1.0, set_testall=True)
+        NNEvaluation.evaluate_regression_energy(neuralnetwork_regE, DataCluster=data_cluster)
+
+    if train_regP or eval_regP:
+        data_cluster = NPZParser.parse(dir_npz + file, frac=1.0, set_testall=True)
+        NNEvaluation.evaluate_regression_position(neuralnetwork_regP, DataCluster=data_cluster)
+
+    if eval_full:
+        os.chdir(dir_results + RUN_NAME + "/")
+        neuralnetwork_clas.load()
+        neuralnetwork_regE.load()
+        neuralnetwork_regT.load()
+        neuralnetwork_regP.load()
+        os.chdir(dir_results + RUN_NAME + "/" + file[:-4] + "/")
+
+        data_cluster = NPZParser.parse(dir_npz + file, set_testall=True)
+
+        NNEvaluation.eval_full_theta(neuralnetwork_clas,
+                                     neuralnetwork_regT,
+                                     neuralnetwork_regE,
+                                     neuralnetwork_regP,
+                                     DataCluster=data_cluster,
+                                     lookup_file=dir_npz + LOOK_UP_FILES[i],
+                                     mlem_export=mlemexport,
+                                     theta=0.5,
+                                     file_name=file[:-4])

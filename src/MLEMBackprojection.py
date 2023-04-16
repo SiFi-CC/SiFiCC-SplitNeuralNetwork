@@ -3,8 +3,8 @@ import matplotlib.pyplot as plt
 from uproot_methods import TVector3
 from src import CBSelector
 
-from matplotlib import colors
-
+# ----------------------------------------------------------------------------------------------------------------------
+# Back-projection script
 
 def tmath_acos(x):
     """

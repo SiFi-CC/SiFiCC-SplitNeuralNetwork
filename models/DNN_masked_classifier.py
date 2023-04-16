@@ -15,7 +15,7 @@ def return_model(input_shape):
     model = keras.models.Sequential()
     # add first dense layer with predefined input dimension
     # model.add(tf.keras.layers.Masking(mask_value=0.0, input_shape=(None, input_shape)))
-    model.add(tf.keras.layers.Dense(128, activation="relu"))
+    model.add(tf.keras.layers.Dense(64, input_dim=input_shape, activation="relu"))
     model.add(tf.keras.layers.Dense(64, activation="relu"))
     model.add(tf.keras.layers.Dropout(0.2))
     model.add(tf.keras.layers.Dense(1, activation="sigmoid"))
@@ -24,7 +24,3 @@ def return_model(input_shape):
                   metrics=[keras.metrics.Precision(), keras.metrics.Recall()])
     # return model
     return model
-
-
-
-
