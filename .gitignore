@@ -8,7 +8,6 @@ ignore/
 # ignore png's and root files in the results subdirectory
 results/**/*.png
 results/**/*.root
-results/**/*.npz
 
 # root_files directory since the datafiles are too large
 root_files/
