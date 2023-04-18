@@ -22,7 +22,7 @@ toy/
 
 # ignore example_code.py
 # it is a redundant file just to test code
-example_code.py
+test/example_code.py
 
 # ignore pngs in main folder
 *.png
