@@ -4,6 +4,7 @@
 
 # ignore folder to temporarely store files not needing to be pushed
 ignore/
+test/
 
 # ignore png's and root files in the results subdirectory
 results/**/*.png
