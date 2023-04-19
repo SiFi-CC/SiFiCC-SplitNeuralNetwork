@@ -52,7 +52,7 @@ LOOK_UP_FILES = [NPZ_LOOKUP_0MM, NPZ_LOOKUP_5MM]
 RUN_NAME = "DNN_S4X6"
 
 # Neural Network settings
-epochs_clas = 10
+epochs_clas = 50
 epochs_regE = 100
 epochs_regP = 100
 epochs_regT = 100
@@ -61,14 +61,14 @@ batchsize_regE = 64
 batchsize_regP = 64
 batchsize_regT = 64
 theta = 0.5
-n_frac = 0.5
+n_frac = 1.0
 
 # Global switches to turn on/off training or analysis steps
 train_clas = True
-train_regE = False
-train_regP = False
-train_regT = False
-eval_clas = True
+train_regE = True
+train_regP = True
+train_regT = True
+eval_clas = False
 eval_regE = False
 eval_regP = False
 eval_regT = False
@@ -180,28 +180,49 @@ if eval_regT:
 # Evaluation of test dataset
 for i, file in enumerate([NPZ_FILE_EVAL_0MM, NPZ_FILE_EVAL_5MM, NPZ_FILE_TRAIN]):
     os.chdir(dir_results + RUN_NAME + "/" + file[:-4] + "/")
-    # npz wrapper
-    data_cluster = DFParser.parse_cluster(dir_npz + NPZ_FILE_TRAIN,
-                                          n_frac=n_frac)
-    if file in NPZ_FILE_TRAIN:
-        data_cluster.p_test = 1.0
-        data_cluster.p_train = 0.0
-        data_cluster.p_valid = 0.0
 
     if train_clas or eval_clas:
+        data_cluster = DFParser.parse_cluster(dir_npz + NPZ_FILE_TRAIN,
+                                              n_frac=n_frac)
+        if file in NPZ_FILE_TRAIN:
+            data_cluster.p_test = 1.0
+            data_cluster.p_train = 0.0
+            data_cluster.p_valid = 0.0
+
         NNEvaluation.evaluate_classifier(neuralnetwork_clas,
                                          DataCluster=data_cluster,
                                          theta=theta)
 
     if train_regE or eval_regE:
+        data_cluster = DFParser.parse_cluster(dir_npz + NPZ_FILE_TRAIN,
+                                              n_frac=n_frac)
+        if file in NPZ_FILE_TRAIN:
+            data_cluster.p_test = 1.0
+            data_cluster.p_train = 0.0
+            data_cluster.p_valid = 0.0
+
         NNEvaluation.evaluate_regression_energy(neuralnetwork_regE,
                                                 DataCluster=data_cluster)
 
     if train_regP or eval_regP:
+        data_cluster = DFParser.parse_cluster(dir_npz + NPZ_FILE_TRAIN,
+                                              n_frac=n_frac)
+        if file in NPZ_FILE_TRAIN:
+            data_cluster.p_test = 1.0
+            data_cluster.p_train = 0.0
+            data_cluster.p_valid = 0.0
+
         NNEvaluation.evaluate_regression_position(neuralnetwork_regP,
                                                   DataCluster=data_cluster)
 
     if train_regT or eval_regT:
+        data_cluster = DFParser.parse_cluster(dir_npz + NPZ_FILE_TRAIN,
+                                              n_frac=n_frac)
+        if file in NPZ_FILE_TRAIN:
+            data_cluster.p_test = 1.0
+            data_cluster.p_train = 0.0
+            data_cluster.p_valid = 0.0
+
         NNEvaluation.evaluate_regression_theta(neuralnetwork_regT,
                                                DataCluster=data_cluster)
 
@@ -213,6 +234,8 @@ for i, file in enumerate([NPZ_FILE_EVAL_0MM, NPZ_FILE_EVAL_5MM, NPZ_FILE_TRAIN])
         neuralnetwork_regT.load()
         os.chdir(dir_results + RUN_NAME + "/" + file[:-4] + "/")
 
+        data_cluster = DFParser.parse_cluster(dir_npz + NPZ_FILE_TRAIN,
+                                              n_frac=n_frac)
         NNEvaluation.eval_complete(neuralnetwork_clas,
                                    neuralnetwork_regE,
                                    neuralnetwork_regP,

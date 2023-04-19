@@ -39,7 +39,7 @@ def plot_efficiencymap(y_pred, y_true, y_sp, figure_name, theta=0.5, sr=100):
     bin_max = int(max(y_sp))
     ary_bin = np.linspace(bin_min, bin_max, sr)
     width = abs(ary_bin[1] - ary_bin[0])
-    ary_bin_err = np.ones(shape=(len(ary_bin),)) * width/2
+    ary_bin_err = np.ones(shape=(len(ary_bin) - 1,)) * width / 2
 
     # Create histogram from prediction and truth
     hist0, _ = np.histogram(y_sp, bins=ary_bin, weights=y_true)
@@ -59,9 +59,10 @@ def plot_efficiencymap(y_pred, y_true, y_sp, figure_name, theta=0.5, sr=100):
     fig, axs = plt.subplots(2, 1)
     axs[0].set_title("Source position efficiency")
     axs[0].set_ylabel("Counts")
-    axs[0].hist(hist0, bins=ary_bin, histtype=u"step", color="black", alpha=0.5, label="Truth")
-    axs[0].hist(hist1, bins=ary_bin, histtype=u"step", color="red", alpha=0.5, linestyle="--", label="Prediction")
-    axs[0].legend(loc="lower center")
+    axs[0].hist(y_sp, bins=ary_bin, histtype=u"step", weights=y_true, color="black", alpha=0.5, label="Truth")
+    axs[0].hist(y_sp, bins=ary_bin, histtype=u"step", weights=ary_w, color="red", alpha=0.5, linestyle="--",
+                label="Prediction")
+    axs[0].legend(loc="upper right")
     axs[1].set_xlabel("Source Position z-axis [mm]")
     axs[1].set_ylabel("Efficiency")
     axs[1].errorbar(ary_bin[:-1] + width, ary_eff, ary_eff_err, ary_bin_err, fmt=".", color="blue")

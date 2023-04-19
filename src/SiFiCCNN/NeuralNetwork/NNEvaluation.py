@@ -32,6 +32,13 @@ def evaluate_classifier(NeuralNetwork,
     # write general binary classifier metrics into console and .txt file
     NNAnalysis.write_metrics_classifier(y_scores, y_true)
 
+    # Generate efficiency map
+    PTClassifier.plot_efficiencymap(y_scores,
+                                    y_true,
+                                    DataCluster.meta[DataCluster.idx_test(), 2],
+                                    figure_name="efficiency_map",
+                                    theta=theta)
+
     # Plotting of score distributions and ROC-analysis
     # grab optimal threshold from ROC-analysis
     PTClassifier.plot_score_distribution(y_scores, y_true, "score_dist")
@@ -49,6 +56,13 @@ def evaluate_regression_energy(NeuralNetwork,
     # grab neural network predictions for test dataset
     y_pred = NeuralNetwork.predict(DataCluster.x_test())
     y_true = DataCluster.y_test()
+
+    # Plot training history
+    PTNetworkHistory.plot_history_regression(NeuralNetwork,
+                                             (NeuralNetwork.model_name +
+                                              "_" +
+                                              NeuralNetwork.model_tag +
+                                              "_history_training"))
 
     # Plot energy regression error
     PTRegression.plot_energy_error(y_pred, y_true, "error_regression_energy")
@@ -75,6 +89,13 @@ def evaluate_regression_position(NeuralNetwork,
     y_pred = NeuralNetwork.predict(DataCluster.x_test())
     y_true = DataCluster.y_test()
 
+    # Plot training history
+    PTNetworkHistory.plot_history_regression(NeuralNetwork,
+                                             (NeuralNetwork.model_name +
+                                              "_" +
+                                              NeuralNetwork.model_tag +
+                                              "_history_training"))
+
     # Plot position error
     PTRegression.plot_position_error(y_pred, y_true, "error_regression_position")
 
@@ -91,6 +112,13 @@ def evaluate_regression_theta(NeuralNetwork,
     # grab neural network predictions for test dataset
     y_pred = NeuralNetwork.predict(DataCluster.x_test())
     y_true = DataCluster.y_test()
+
+    # Plot training history
+    PTNetworkHistory.plot_history_regression(NeuralNetwork,
+                                             (NeuralNetwork.model_name +
+                                              "_" +
+                                              NeuralNetwork.model_tag +
+                                              "_history_training"))
 
     # Plot scattering angle error
     PTRegression.plot_theta_error(y_pred, y_true, "error_regression_theta")
