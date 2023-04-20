@@ -43,11 +43,11 @@ class Event:
 
     def __init__(self,
                  EventNumber,
+                 MCSimulatedEventType,
                  MCEnergy_Primary,
                  MCEnergy_e,
                  MCEnergy_p,
                  MCPosition_source,
-                 MCSimulatedEventType,
                  MCDirection_source,
                  MCComptonPosition,
                  MCDirection_scatter,
@@ -62,18 +62,24 @@ class Event:
                  RecoClusterEnergies_uncertainty,
                  RecoClusterEntries,
                  RecoClusterTimestamps,
-                 MCEventStartTime,
-                 MCComptonTime,
+                 SiPM_triggertime,
+                 SiPM_qdc,
+                 SiPM_position,
+                 SiPM_id,
+                 fibre_time,
+                 fibre_energy,
+                 fibre_position,
+                 fibre_id,
                  scatterer,
                  absorber):
 
-        # Monte-Carlo information
+        # Global information
         self.EventNumber = EventNumber
+        self.MCSimulatedEventType = MCSimulatedEventType
         self.MCEnergy_Primary = MCEnergy_Primary
         self.MCEnergy_e = MCEnergy_e
         self.MCEnergy_p = MCEnergy_p
         self.MCPosition_source = MCPosition_source
-        self.MCSimulatedEventType = MCSimulatedEventType
         self.MCDirection_source = MCDirection_source
         self.MCComptonPosition = MCComptonPosition
         self.MCDirection_scatter = MCDirection_scatter
@@ -81,10 +87,12 @@ class Event:
         self.MCInteractions_e = MCInteractions_e
         self.MCPosition_p = MCPosition_p
         self.MCInteractions_p = MCInteractions_p
-        self.MCEventStartTime = MCEventStartTime
-        self.MCComptonTime = MCComptonTime
 
-        # Cut-Based information
+        # LEGACY FEATURES
+        # self.MCEventStartTime = MCEventStartTime
+        # self.MCComptonTime = MCComptonTime
+
+        # Reco information (Cut-Based Recontruction)
         self.Identified = Identified
         # Cut-Based reco data can not be accessed in python due to the entries being branches
 
@@ -94,10 +102,18 @@ class Event:
         self.RecoClusterEnergies_values = RecoClusterEnergies_values
         self.RecoClusterEnergies_uncertainty = RecoClusterEnergies_uncertainty
         self.RecoClusterEntries = RecoClusterEntries
-
-        # timing information
         self.RecoClusterTimestamps = RecoClusterTimestamps
         self.RecoClusterTimestamps_relative = RecoClusterTimestamps - min(RecoClusterTimestamps)
+
+        # SiPM and Fibre information
+        self.SiPM_triggertime = SiPM_triggertime
+        self.SiPM_qdc = SiPM_qdc
+        self.SiPM_position = SiPM_position
+        self.SiPM_id = SiPM_id
+        self.fibre_time = fibre_time
+        self.fibre_energy = fibre_energy
+        self.fibre_position = fibre_position
+        self.fibre_id = fibre_id
 
         # Detector modules
         self.scatterer = scatterer
