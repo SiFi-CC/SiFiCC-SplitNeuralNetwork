@@ -1,4 +1,4 @@
-def return_model(input_shape):
+def return_model(timesteps, features):
     """
     Dense neural network with basic structure.
     Set to be a baseline model for future neural networks.
@@ -15,8 +15,9 @@ def return_model(input_shape):
     model = keras.models.Sequential()
     # add first dense layer with predefined input dimension
     # model.add(tf.keras.layers.Masking(mask_value=0.0, input_shape=(None, None, input_shape)))
-    model.add(tf.keras.layers.Dense(64, input_dim=input_shape, activation="relu"))
-    model.add(tf.keras.layers.Dense(32, activation="relu"))
+    model.add(tf.keras.layers.Flatten(input_shape=(timesteps, features)))
+    model.add(tf.keras.layers.Dense(64, activation="relu"))
+    model.add(tf.keras.layers.Dense(64, activation="relu"))
     model.add(tf.keras.layers.Dropout(0.1))
     model.add(tf.keras.layers.Dense(1, activation="linear"))
     model.compile(loss="mean_absolute_error",

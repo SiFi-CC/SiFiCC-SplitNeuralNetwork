@@ -14,11 +14,8 @@ def return_model(timesteps, features):
     # create model
     model = keras.models.Sequential()
     # add first dense layer with predefined input dimension
-    # model.add(tf.keras.layers.Masking(mask_value=0.0, input_shape=(None, input_shape)))
-    model.add(tf.keras.layers.Flatten(input_shape=(timesteps, features)))
-    model.add(tf.keras.layers.Dense(64, activation="relu"))
-    model.add(tf.keras.layers.Dense(64, activation="relu"))
-    model.add(tf.keras.layers.Dropout(0.2))
+    model.add(tf.keras.layers.Masking(mask_value=0., input_shape=(timesteps, features)))
+    model.add(tf.keras.layers.LSTM(32, input_dim=features))
     model.add(tf.keras.layers.Dense(1, activation="sigmoid"))
     # compile model with loss function, optimizer and accuracy
     model.compile(loss="binary_crossentropy",
