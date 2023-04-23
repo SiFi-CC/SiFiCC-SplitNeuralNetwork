@@ -124,7 +124,8 @@ def backprojection(ary_e1,
 
             # optimized sampling of z-dimension
             # zbin_sampling = np.arange(0, nbinsz, 4, dtype=int)
-            zbin_sampling = []
+            zbin_sampling = np.arange(0, nbinsz, 4, dtype=int)
+            """            
             for i in range(nbinsz):
                 zbin_step = int(nbinsz / 2 + (i + 1) ** 2)
                 if zbin_step < nbinsz:
@@ -132,21 +133,20 @@ def backprojection(ary_e1,
                     zbin_sampling.append(int(nbinsz / 2 - (i + 1) ** 2))
                 else:
                     break
-
+            """
             for z in zbin_sampling:
                 for y in range(nbinsy):
                     ary_map[z, y] = 1
                     pixelCenter = TVector3(0.0, -ylimit + widthy / 2 + (y * widthy),
                                            -zlimit + widthz / 2 + (z * widthz))
-                    axis = TVector3(ary_x1[i], ary_y1[i], ary_z1[i])
-                    linkingVector = pixelCenter - axis
+                    axis = TVector3(ary_x1[i], ary_y1[i], ary_z1[i]) - TVector3(ary_x2[i], ary_y2[i], ary_z2[i])
+                    linkingVector = pixelCenter - TVector3(ary_x1[i], ary_y1[i], ary_z1[i])
                     angle = axis.angle(linkingVector)
                     resolution = np.arctan(0.5 * widthz * np.sqrt(2) / (D / A))
-
                     if abs(cone.theta - angle) <= resolution:
                         ary_image[z, y] += 1
+
                         ary_image_temp[z, y] += 1
-                        break_cond = True
                         list_pixel_cache.append((z, y))
 
             for pixel in list_pixel_cache:
@@ -164,8 +164,8 @@ def backprojection(ary_e1,
                             ary_map[z, y] = 1
                             pixelCenter = TVector3(0.0, -ylimit + widthy / 2 + (y * widthy),
                                                    -zlimit + widthz / 2 + (z * widthz))
-                            axis = TVector3(ary_x1[i], ary_y1[i], ary_z1[i])
-                            linkingVector = pixelCenter - axis
+                            axis = TVector3(ary_x1[i], ary_y1[i], ary_z1[i]) - TVector3(ary_x2[i], ary_y2[i], ary_z2[i])
+                            linkingVector = pixelCenter - TVector3(ary_x1[i], ary_y1[i], ary_z1[i])
                             angle = axis.angle(linkingVector)
 
                             resolution = np.arctan(0.5 * widthz * np.sqrt(2) / (D / A))
@@ -186,15 +186,15 @@ def backprojection(ary_e1,
             plt.show()
             """
 
-        else:
+        if not optimized:
             # Base algorithm
             for z in range(nbinsz):
                 for y in range(nbinsy):
                     # calculation done in uproot TVector3 for optimization
                     pixelCenter = TVector3(0.0, -ylimit + widthy / 2 + (y * widthy),
                                            -zlimit + widthz / 2 + (z * widthz))
-                    axis = TVector3(ary_x1[i], ary_y1[i], ary_z1[i])
-                    linkingVector = pixelCenter - axis
+                    axis = TVector3(ary_x1[i], ary_y1[i], ary_z1[i]) - TVector3(ary_x2[i], ary_y2[i], ary_z2[i])
+                    linkingVector = pixelCenter - TVector3(ary_x1[i], ary_y1[i], ary_z1[i])
                     angle = axis.angle(linkingVector)
 
                     resolution = np.arctan(0.5 * widthz * np.sqrt(2) / (D / A))
@@ -203,3 +203,73 @@ def backprojection(ary_e1,
                         ary_image[z, y] += 1
 
     return ary_image
+
+
+# ----------------------------------------------------------------------------------------------------------------------
+# methods for easy execution of back projection
+
+def get_projection(image):
+    # rotate original image by 90 degrees
+    # This is purely done for presentational purpose
+    image = np.rot90(image)
+    ary_proj = np.sum(image, axis=0)
+    return ary_proj
+
+
+def get_backprojection(ary_score,
+                       ary_e1,
+                       ary_e2,
+                       ary_x1,
+                       ary_y1,
+                       ary_z1,
+                       ary_x2,
+                       ary_y2,
+                       ary_z2,
+                       ary_theta,
+                       use_theta="DOTVEC",
+                       optimized=False,
+                       veto=False,
+                       f_sample=1.0,
+                       n_subsample=1,
+                       scatz=60.0,
+                       scaty=40.0,
+                       threshold=0.5,
+                       verbose=0):
+    # Grab the total number of positive events
+    # Apply the scaling factor to the positive events to generate a sub-sample
+    # repeat for n_subsample  and average the back-projection of every sub-sample
+    n_pos = np.sum((ary_score > threshold) * 1)
+    n_pos_subsample = int(n_pos * f_sample)
+    ary_proj = np.zeros(shape=(n_subsample, int(scatz)))
+
+    for i in range(n_subsample):
+        ary_idx = np.arange(0, len(ary_score), 1.0, dtype=int)
+        ary_idx_pos = ary_idx[ary_score > threshold]
+
+        rng = np.random.default_rng()
+        rng.shuffle(ary_idx_pos)
+
+        # generate back-projection image
+        ary_image = backprojection(ary_e1[ary_idx_pos[:n_pos_subsample]],
+                                   ary_e2[ary_idx_pos[:n_pos_subsample]],
+                                   ary_x1[ary_idx_pos[:n_pos_subsample]],
+                                   ary_y1[ary_idx_pos[:n_pos_subsample]],
+                                   ary_z1[ary_idx_pos[:n_pos_subsample]],
+                                   ary_x2[ary_idx_pos[:n_pos_subsample]],
+                                   ary_y2[ary_idx_pos[:n_pos_subsample]],
+                                   ary_z2[ary_idx_pos[:n_pos_subsample]],
+                                   ary_theta[ary_idx_pos[:n_pos_subsample]],
+                                   scatz=scatz,
+                                   scaty=scaty,
+                                   use_theta=use_theta,
+                                   optimized=optimized,
+                                   veto=veto)
+        ary_proj[i, :] = get_projection(ary_image)
+        if verbose == 1:
+            print("Back-projection done for {} events of sub-sample {}".format(n_pos_subsample, i))
+
+    # mean value of all sub-samples
+    proj_mean = np.mean(ary_proj, axis=0)
+    proj_std = np.std(ary_proj, axis=0)
+
+    return proj_mean, proj_std

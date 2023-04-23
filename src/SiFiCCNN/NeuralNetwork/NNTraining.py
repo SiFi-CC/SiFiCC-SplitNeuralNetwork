@@ -48,6 +48,7 @@ def train_regression_energy(NeuralNetwork,
     DataCluster.standardize(ary_mean, ary_std)
     NeuralNetwork.norm_mean = ary_mean
     NeuralNetwork.norm_std = ary_std
+    DataCluster.reset_weights()
 
     if verbose == 1:
         print("\n# Training statistics: ")
@@ -84,6 +85,7 @@ def train_regression_position(NeuralNetwork,
     DataCluster.standardize(ary_mean, ary_std)
     NeuralNetwork.norm_mean = ary_mean
     NeuralNetwork.norm_std = ary_std
+    DataCluster.reset_weights()
 
     if verbose == 1:
         print("\n# Training statistics: ")
@@ -120,6 +122,7 @@ def train_regression_theta(NeuralNetwork,
     DataCluster.standardize(ary_mean, ary_std)
     NeuralNetwork.norm_mean = ary_mean
     NeuralNetwork.norm_std = ary_std
+    DataCluster.reset_weights()
 
     if verbose == 1:
         print("\n# Training statistics: ")

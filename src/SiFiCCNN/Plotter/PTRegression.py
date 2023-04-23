@@ -24,14 +24,14 @@ def max_super_function(x):
 
 def plot_energy_error(y_pred, y_true, figure_name):
     plt.rcParams.update({'font.size': 16})
-    width = 0.01
-    bins_err = np.arange(-1.5, 1.5, width)
+    width = 0.1
+    bins_err = np.arange(-1.0, 1.0, width)
     bins_energy = np.arange(0.0, 10.0, width)
 
     bins_err_center = bins_err[:-1] + (width / 2)
 
-    hist0, _ = np.histogram(y_pred[:, 0] - y_true[:, 0], bins=bins_err)
-    hist1, _ = np.histogram(y_pred[:, 1] - y_true[:, 1], bins=bins_err)
+    hist0, _ = np.histogram((y_pred[:, 0] - y_true[:, 0]) / y_true[:, 0], bins=bins_err)
+    hist1, _ = np.histogram((y_pred[:, 1] - y_true[:, 1]) / y_true[:, 1], bins=bins_err)
 
     # fitting energy resolution
     popt0, pcov0 = curve_fit(gaussian, bins_err_center, hist0, p0=[0.0, 1.0, np.sum(hist0) * width])
@@ -40,10 +40,10 @@ def plot_energy_error(y_pred, y_true, figure_name):
 
     plt.figure(figsize=(8, 5))
     plt.ticklabel_format(axis="y", style="sci", scilimits=(0, 0))
-    plt.title("Electron Energy resolution")
-    plt.xlabel(r"$E_{Pred}$ - $E_{True}$ [MeV]")
+    plt.title("Electron energy resolution")
+    plt.xlabel(r"$\frac{E_{Pred} - E_{True}}{E_{True}}$")
     plt.ylabel("counts")
-    plt.hist(y_pred[:, 0] - y_true[:, 0], bins=bins_err, histtype=u"step", color="blue")
+    plt.hist((y_pred[:, 0] - y_true[:, 0]) / y_true[:, 0], bins=bins_err, histtype=u"step", color="blue")
     plt.plot(ary_x, gaussian(ary_x, *popt0), color="orange",
              label=r"$\mu$ = {:.2f}""\n"r"$\sigma$ = {:.2f}".format(popt0[0], popt0[1]))
     plt.legend()
@@ -54,10 +54,10 @@ def plot_energy_error(y_pred, y_true, figure_name):
 
     plt.figure(figsize=(8, 5))
     plt.ticklabel_format(axis="y", style="sci", scilimits=(0, 0))
-    plt.title("Error Energy Photon")
-    plt.xlabel(r"$E_{Pred}$ - $E_{True}$ [MeV]")
+    plt.title("Photon energy resolution")
+    plt.xlabel(r"$\frac{E_{Pred} - E_{True}}{E_{True}}$")
     plt.ylabel("counts")
-    plt.hist(y_pred[:, 1] - y_true[:, 1], bins=bins_err, histtype=u"step", color="blue")
+    plt.hist((y_pred[:, 1] - y_true[:, 1]) / y_true[:, 1], bins=bins_err, histtype=u"step", color="blue")
     plt.plot(ary_x, lorentzian(ary_x, *popt1), color="green",
              label=r"$\mu$ = {:.2f}""\n"r"$FWHM$ = {:.2f}".format(popt1[0], popt1[1] / 2))
     plt.legend()
@@ -69,8 +69,9 @@ def plot_energy_error(y_pred, y_true, figure_name):
     plt.figure()
     plt.title("Error Energy Electron")
     plt.xlabel("$E_{True}$ [MeV]")
-    plt.ylabel(r"$E_{Pred}$ - $E_{True}$ [MeV]")
-    plt.hist2d(x=y_true[:, 0], y=y_pred[:, 0] - y_true[:, 0], bins=[bins_energy, bins_err], norm=LogNorm())
+    plt.ylabel(r"$\frac{E_{Pred} - E_{True}}{E_{True}}$")
+    plt.hist2d(x=y_true[:, 0], y=(y_pred[:, 0] - y_true[:, 0]) / y_true[:, 0], bins=[bins_energy, bins_err],
+               norm=LogNorm())
     plt.colorbar()
     plt.tight_layout()
     plt.savefig(figure_name + "_electron_relative.png")
@@ -79,8 +80,9 @@ def plot_energy_error(y_pred, y_true, figure_name):
     plt.figure()
     plt.title("Error Energy Photon")
     plt.xlabel("$E_{True}$ [MeV]")
-    plt.ylabel(r"$E_{Pred}$ - $E_{True}$ [MeV]")
-    plt.hist2d(x=y_true[:, 1], y=y_pred[:, 1] - y_true[:, 1], bins=[bins_energy, bins_err], norm=LogNorm())
+    plt.ylabel(r"$\frac{E_{Pred} - E_{True}}{E_{True}}$")
+    plt.hist2d(x=y_true[:, 1], y=(y_pred[:, 1] - y_true[:, 1]) / y_true[:, 1], bins=[bins_energy, bins_err],
+               norm=LogNorm())
     plt.colorbar()
     plt.tight_layout()
     plt.savefig(figure_name + "_photon_relative.png")

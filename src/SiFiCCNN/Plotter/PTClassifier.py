@@ -49,7 +49,7 @@ def plot_efficiencymap(y_pred, y_true, y_sp, figure_name, theta=0.5, sr=100):
     ary_eff = np.zeros(shape=(len(hist0),))
     ary_eff_err = np.zeros(shape=(len(hist0),))
     for i in range(len(ary_eff)):
-        if hist1[i] == 0:
+        if hist1[i] < 10:
             continue
         else:
             ary_eff[i] = hist1[i] / hist0[i]

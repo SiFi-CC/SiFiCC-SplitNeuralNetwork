@@ -92,7 +92,7 @@ class Event:
         # self.MCEventStartTime = MCEventStartTime
         # self.MCComptonTime = MCComptonTime
 
-        # Reco information (Cut-Based Recontruction)
+        # Reco information (Cut-Based Reconstruction)
         self.Identified = Identified
         # Cut-Based reco data can not be accessed in python due to the entries being branches
 

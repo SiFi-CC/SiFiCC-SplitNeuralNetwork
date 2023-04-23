@@ -13,8 +13,9 @@ def export_sxax(RootCluster,
     dir_npz = dir_main + "/npz_files/"
 
     # Global generator settings
-    NAME_TAG = "DNN_" + "S" + str(n_cs) + "A" + str(n_ca)
-    n_features = 10 * (n_cs + n_ca)
+    NAME_TAG = "RNN_" + "S" + str(n_cs) + "A" + str(n_ca)
+    n_timesteps = (n_cs + n_ca)
+    n_features = 10
     n_cluster = n_cs + n_ca
 
     # Input feature shape
@@ -22,10 +23,11 @@ def export_sxax(RootCluster,
 
     print("Input feature shape: ")
     print("Samples: ", n_samples)
+    print("Timesteps: ", n_timesteps)
     print("Features: ", n_features)
 
     # create empty arrays for storage
-    ary_features = np.zeros(shape=(n_samples, n_features), dtype=np.float32)
+    ary_features = np.zeros(shape=(n_samples, n_timesteps, n_features), dtype=np.float32)
     ary_targets_clas = np.zeros(shape=(n_samples,), dtype=np.float32)
     ary_targets_reg1 = np.zeros(shape=(n_samples, 2), dtype=np.float32)
     ary_targets_reg2 = np.zeros(shape=(n_samples, 6), dtype=np.float32)
@@ -42,30 +44,30 @@ def export_sxax(RootCluster,
         for j, idx in enumerate(np.flip(idx_scatterer)):
             if j >= n_cs:
                 break
-            ary_features[i, j * 10: (j * 10) + 10] = [event.RecoClusterEntries[idx],
-                                                      event.RecoClusterTimestamps_relative[idx],
-                                                      event.RecoClusterEnergies_values[idx],
-                                                      event.RecoClusterPosition[idx].x,
-                                                      event.RecoClusterPosition[idx].y,
-                                                      event.RecoClusterPosition[idx].z,
-                                                      event.RecoClusterEnergies_uncertainty[idx],
-                                                      event.RecoClusterPosition_uncertainty[idx].x,
-                                                      event.RecoClusterPosition_uncertainty[idx].y,
-                                                      event.RecoClusterPosition_uncertainty[idx].z]
+            ary_features[i, j, :] = [event.RecoClusterEntries[idx],
+                                     event.RecoClusterTimestamps_relative[idx],
+                                     event.RecoClusterEnergies_values[idx],
+                                     event.RecoClusterPosition[idx].x,
+                                     event.RecoClusterPosition[idx].y,
+                                     event.RecoClusterPosition[idx].z,
+                                     event.RecoClusterEnergies_uncertainty[idx],
+                                     event.RecoClusterPosition_uncertainty[idx].x,
+                                     event.RecoClusterPosition_uncertainty[idx].y,
+                                     event.RecoClusterPosition_uncertainty[idx].z]
 
         for j, idx in enumerate(np.flip(idx_absorber)):
             if j >= n_ca:
                 break
-            ary_features[i, (j + n_cs) * 10: ((j + n_cs) * 10) + 10] = [event.RecoClusterEntries[idx],
-                                                                        event.RecoClusterTimestamps_relative[idx],
-                                                                        event.RecoClusterEnergies_values[idx],
-                                                                        event.RecoClusterPosition[idx].x,
-                                                                        event.RecoClusterPosition[idx].y,
-                                                                        event.RecoClusterPosition[idx].z,
-                                                                        event.RecoClusterEnergies_uncertainty[idx],
-                                                                        event.RecoClusterPosition_uncertainty[idx].x,
-                                                                        event.RecoClusterPosition_uncertainty[idx].y,
-                                                                        event.RecoClusterPosition_uncertainty[idx].z]
+            ary_features[i, (j + n_cs), :] = [event.RecoClusterEntries[idx],
+                                              event.RecoClusterTimestamps_relative[idx],
+                                              event.RecoClusterEnergies_values[idx],
+                                              event.RecoClusterPosition[idx].x,
+                                              event.RecoClusterPosition[idx].y,
+                                              event.RecoClusterPosition[idx].z,
+                                              event.RecoClusterEnergies_uncertainty[idx],
+                                              event.RecoClusterPosition_uncertainty[idx].x,
+                                              event.RecoClusterPosition_uncertainty[idx].y,
+                                              event.RecoClusterPosition_uncertainty[idx].z]
 
         # target: ideal compton events tag
         ary_targets_clas[i] = event.is_ideal_compton * 1

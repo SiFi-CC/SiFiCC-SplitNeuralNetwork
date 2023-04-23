@@ -13,6 +13,16 @@ def lr_scheduler(epoch):
         return 1e-4
     return 1e-5
 
+def rnn_lr_scheduler(epoch):
+    if epoch < 20:
+        return 1e-3
+    if epoch < 40:
+        return 5e-4
+    if epoch < 50:
+        return 1e-4
+    return 1e-5
+
+
 
 class NeuralNetwork:
 
@@ -33,7 +43,7 @@ class NeuralNetwork:
 
     def train(self, x_train, y_train, x_weights, x_valid, y_valid):
         # train model
-        l_callbacks = [keras.callbacks.LearningRateScheduler(lr_scheduler), ]
+        l_callbacks = [keras.callbacks.LearningRateScheduler(rnn_lr_scheduler), ]
 
         history = self.model.fit(x_train, y_train, validation_data=(x_valid, y_valid),
                                  sample_weight=x_weights,
