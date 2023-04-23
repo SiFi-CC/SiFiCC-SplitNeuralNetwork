@@ -1,10 +1,11 @@
 import os
 import numpy as np
 
-from src.SiFiCCNN.Root.RootCluster import RootCluster
+from src.SiFiCCNN.Root.RootParser import Root
 from src.SiFiCCNN.Root import RootFiles
 
 from src.SiFiCCNN.InputGenerator import IGClusterSXAX
+from src.SiFiCCNN.InputGenerator import IGRNNClusterSXAX
 
 dir_main = os.getcwd() + "/.."
 dir_root = dir_main + "/root_files/"
@@ -17,13 +18,13 @@ dir_plots = dir_main + "/plots/"
 # ----------------------------------------------------------------------------------------------------------------------
 
 def generate_sxax(n_cs, n_ca):
-    rootcluster_cont = RootCluster(dir_main + RootFiles.OptimisedGeometry_Continuous_2e10protons_withTimestamps_local)
-    rootcluster_bp0mm = RootCluster(dir_main + RootFiles.OptimisedGeometry_BP0mm_2e10protons_withTimestamps_local)
-    rootcluster_bp5mm = RootCluster(dir_main + RootFiles.OptimisedGeometry_BP5mm_4e9protons_withTimestamps_local)
+    rootcluster_cont = Root(dir_main + RootFiles.OptimisedGeometry_Continuous_2e10protons_withTimestamps_local)
+    rootcluster_bp0mm = Root(dir_main + RootFiles.OptimisedGeometry_BP0mm_2e10protons_withTimestamps_local)
+    rootcluster_bp5mm = Root(dir_main + RootFiles.OptimisedGeometry_BP5mm_4e9protons_withTimestamps_local)
 
-    IGClusterSXAX.export_sxax(rootcluster_cont, dir_npz, n_cs, n_ca)
-    IGClusterSXAX.export_sxax(rootcluster_bp0mm, dir_npz, n_cs, n_ca)
-    IGClusterSXAX.export_sxax(rootcluster_bp5mm, dir_npz, n_cs, n_ca)
+    IGRNNClusterSXAX.export_sxax(rootcluster_cont, dir_npz, n_cs, n_ca)
+    IGRNNClusterSXAX.export_sxax(rootcluster_bp0mm, dir_npz, n_cs, n_ca)
+    IGRNNClusterSXAX.export_sxax(rootcluster_bp5mm, dir_npz, n_cs, n_ca)
 
 
 def check_sxax():

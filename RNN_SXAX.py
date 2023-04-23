@@ -21,10 +21,10 @@ from src.SiFiCCNN.NeuralNetwork import NeuralNetwork
 from src.SiFiCCNN.NeuralNetwork import NNTraining
 from src.SiFiCCNN.NeuralNetwork import NNEvaluation
 
-from src.SiFiCCNN.Model import DNN_SXAX_classifier
-from src.SiFiCCNN.Model import DNN_SXAX_regression_energy
-from src.SiFiCCNN.Model import DNN_SXAX_regression_position
-from src.SiFiCCNN.Model import DNN_SXAX_regression_theta
+from src.SiFiCCNN.Model import RNN_SXAX_classifier
+from src.SiFiCCNN.Model import RNN_SXAX_regression_energy
+from src.SiFiCCNN.Model import RNN_SXAX_regression_position
+from src.SiFiCCNN.Model import RNN_SXAX_regression_theta
 
 # ----------------------------------------------------------------------------------------------------------------------
 # Global Settings
@@ -49,22 +49,22 @@ NPZ_LOOKUP_5MM = "OptimisedGeometry_BP5mm_4e9protons_withTimestamps_S1AX_lookup.
 LOOK_UP_FILES = [NPZ_LOOKUP_0MM, NPZ_LOOKUP_5MM]
 """
 # GLOBAL SETTINGS
-RUN_NAME = "DNN_S4X6"
+RUN_NAME = "RNN_S4X6"
 
 # Neural Network settings
-epochs_clas = 50
-epochs_regE = 100
-epochs_regP = 100
-epochs_regT = 100
+epochs_clas = 30
+epochs_regE = 50
+epochs_regP = 50
+epochs_regT = 50
 batchsize_clas = 64
 batchsize_regE = 64
 batchsize_regP = 64
 batchsize_regT = 64
 theta = 0.5
-n_frac = 1.0
+n_frac = 0.5
 
 # Global switches to turn on/off training or analysis steps
-train_clas = False
+train_clas = True
 train_regE = False
 train_regP = False
 train_regT = False
@@ -75,7 +75,7 @@ eval_regT = False
 eval_full = False
 
 # MLEM export setting: None (to disable export), "Reco" (for classical), "Pred" (For Neural Network predictions)
-export_npz = True
+export_npz = False
 export_cc6 = False
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -101,10 +101,10 @@ if not os.path.isdir(dir_results + RUN_NAME + "/" + NPZ_FILE_TRAIN[:-4] + "/"):
 # Training schedule
 # TODO: Change input dimension dynamic
 
-tfmodel_clas = DNN_SXAX_classifier.return_model(10, 10)
-tfmodel_regE = DNN_SXAX_regression_energy.return_model(10, 10)
-tfmodel_regP = DNN_SXAX_regression_position.return_model(10, 10)
-tfmodel_regT = DNN_SXAX_regression_theta.return_model(10, 10)
+tfmodel_clas = RNN_SXAX_classifier.return_model(10, 10)
+tfmodel_regE = RNN_SXAX_regression_energy.return_model(10, 10)
+tfmodel_regP = RNN_SXAX_regression_position.return_model(10, 10)
+tfmodel_regT = RNN_SXAX_regression_theta.return_model(10, 10)
 
 neuralnetwork_clas = NeuralNetwork.NeuralNetwork(model=tfmodel_clas,
                                                  model_name=RUN_NAME,
