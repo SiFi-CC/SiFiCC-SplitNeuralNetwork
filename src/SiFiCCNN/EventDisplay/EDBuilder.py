@@ -34,6 +34,67 @@ def get_surface(x, y, z, xdim, ydim, zdim):
 
 
 # ----------------------------------------------------------------------------------------------------------------------
+# Custom algorithm for sorting out Geant4 interaction lists
+
+def get_digits(number):
+    list_digits = []
+    str_digit = str(number)
+    for i in range(1, len(str_digit) + 1):
+        list_digits.append(int(str_digit[-i]))
+    if len(list_digits) == 1:
+        list_digits.append(0)
+    return list_digits
+
+
+def get_interaction(MCInteractions_e, MCInteractions_p):
+    list_e_interaction = [[]]
+    counter = 0
+    list_tmp = []
+    for i in range(len(MCInteractions_e)):
+        list_digit = get_digits(MCInteractions_e[i])
+        if list_digit[1] == 1:
+            list_e_interaction[0].append(i)
+    list_e_interaction[0] = np.array(list_e_interaction[0])
+    for i in range(2, 10):
+        for j in range(len(MCInteractions_e)):
+            list_digit = get_digits(MCInteractions_e[j])
+            if list_digit[1] == i:
+                list_tmp.append(j)
+            elif len(list_tmp) != 0:
+                if MCInteractions_e[list_tmp[0] - 1] > MCInteractions_e[list_tmp[0]]:
+                    list_e_interaction[counter] = np.concatenate(
+                        [list_e_interaction[counter], np.array(list_tmp)])
+                else:
+                    list_e_interaction.append(np.arange(list_tmp[0] - 1, list_tmp[-1] + 1, 1.0, dtype=int))
+                    counter += 1
+                list_tmp = []
+
+        # photon interaction plotting
+    list_p_interaction = [[]]
+    counter = 0
+    list_tmp = []
+    for i in range(len(MCInteractions_p)):
+        if 0 < MCInteractions_p[i] < 10:
+            list_p_interaction[0].append(i)
+    list_p_interaction[0] = np.array(list_p_interaction[0])
+    for i in range(1, 10):
+        for j in range(len(MCInteractions_p)):
+            list_digit = get_digits(MCInteractions_p[j])
+            if list_digit[1] == i:
+                list_tmp.append(j)
+            elif len(list_tmp) != 0:
+                if MCInteractions_p[list_tmp[0] - 1] > MCInteractions_p[list_tmp[0]]:
+                    list_p_interaction[counter] = np.concatenate(
+                        [list_p_interaction[counter], np.array(list_tmp)])
+                else:
+                    list_p_interaction.append(np.arange(list_tmp[0] - 1, list_tmp[-1] + 1, 1.0, dtype=int))
+                    counter += 1
+                list_tmp = []
+
+    return list_e_interaction, list_p_interaction
+
+
+# ----------------------------------------------------------------------------------------------------------------------
 # Vector Algebra collection to create Compton cones
 
 def unit_vec(vec):
@@ -85,7 +146,7 @@ def get_compton_cone(vec_apex, vec_axis, vec_origin, theta, sr=8):
     # shift them to correct final position
 
     for i in range(len(list_cone_vec)):
-        a = -vec_origin.x / list_cone_vec[i][0]
+        a = -(vec_apex.x - vec_origin.x) / list_cone_vec[i][0]
         list_cone_vec[i] *= a
         list_cone_vec[i] = np.array([list_cone_vec[i][0] + vec_apex.x,
                                      list_cone_vec[i][1] + vec_apex.y,

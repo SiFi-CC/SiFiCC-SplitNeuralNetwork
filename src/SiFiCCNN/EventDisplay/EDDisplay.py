@@ -1,23 +1,12 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-from src.SiFiCC_EDPY.EventDisplay import EDBuilder
+from src.SiFiCCNN.EventDisplay import EDBuilder
 
 
 # ----------------------------------------------------------------------------------------------------------------------
 
-
-def get_digits(number):
-    list_digits = []
-    str_digit = str(number)
-    for i in range(1, len(str_digit) + 1):
-        list_digits.append(int(str_digit[-i]))
-    if len(list_digits) == 1:
-        list_digits.append(0)
-    return list_digits
-
-
-def display(event, detector):
+def display(event):
     # ------------------------------------------------------------------------------------------------------------------
     # Main plotting, general settings of 3D plot
     fig = plt.figure(figsize=(12, 12))
@@ -32,45 +21,24 @@ def display(event, detector):
     # ------------------------------------------------------------------------------------------------------------------
     # detector edges, orientation axis, (fiber hits)
     # get detector edges
-    list_edge_scatterer = EDBuilder.get_edges(detector.scatterer.pos.x,
-                                              detector.scatterer.pos.y,
-                                              detector.scatterer.pos.z,
-                                              detector.scatterer.dimx,
-                                              detector.scatterer.dimy,
-                                              detector.scatterer.dimz)
-    list_edge_absorber = EDBuilder.get_edges(detector.absorber.pos.x,
-                                             detector.absorber.pos.y,
-                                             detector.absorber.pos.z,
-                                             detector.absorber.dimx,
-                                             detector.absorber.dimy,
-                                             detector.absorber.dimz)
-
-    # get detector hits
-    list_cluster_x = []
-    list_cluster_y = []
-    list_cluster_z = []
-    for cl in event.RecoClusterPosition:
-        list_cluster_x.append(cl.x)
-        list_cluster_y.append(cl.y)
-        list_cluster_z.append(cl.z)
+    list_edge_scatterer = EDBuilder.get_edges(event.scatterer.pos.x,
+                                              event.scatterer.pos.y,
+                                              event.scatterer.pos.z,
+                                              event.scatterer.dimx,
+                                              event.scatterer.dimy,
+                                              event.scatterer.dimz)
+    list_edge_absorber = EDBuilder.get_edges(event.absorber.pos.x,
+                                             event.absorber.pos.y,
+                                             event.absorber.pos.z,
+                                             event.absorber.dimx,
+                                             event.absorber.dimy,
+                                             event.absorber.dimz)
 
     for i in range(len(list_edge_scatterer)):
         ax.plot3D(list_edge_scatterer[i][0], list_edge_scatterer[i][1], list_edge_scatterer[i][2], color="blue")
         ax.plot3D(list_edge_absorber[i][0], list_edge_absorber[i][1], list_edge_absorber[i][2], color="blue")
-    # plot source axis
+    # plot reference axis
     ax.plot3D([0, 270 + 46.8 / 2], [0, 0], [0, 0], color="black", linestyle="--")
-    # plot fiber hits + cluster hits
-    b = 5  # marker-size scaling factor
-    for i in range(len(list_cluster_x)):
-        """
-        # fiber hits
-        list_surface = surface_list(list_cluster_x[i], 0, list_cluster_z[i], 1.3, 100.0, 1.3)
-        for j in range(len(list_surface)):
-            ax.plot_wireframe(*list_surface[i], alpha=0.5, color="green")
-        """
-        # cluster hits
-        ax.plot3D(list_cluster_x[i], list_cluster_y[i], list_cluster_z[i],
-                  "X", color="orange", markersize=event.RecoClusterEnergies_values[i] * b)
 
     # ------------------------------------------------------------------------------------------------------------------
     # plot primary gamma trajectory
@@ -92,27 +60,7 @@ def display(event, detector):
     """
     # ------------------------------------------------------------------------------------------------------------------
     # electron interaction plotting
-    list_e_interaction = [[]]
-    counter = 0
-    list_tmp = []
-    for i in range(len(event.MCInteractions_e)):
-        list_digit = get_digits(event.MCInteractions_e[i])
-        if list_digit[1] == 1:
-            list_e_interaction[0].append(i)
-    list_e_interaction[0] = np.array(list_e_interaction[0])
-    for i in range(2, 10):
-        for j in range(len(event.MCInteractions_e)):
-            list_digit = get_digits(event.MCInteractions_e[j])
-            if list_digit[1] == i:
-                list_tmp.append(j)
-            elif len(list_tmp) != 0:
-                if event.MCInteractions_e[list_tmp[0] - 1] > event.MCInteractions_e[list_tmp[0]]:
-                    list_e_interaction[counter] = np.concatenate(
-                        [list_e_interaction[counter], np.array(list_tmp)])
-                else:
-                    list_e_interaction.append(np.arange(list_tmp[0] - 1, list_tmp[-1] + 1, 1.0, dtype=int))
-                    counter += 1
-                list_tmp = []
+    list_e_interaction, list_p_interaction = EDBuilder.get_interaction(event.MCInteractions_e, event.MCInteractions_p)
 
     # plot secondary electron reaction chain
     for i in range(len(list_e_interaction)):
@@ -122,29 +70,6 @@ def display(event, detector):
                 [event.MCPosition_e.y[list_e_interaction[i][j - 1]], event.MCPosition_e.y[list_e_interaction[i][j]]],
                 [event.MCPosition_e.z[list_e_interaction[i][j - 1]], event.MCPosition_e.z[list_e_interaction[i][j]]],
                 color="green", linestyle="--")
-
-    # photon interaction plotting
-    list_p_interaction = [[]]
-    counter = 0
-    list_tmp = []
-    for i in range(len(event.MCInteractions_p)):
-        if 0 < event.MCInteractions_p[i] < 10:
-            list_p_interaction[0].append(i)
-    list_p_interaction[0] = np.array(list_p_interaction[0])
-    for i in range(1, 10):
-        for j in range(len(event.MCInteractions_p)):
-            list_digit = get_digits(event.MCInteractions_p[j])
-            if list_digit[1] == i:
-                list_tmp.append(j)
-            elif len(list_tmp) != 0:
-                if event.MCInteractions_p[list_tmp[0] - 1] > event.MCInteractions_p[list_tmp[0]]:
-                    list_p_interaction[counter] = np.concatenate(
-                        [list_p_interaction[counter], np.array(list_tmp)])
-                else:
-                    list_p_interaction.append(np.arange(list_tmp[0] - 1, list_tmp[-1] + 1, 1.0, dtype=int))
-                    counter += 1
-                list_tmp = []
-
     # plot secondary photon reaction chain
     for i in range(len(list_p_interaction)):
         for j in range(1, len(list_p_interaction[i])):
@@ -157,12 +82,75 @@ def display(event, detector):
     # ------------------------------------------------------------------------------------------------------------------
     # Marker for MC-Truth (Later definition standard for Neural Network)
     ax.plot3D(event.MCPosition_e_first.x, event.MCPosition_e_first.y, event.MCPosition_e_first.z,
-              "x", color="red", markersize=event.MCEnergy_e * b)
+              "x", color="red", markersize=event.MCEnergy_e * 10)
     ax.plot3D(event.MCPosition_p_first.x, event.MCPosition_p_first.y, event.MCPosition_p_first.z,
-              "x", color="red", markersize=event.MCEnergy_p * b)
+              "x", color="red", markersize=event.MCEnergy_p * 10)
     ax.plot3D(event.MCPosition_source.x, event.MCPosition_source.y, event.MCPosition_source.z,
               "o", color="red", markersize=4)
 
+    # ------------------------------------------------------------------------------------------------------------------
+    # SiPM and Fibre hits
+    # Only drawn if event file contains SiPM and Fibre information
+    """
+    if event.bsipm:
+        for i in range(len(event.SiPM_position)):
+            print(event.SiPM_position.x[i], event.SiPM_position.y[i], event.SiPM_position.z[i])
+            ax.plot3D(event.SiPM_position.x[i], event.SiPM_position.y[i], event.SiPM_position.z[i], "o", color="red",
+                      markersize=10)
+        for i in range(len(event.fibre_position)):
+            print(event.fibre_position.x[i], event.fibre_position.y[i], event.fibre_position.z[i])
+            ax.plot3D(event.fibre_position.x[i], event.fibre_position.y[i], event.fibre_position.z[i], "o",
+                      color="blue", markersize=5)
+
+    """
+    # ------------------------------------------------------------------------------------------------------------------
+    # True and reconstructed compton cone
+
+    if event.bglobal:
+        # Grab Compton scattering angle from source and scattering directions as energy calculations are not good enough
+        # on MC-Truth level
+
+        # Main vectors needed for cone calculations
+        vec_ax1 = event.MCPosition_e_first
+        vec_ax2 = event.MCPosition_p_first - event.MCPosition_e_first
+        vec_src = event.MCPosition_source
+
+        list_cone = EDBuilder.get_compton_cone(vec_ax1, vec_ax2, vec_src, event.theta_dotvec, sr=128)
+        for i in range(1, len(list_cone)):
+            ax.plot3D([list_cone[i - 1][0], list_cone[i][0]],
+                      [list_cone[i - 1][1], list_cone[i][1]],
+                      [list_cone[i - 1][2], list_cone[i][2]],
+                      color="black")
+        for i in [8, 16, 32, 64]:
+            ax.plot3D([vec_ax1.x, list_cone[i - 1][0]],
+                      [vec_ax1.y, list_cone[i - 1][1]],
+                      [vec_ax1.z, list_cone[i - 1][2]],
+                      color="black")
+
+    """
+    # ------------------------------------------------------------------------------------------------------------------
+    # get detector hits
+    list_cluster_x = []
+    list_cluster_y = []
+    list_cluster_z = []
+    for cl in event.RecoClusterPosition:
+        list_cluster_x.append(cl.x)
+        list_cluster_y.append(cl.y)
+        list_cluster_z.append(cl.z)
+
+    # plot fiber hits + cluster hits
+    b = 5  # marker-size scaling factor
+    for i in range(len(list_cluster_x)):
+        
+        # fiber hits
+        list_surface = surface_list(list_cluster_x[i], 0, list_cluster_z[i], 1.3, 100.0, 1.3)
+        for j in range(len(list_surface)):
+            ax.plot_wireframe(*list_surface[i], alpha=0.5, color="green")
+        
+        # cluster hits
+        ax.plot3D(list_cluster_x[i], list_cluster_y[i], list_cluster_z[i],
+                  "X", color="orange", markersize=event.RecoClusterEnergies_values[i] * b)
+    
     # ------------------------------------------------------------------------------------------------------------------
     # MC-Truth and CB-Reco compton cone
     # Grab Compton scattering angle from source and scattering directions as energy calculations are not good enough
@@ -211,7 +199,7 @@ def display(event, detector):
               [vec_ax1.y, vec_ax2.y],
               [vec_ax1.z, vec_ax2.z],
               color="orange", linestyle="--")
-
+    """
     # ------------------------------------------------------------------------------------------------------------------
     # Control prints
     print("\nControl: ")
@@ -224,10 +212,11 @@ def display(event, detector):
     print("\nCompton Scattering Angle theta:")
     print("theta (Energy):",
           "{:5.3f} [rad] | {:5.1f} [deg]".format(event.theta_energy, event.theta_energy * 360 / 2 / np.pi))
-    print("theta (Vector):", "{:5.3f} [rad] | {:5.1f} [deg]".format(dir_angle, dir_angle * 360 / 2 / np.pi))
+    print("theta (Vector):",
+          "{:5.3f} [rad] | {:5.1f} [deg]".format(event.theta_dotvec, event.theta_dotvec * 360 / 2 / np.pi))
 
     # print("RETURNER:", event.check_absorber_interaction())
-
+    """
     # ------------------------------------------------------------------------------------------------------------------
     # title string
     dict_type = {2: "Real Coincidence",
@@ -244,5 +233,7 @@ def display(event, detector):
             event.EventNumber, dict_type[event.MCSimulatedEventType], str_tagging,
             event.MCEnergy_e, event.MCEnergy_p, event.MCEnergy_Primary, np.sum(event.RecoClusterEnergies_values)))
     # plt.legend()
+    """
+
     plt.tight_layout()
     plt.show()
