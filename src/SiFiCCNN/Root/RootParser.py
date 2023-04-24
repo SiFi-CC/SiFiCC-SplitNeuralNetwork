@@ -72,6 +72,13 @@ class Root:
         if set(self.leaves_global).issubset(self.events_keys):
             self.ifglobal = True
             self.list_leaves_final += self.leaves_global
+        # try to catch exception
+        if not self.ifglobal:
+            self.leaves_global[2] = b"MCEnergyPrimary"
+            if set(self.leaves_global).issubset(self.events_keys):
+                self.ifglobal = True
+                self.list_leaves_final += self.leaves_global
+
         if set(self.leaves_reco).issubset(self.events_keys):
             self.ifreco = True
             self.list_leaves_final += self.leaves_reco
@@ -160,7 +167,10 @@ class Root:
         if self.ifglobal:
             param_EventNumber = basket["EventNumber"][idx]
             param_MCSimulatedEventType = basket['MCSimulatedEventType'][idx]
-            param_MCEnergy_Primary = basket['MCEnergy_Primary'][idx]
+            if b"MCEnergy_Primary" not in self.list_leaves_final:
+                param_MCEnergy_Primary = basket['MCEnergyPrimary'][idx]
+            else:
+                param_MCEnergy_Primary = basket['MCEnergy_Primary'][idx]
             param_MCEnergy_e = basket['MCEnergy_e'][idx]
             param_MCEnergy_p = basket['MCEnergy_p'][idx]
             param_MCPosition_source = basket['MCPosition_source'][idx]
@@ -184,6 +194,7 @@ class Root:
         param_RecoClusterEnergies_uncertainty = 0
         param_RecoClusterEntries = 0
         param_RecoClusterTimestamps = 0
+
         if self.ifcluster:
             param_RecoClusterPosition = basket['RecoClusterPositions.position'][idx]
             param_RecoClusterPosition_uncertainty = basket['RecoClusterPositions.uncertainty'][idx]
@@ -211,7 +222,11 @@ class Root:
             param_fibre_position = basket["FibreData.fFibrePosition"][idx]
             param_fibre_id = basket["FibreData.fFibreId"][idx]
 
-        event = Event(EventNumber=param_EventNumber,
+        event = Event(bglobal=self.ifglobal,
+                      breco=self.ifreco,
+                      bcluster=self.ifcluster,
+                      bsipm=self.ifsipm,
+                      EventNumber=param_EventNumber,
                       MCSimulatedEventType=param_MCSimulatedEventType,
                       MCEnergy_Primary=param_MCEnergy_Primary,
                       MCEnergy_e=param_MCEnergy_e,

@@ -42,6 +42,10 @@ class Event:
     """
 
     def __init__(self,
+                 bglobal,
+                 breco,
+                 bcluster,
+                 bsipm,
                  EventNumber,
                  MCSimulatedEventType,
                  MCEnergy_Primary,
@@ -73,6 +77,12 @@ class Event:
                  scatterer,
                  absorber):
 
+        # Information level tags
+        self.bglobal = bglobal
+        self.breco = breco
+        self.bcluster = bcluster
+        self.bsipm = bsipm
+
         # Global information
         self.EventNumber = EventNumber
         self.MCSimulatedEventType = MCSimulatedEventType
@@ -103,7 +113,8 @@ class Event:
         self.RecoClusterEnergies_uncertainty = RecoClusterEnergies_uncertainty
         self.RecoClusterEntries = RecoClusterEntries
         self.RecoClusterTimestamps = RecoClusterTimestamps
-        self.RecoClusterTimestamps_relative = RecoClusterTimestamps - min(RecoClusterTimestamps)
+        if self.bcluster:
+            self.RecoClusterTimestamps_relative = RecoClusterTimestamps - min(RecoClusterTimestamps)
 
         # SiPM and Fibre information
         self.SiPM_triggertime = SiPM_triggertime
