@@ -13,6 +13,7 @@ def lr_scheduler(epoch):
         return 1e-4
     return 1e-5
 
+
 def rnn_lr_scheduler(epoch):
     if epoch < 20:
         return 1e-3
@@ -20,8 +21,11 @@ def rnn_lr_scheduler(epoch):
         return 5e-4
     if epoch < 50:
         return 1e-4
+    if epoch < 70:
+        return 5e-5
+    if epoch < 100:
+        return 1e-5
     return 1e-5
-
 
 
 class NeuralNetwork:
