@@ -1,5 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d.axes3d import Axes3D
+from mpl_toolkits.mplot3d import proj3d
 
 from src.SiFiCCNN.EventDisplay import EDBuilder
 
@@ -9,11 +11,26 @@ from src.SiFiCCNN.EventDisplay import EDBuilder
 def display(event):
     # ------------------------------------------------------------------------------------------------------------------
     # Main plotting, general settings of 3D plot
-    fig = plt.figure(figsize=(12, 12))
+    fig = plt.figure(figsize=(12, 8))
     ax = fig.add_subplot(111, projection='3d')
-    ax.set_xlim(-10, 300)
-    ax.set_ylim(-155, 155)
-    ax.set_zlim(-155, 155)
+    ax.set_box_aspect(aspect=(3, 1, 1))
+    """
+    # axis scaling
+    x_scale = 1
+    y_scale = 0.3
+    z_scale = 0.3
+    scale = np.diag([x_scale, y_scale, z_scale, 1.0])
+    scale = scale * (1.0 / scale.max())
+    scale[3, 3] = 0.8
+
+    def short_proj():
+        return np.dot(Axes3D.get_proj(ax), scale)
+
+    ax.get_proj = short_proj
+    """
+    ax.set_xlim3d(-10, 300)
+    ax.set_ylim3d(-55, 55)
+    ax.set_zlim3d(-55, 55)
     ax.set_xlabel("x-axis [mm]")
     ax.set_ylabel("y-axis [mm]")
     ax.set_zlabel("z-axis [mm]")
@@ -127,79 +144,54 @@ def display(event):
                       [vec_ax1.z, list_cone[i - 1][2]],
                       color="black")
 
-    """
+    if event.bcluster:
+        # Compton cone definition, defined by reco cluster positions
+        vec_ax1, _ = event.get_electron_position()
+        vec_ax2, _ = event.get_photon_position()
+        e1, _ = event.get_electron_energy()
+        e2, _ = event.get_photon_energy()
+        reco_theta = event.calc_theta_energy(e1, e2)
+        vec_src = event.MCPosition_source
+
+        list_cone = EDBuilder.get_compton_cone(vec_ax1, vec_ax2 - vec_ax1, vec_src, reco_theta, sr=128)
+        for i in range(1, len(list_cone)):
+            ax.plot3D([list_cone[i - 1][0], list_cone[i][0]],
+                      [list_cone[i - 1][1], list_cone[i][1]],
+                      [list_cone[i - 1][2], list_cone[i][2]],
+                      color="orange", linestyle="--")
+        for i in [8, 16, 32, 64]:
+            ax.plot3D([vec_ax1.x, list_cone[i - 1][0]],
+                      [vec_ax1.y, list_cone[i - 1][1]],
+                      [vec_ax1.z, list_cone[i - 1][2]],
+                      color="orange", linestyle="--")
+        ax.plot3D([vec_ax1.x, vec_ax2.x],
+                  [vec_ax1.y, vec_ax2.y],
+                  [vec_ax1.z, vec_ax2.z],
+                  color="orange", linestyle="--")
+
     # ------------------------------------------------------------------------------------------------------------------
     # get detector hits
-    list_cluster_x = []
-    list_cluster_y = []
-    list_cluster_z = []
-    for cl in event.RecoClusterPosition:
-        list_cluster_x.append(cl.x)
-        list_cluster_y.append(cl.y)
-        list_cluster_z.append(cl.z)
+    if event.bcluster:
+        list_cluster_x = []
+        list_cluster_y = []
+        list_cluster_z = []
+        for cl in event.RecoClusterPosition:
+            list_cluster_x.append(cl.x)
+            list_cluster_y.append(cl.y)
+            list_cluster_z.append(cl.z)
 
-    # plot fiber hits + cluster hits
-    b = 5  # marker-size scaling factor
-    for i in range(len(list_cluster_x)):
-        
-        # fiber hits
-        list_surface = surface_list(list_cluster_x[i], 0, list_cluster_z[i], 1.3, 100.0, 1.3)
-        for j in range(len(list_surface)):
-            ax.plot_wireframe(*list_surface[i], alpha=0.5, color="green")
-        
-        # cluster hits
-        ax.plot3D(list_cluster_x[i], list_cluster_y[i], list_cluster_z[i],
-                  "X", color="orange", markersize=event.RecoClusterEnergies_values[i] * b)
-    
-    # ------------------------------------------------------------------------------------------------------------------
-    # MC-Truth and CB-Reco compton cone
-    # Grab Compton scattering angle from source and scattering directions as energy calculations are not good enough
-    # on MC-Truth level
-    v1_u = np.array([event.MCDirection_source.x, event.MCDirection_source.y, event.MCDirection_source.z])
-    v2_u = np.array([event.MCDirection_scatter.x, event.MCDirection_scatter.y, event.MCDirection_scatter.z])
-    dir_angle = np.arccos(np.clip(np.dot(v1_u, v2_u), -1.0, 1.0))
-
-    # Main vectors needed for cone calculations
-    vec_ax1 = event.MCPosition_e_first
-    vec_ax2 = event.MCPosition_p_first - event.MCPosition_e_first
-    vec_src = event.MCPosition_source
-
-    list_cone = EDBuilder.get_compton_cone(vec_ax1, vec_ax2, vec_src, dir_angle, sr=128)
-    for i in range(1, len(list_cone)):
-        ax.plot3D([list_cone[i - 1][0], list_cone[i][0]],
-                  [list_cone[i - 1][1], list_cone[i][1]],
-                  [list_cone[i - 1][2], list_cone[i][2]],
-                  color="black")
-    for i in [8, 16, 32, 64]:
-        ax.plot3D([vec_ax1.x, list_cone[i - 1][0]],
-                  [vec_ax1.y, list_cone[i - 1][1]],
-                  [vec_ax1.z, list_cone[i - 1][2]],
-                  color="black")
-
-    # Compton cone definition, defined by reco cluster positions
-    vec_ax1, _ = event.get_electron_position()
-    vec_ax2, _ = event.get_photon_position()
-    e1, _ = event.get_electron_energy()
-    e2, _ = event.get_photon_energy()
-    reco_theta = event.calc_theta_energy(e1, e2)
-    offset = vec_ax1.x
-
-    list_cone = EDBuilder.get_compton_cone(vec_ax1, vec_ax2 - vec_ax1, vec_src, reco_theta, sr=128)
-    for i in range(1, len(list_cone)):
-        ax.plot3D([list_cone[i - 1][0], list_cone[i][0]],
-                  [list_cone[i - 1][1], list_cone[i][1]],
-                  [list_cone[i - 1][2], list_cone[i][2]],
-                  color="orange", linestyle="--")
-    for i in [8, 16, 32, 64]:
-        ax.plot3D([vec_ax1.x, list_cone[i - 1][0]],
-                  [vec_ax1.y, list_cone[i - 1][1]],
-                  [vec_ax1.z, list_cone[i - 1][2]],
-                  color="orange", linestyle="--")
-    ax.plot3D([vec_ax1.x, vec_ax2.x],
-              [vec_ax1.y, vec_ax2.y],
-              [vec_ax1.z, vec_ax2.z],
-              color="orange", linestyle="--")
-    """
+        # plot fiber hits + cluster hits
+        b = 5  # marker-size scaling factor
+        for i in range(len(list_cluster_x)):
+            """
+            # fiber hits
+            list_surface = surface_list(list_cluster_x[i], 0, list_cluster_z[i], 1.3, 100.0, 1.3)
+            for j in range(len(list_surface)):
+                ax.plot_wireframe(*list_surface[i], alpha=0.5, color="green")
+            """
+            # cluster hits
+            ax.plot3D(list_cluster_x[i], list_cluster_y[i], list_cluster_z[i],
+                      "X", color="orange", markersize=event.RecoClusterEnergies_values[i] * b)
     # ------------------------------------------------------------------------------------------------------------------
     # Control prints
     print("\nControl: ")
