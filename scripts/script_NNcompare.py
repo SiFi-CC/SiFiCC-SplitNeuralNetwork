@@ -3,6 +3,8 @@ import os
 import pickle as pkl
 
 from src.SiFiCCNN.Plotter import PTNetworkCompare
+from src.SiFiCCNN.NeuralNetwork import NeuralNetwork
+from src.SiFiCCNN.DataFrame import DFParser
 
 dir_main = os.getcwd() + "/.."
 dir_root = dir_main + "/root_files/"
@@ -113,3 +115,114 @@ def compare_neuralnetworks(run_name1,
 
 
 compare_neuralnetworks("DNN_S4X6", "RNN_S4X6")
+
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+def compare_prediction(DNN_name,
+                       RNN_name):
+    from src.SiFiCCNN.Model import DNN_SXAX_classifier
+    from src.SiFiCCNN.Model import DNN_SXAX_regression_energy
+    from src.SiFiCCNN.Model import DNN_SXAX_regression_position
+    from src.SiFiCCNN.Model import DNN_SXAX_regression_theta
+
+    from src.SiFiCCNN.Model import RNN_SXAX_classifier
+    from src.SiFiCCNN.Model import RNN_SXAX_regression_energy
+    from src.SiFiCCNN.Model import RNN_SXAX_regression_position
+    from src.SiFiCCNN.Model import RNN_SXAX_regression_theta
+
+    NPZ_FILE_TRAIN = "OptimisedGeometry_Continuous_2e10protons_RNN_S4A6.npz"
+
+    # get prediction DNN
+    tfmodel_clas = DNN_SXAX_classifier.return_model(10, 10)
+    tfmodel_regE = DNN_SXAX_regression_energy.return_model(10, 10)
+    tfmodel_regP = DNN_SXAX_regression_position.return_model(10, 10)
+    tfmodel_regT = DNN_SXAX_regression_theta.return_model(10, 10)
+
+    neuralnetwork_clas = NeuralNetwork.NeuralNetwork(model=tfmodel_clas,
+                                                     model_name=DNN_name,
+                                                     model_tag="clas")
+    neuralnetwork_regE = NeuralNetwork.NeuralNetwork(model=tfmodel_regE,
+                                                     model_name=DNN_name,
+                                                     model_tag="regE")
+    neuralnetwork_regP = NeuralNetwork.NeuralNetwork(model=tfmodel_regP,
+                                                     model_name=DNN_name,
+                                                     model_tag="regP")
+    neuralnetwork_regT = NeuralNetwork.NeuralNetwork(model=tfmodel_regT,
+                                                     model_name=DNN_name,
+                                                     model_tag="regT")
+
+    os.chdir(dir_results + DNN_name + "/")
+    neuralnetwork_clas.load()
+    neuralnetwork_regE.load()
+    neuralnetwork_regP.load()
+    neuralnetwork_regT.load()
+
+    data_cluster = DFParser.parse_cluster(dir_npz + NPZ_FILE_TRAIN)
+
+    # grab all positive identified events by the neural network
+    y_scores = neuralnetwork_clas.predict(data_cluster.features)
+    y_pred_energy = neuralnetwork_regE.predict(data_cluster.features)
+    y_pred_position = neuralnetwork_regP.predict(data_cluster.features)
+    y_pred_theta = neuralnetwork_regT.predict(data_cluster.features)
+
+    # create an array containing full neural network prediction
+    ary_dnn_pred = np.zeros(shape=(data_cluster.entries, 10))
+    ary_dnn_pred[:, 0] = np.reshape(y_scores, newshape=(len(y_scores),))
+    ary_dnn_pred[:, 1:3] = np.reshape(y_pred_energy, newshape=(y_pred_energy.shape[0], y_pred_energy.shape[1]))
+    ary_dnn_pred[:, 3:9] = np.reshape(y_pred_position, newshape=(y_pred_position.shape[0], y_pred_position.shape[1]))
+    ary_dnn_pred[:, 9] = np.reshape(y_pred_theta, newshape=(y_pred_position.shape[0],))
+
+    # get prediction RNN
+    tfmodel_clas = RNN_SXAX_classifier.return_model(10, 10)
+    tfmodel_regE = RNN_SXAX_regression_energy.return_model(10, 10)
+    tfmodel_regP = RNN_SXAX_regression_position.return_model(10, 10)
+    tfmodel_regT = RNN_SXAX_regression_theta.return_model(10, 10)
+
+    neuralnetwork_clas = NeuralNetwork.NeuralNetwork(model=tfmodel_clas,
+                                                     model_name=RNN_name,
+                                                     model_tag="clas")
+    neuralnetwork_regE = NeuralNetwork.NeuralNetwork(model=tfmodel_regE,
+                                                     model_name=RNN_name,
+                                                     model_tag="regE")
+    neuralnetwork_regP = NeuralNetwork.NeuralNetwork(model=tfmodel_regP,
+                                                     model_name=RNN_name,
+                                                     model_tag="regP")
+    neuralnetwork_regT = NeuralNetwork.NeuralNetwork(model=tfmodel_regT,
+                                                     model_name=RNN_name,
+                                                     model_tag="regT")
+
+    os.chdir(dir_results + RNN_name + "/")
+    neuralnetwork_clas.load()
+    neuralnetwork_regE.load()
+    neuralnetwork_regP.load()
+    neuralnetwork_regT.load()
+
+    data_cluster = DFParser.parse_cluster(dir_npz + NPZ_FILE_TRAIN)
+
+    # grab all positive identified events by the neural network
+    y_scores = neuralnetwork_clas.predict(data_cluster.features)
+    y_pred_energy = neuralnetwork_regE.predict(data_cluster.features)
+    y_pred_position = neuralnetwork_regP.predict(data_cluster.features)
+    y_pred_theta = neuralnetwork_regT.predict(data_cluster.features)
+
+    # create an array containing full neural network prediction
+    ary_rnn_pred = np.zeros(shape=(data_cluster.entries, 10))
+    ary_rnn_pred[:, 0] = np.reshape(y_scores, newshape=(len(y_scores),))
+    ary_rnn_pred[:, 1:3] = np.reshape(y_pred_energy, newshape=(y_pred_energy.shape[0], y_pred_energy.shape[1]))
+    ary_rnn_pred[:, 3:9] = np.reshape(y_pred_position, newshape=(y_pred_position.shape[0], y_pred_position.shape[1]))
+    ary_rnn_pred[:, 9] = np.reshape(y_pred_theta, newshape=(y_pred_position.shape[0],))
+
+    # comparison plots for network predictions
+    PTNetworkCompare.plot_compare_energy(ary_dnn_pred[:, 1:3],
+                                         ary_rnn_pred[:, 1:3],
+                                         data_cluster.targets_reg1,
+                                         dir_final + "DNNS4A6_RNNS4A6_energyregression")
+    PTNetworkCompare.plot_compare_position(ary_dnn_pred[:, 3:9],
+                                           ary_rnn_pred[:, 3:9],
+                                           data_cluster.targets_reg2,
+                                           dir_final + "DNNS4A6_RNNS4A6_positionregression")
+    PTNetworkCompare.plot_compare_energy(ary_dnn_pred[:, 9],
+                                         ary_rnn_pred[:, 9],
+                                         data_cluster.targets_reg3,
+                                         dir_final + "DNNS4A6_RNNS4A6_thetaregression")
