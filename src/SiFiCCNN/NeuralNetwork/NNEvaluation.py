@@ -43,6 +43,9 @@ def evaluate_classifier(NeuralNetwork,
     # grab optimal threshold from ROC-analysis
     PTClassifier.plot_score_distribution(y_scores, y_true, "score_dist")
 
+    # Saliency map examples
+    NNAnalysis.get_saliency_examples(y_scores, y_true, NeuralNetwork, DataCluster)
+
 
 def evaluate_regression_energy(NeuralNetwork,
                                DataCluster):
