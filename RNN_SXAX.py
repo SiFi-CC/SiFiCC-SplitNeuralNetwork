@@ -49,25 +49,25 @@ NPZ_LOOKUP_5MM = "OptimisedGeometry_BP5mm_4e9protons_withTimestamps_S1AX_lookup.
 LOOK_UP_FILES = [NPZ_LOOKUP_0MM, NPZ_LOOKUP_5MM]
 """
 # GLOBAL SETTINGS
-RUN_NAME = "RNN_S4X6"
+RUN_NAME = "RNN_S4A6_master"
 
 # Neural Network settings
-epochs_clas = 30
-epochs_regE = 50
-epochs_regP = 50
-epochs_regT = 50
+epochs_clas = 100
+epochs_regE = 100
+epochs_regP = 100
+epochs_regT = 100
 batchsize_clas = 64
 batchsize_regE = 64
 batchsize_regP = 64
 batchsize_regT = 64
 theta = 0.5
-n_frac = 0.5
+n_frac = 1.0
 
 # Global switches to turn on/off training or analysis steps
 train_clas = True
 train_regE = False
 train_regP = False
-train_regT = False
+train_regT = True
 eval_clas = False
 eval_regE = False
 eval_regP = False

@@ -40,16 +40,17 @@ NPZ_FILE_TRAIN = "OptimisedGeometry_Continuous_2e10protons_RNN_S4A6.npz"
 NPZ_FILE_EVAL_0MM = "OptimisedGeometry_BP0mm_2e10protons_withTimestamps_RNN_S4A6.npz"
 NPZ_FILE_EVAL_5MM = "OptimisedGeometry_BP5mm_4e9protons_withTimestamps_RNN_S4A6.npz"
 EVALUATION_FILES = [NPZ_FILE_EVAL_0MM, NPZ_FILE_EVAL_5MM]
-"""
+
 # Lookup files
 # One for each evaluated file must ge given
 # Containing Monte-Carlo truth and Cut-Based reconstruction information
-NPZ_LOOKUP_0MM = "OptimisedGeometry_BP0mm_2e10protons_withTimestamps_S1AX_lookup.npz"
-NPZ_LOOKUP_5MM = "OptimisedGeometry_BP5mm_4e9protons_withTimestamps_S1AX_lookup.npz"
-LOOK_UP_FILES = [NPZ_LOOKUP_0MM, NPZ_LOOKUP_5MM]
-"""
+NPZ_LOOKUP_0MM = "OptimisedGeometry_BP0mm_2e10protons_withTimestamps_CBRECO.npz"
+NPZ_LOOKUP_5MM = "OptimisedGeometry_BP5mm_4e9protons_withTimestamps_CBRECO.npz"
+NPZ_LOOKUP_TRAIN = "OptimisedGeometry_Continuous_2e10protons_CBRECO.npz"
+LOOK_UP_FILES = [NPZ_LOOKUP_0MM, NPZ_LOOKUP_5MM, NPZ_LOOKUP_TRAIN]
+
 # GLOBAL SETTINGS
-RUN_NAME = "DNN_S4X6"
+RUN_NAME = "DNN_S4A6_master"
 
 # Neural Network settings
 epochs_clas = 50
@@ -72,10 +73,10 @@ eval_clas = False
 eval_regE = False
 eval_regP = False
 eval_regT = False
-eval_full = False
+eval_full = True
 
 # MLEM export setting: None (to disable export), "Reco" (for classical), "Pred" (For Neural Network predictions)
-export_npz = True
+export_npz = False
 export_cc6 = False
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -236,6 +237,7 @@ for i, file in enumerate([NPZ_FILE_EVAL_0MM, NPZ_FILE_EVAL_5MM, NPZ_FILE_TRAIN])
 
         data_cluster = DFParser.parse_cluster(dir_npz + file,
                                               n_frac=n_frac)
+        """        
         NNEvaluation.eval_complete(neuralnetwork_clas,
                                    neuralnetwork_regE,
                                    neuralnetwork_regP,
@@ -245,3 +247,9 @@ for i, file in enumerate([NPZ_FILE_EVAL_0MM, NPZ_FILE_EVAL_5MM, NPZ_FILE_TRAIN])
                                    file_name=file[:-4],
                                    export_npz=export_npz,
                                    export_CC6=export_cc6)
+        """
+        NNEvaluation.eval_reco_compare(neuralnetwork_regE,
+                                       neuralnetwork_regP,
+                                       neuralnetwork_regT,
+                                       DataCluster=data_cluster,
+                                       reco_file=dir_npz + LOOK_UP_FILES[i])
