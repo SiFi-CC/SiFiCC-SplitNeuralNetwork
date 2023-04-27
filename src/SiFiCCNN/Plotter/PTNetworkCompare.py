@@ -239,8 +239,8 @@ def plot_compare_position(y_pred0,
     plt.hist(y_pred0[:, 0] - y_true[:, 0], bins=bins_err_x, histtype=u"step", color="blue")
     plt.plot(ary_x, gaussian(ary_x, *popt00), color="blue",
              label=r"$\mu$ = {:.2f}""\n"r"$\sigma$ = {:.2f}".format(popt00[0], popt00[1]))
-    plt.hist(y_pred1[:, 0] - y_true[:, 0], bins=bins_err_x, histtype=u"step", color="blue")
-    plt.plot(ary_x, gaussian(ary_x, *popt10), color="blue",
+    plt.hist(y_pred1[:, 0] - y_true[:, 0], bins=bins_err_x, histtype=u"step", color="red")
+    plt.plot(ary_x, gaussian(ary_x, *popt10), color="red",
              label=r"$\mu$ = {:.2f}""\n"r"$\sigma$ = {:.2f}".format(popt10[0], popt10[1]))
     plt.legend()
     plt.grid()

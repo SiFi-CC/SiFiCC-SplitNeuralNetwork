@@ -29,6 +29,8 @@ def generate_sxax(n_cs, n_ca):
 
     # generate classical cut-based reco output
     RootExport.export_classicreco(rootcluster_bp0mm, dir_npz)
+    RootExport.export_classicreco(rootcluster_bp5mm, dir_npz)
+    RootExport.export_classicreco(rootcluster_cont, dir_npz)
 
 
 def check_sxax():

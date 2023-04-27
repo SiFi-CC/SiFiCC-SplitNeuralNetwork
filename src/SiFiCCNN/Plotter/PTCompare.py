@@ -127,17 +127,19 @@ def plot_compare_regression_position(nn1_mae,
     plt.savefig(figure_name + "_loss" + ".png")
     plt.close()
 
+
 # ----------------------------------------------------------------------------------------------------------------------
 #
 
 def plot_compare_energy(y_pred0,
                         y_pred1,
                         y_true,
+                        labels,
                         figure_name):
     plt.rcParams.update({'font.size': 16})
 
-    width = 0.1
-    bins_err = np.arange(-1.0, 1.0, width)
+    width = 0.01
+    bins_err = np.arange(-1.0 + width, 1.0 - width, width)
     bins_err_center = bins_err[:-1] + (width / 2)
 
     hist00, _ = np.histogram((y_pred0[:, 0] - y_true[:, 0]) / y_true[:, 0], bins=bins_err)
@@ -157,11 +159,13 @@ def plot_compare_energy(y_pred0,
     plt.title("Electron energy resolution")
     plt.xlabel(r"$\frac{E_{Pred} - E_{True}}{E_{True}}$")
     plt.ylabel("counts")
-    plt.hist((y_pred0[:, 0] - y_true[:, 0]) / y_true[:, 0], bins=bins_err, histtype=u"step", color="blue")
-    plt.plot(ary_x, gaussian(ary_x, *popt00), color="blue",
+    plt.hist((y_pred0[:, 0] - y_true[:, 0]) / y_true[:, 0], bins=bins_err, histtype=u"step", color="red",
+             label=labels[0])
+    plt.plot(ary_x, gaussian(ary_x, *popt00), color="red",
              label=r"$\mu$ = {:.2f}""\n"r"$\sigma$ = {:.2f}".format(popt00[0], popt00[1]))
-    plt.hist((y_pred1[:, 0] - y_true[:, 0]) / y_true[:, 0], bins=bins_err, histtype=u"step", color="red")
-    plt.plot(ary_x, gaussian(ary_x, *popt10), color="red",
+    plt.hist((y_pred1[:, 0] - y_true[:, 0]) / y_true[:, 0], bins=bins_err, histtype=u"step", color="black",
+             label=labels[1], alpha=0.5)
+    plt.plot(ary_x, gaussian(ary_x, *popt10), color="black", alpha=0.5,
              label=r"$\mu$ = {:.2f}""\n"r"$\sigma$ = {:.2f}".format(popt10[0], popt10[1]))
     plt.legend()
     plt.grid()
@@ -174,11 +178,13 @@ def plot_compare_energy(y_pred0,
     plt.title("Photon energy resolution")
     plt.xlabel(r"$\frac{E_{Pred} - E_{True}}{E_{True}}$")
     plt.ylabel("counts")
-    plt.hist((y_pred0[:, 1] - y_true[:, 1]) / y_true[:, 1], bins=bins_err, histtype=u"step", color="blue")
-    plt.plot(ary_x, lorentzian(ary_x, *popt01), color="blue",
+    plt.hist((y_pred0[:, 1] - y_true[:, 1]) / y_true[:, 1], bins=bins_err, histtype=u"step", color="red",
+             label=labels[0])
+    plt.plot(ary_x, lorentzian(ary_x, *popt01), color="red",
              label=r"$\mu$ = {:.2f}""\n"r"$FWHM$ = {:.2f}".format(popt01[0], popt01[1] / 2))
-    plt.hist((y_pred1[:, 1] - y_true[:, 1]) / y_true[:, 1], bins=bins_err, histtype=u"step", color="red")
-    plt.plot(ary_x, lorentzian(ary_x, *popt11), color="red",
+    plt.hist((y_pred1[:, 1] - y_true[:, 1]) / y_true[:, 1], bins=bins_err, histtype=u"step", color="black",
+             label=labels[1], alpha=0.5)
+    plt.plot(ary_x, lorentzian(ary_x, *popt11), color="black", alpha=0.5,
              label=r"$\mu$ = {:.2f}""\n"r"$FWHM$ = {:.2f}".format(popt11[0], popt11[1] / 2))
     plt.legend()
     plt.grid()
@@ -190,6 +196,7 @@ def plot_compare_energy(y_pred0,
 def plot_compare_position(y_pred0,
                           y_pred1,
                           y_true,
+                          labels,
                           figure_name):
     plt.rcParams.update({'font.size': 16})
 
@@ -238,11 +245,11 @@ def plot_compare_position(y_pred0,
     plt.title("Electron position-x resolution")
     plt.xlabel(r"$e^{Pred}_{x}$ - $e^{True}_{x}$ [mm]")
     plt.ylabel("counts")
-    plt.hist(y_pred0[:, 0] - y_true[:, 0], bins=bins_err_x, histtype=u"step", color="blue")
-    plt.plot(ary_x, gaussian(ary_x, *popt00), color="blue",
+    plt.hist(y_pred0[:, 0] - y_true[:, 0], bins=bins_err_x, histtype=u"step", color="red", label=labels[0])
+    plt.plot(ary_x, gaussian(ary_x, *popt00), color="red",
              label=r"$\mu$ = {:.2f}""\n"r"$\sigma$ = {:.2f}".format(popt00[0], popt00[1]))
-    plt.hist(y_pred1[:, 0] - y_true[:, 0], bins=bins_err_x, histtype=u"step", color="blue")
-    plt.plot(ary_x, gaussian(ary_x, *popt10), color="blue",
+    plt.hist(y_pred1[:, 0] - y_true[:, 0], bins=bins_err_x, histtype=u"step", color="black", alpha=0.5, label=labels[1])
+    plt.plot(ary_x, gaussian(ary_x, *popt10), color="black", alpha=0.5,
              label=r"$\mu$ = {:.2f}""\n"r"$\sigma$ = {:.2f}".format(popt10[0], popt10[1]))
     plt.legend()
     plt.grid()
@@ -255,11 +262,11 @@ def plot_compare_position(y_pred0,
     plt.title("Electron position-y resolution")
     plt.xlabel(r"$e^{Pred}_{y}$ - $e^{True}_{y}$ [mm]")
     plt.ylabel("counts")
-    plt.hist(y_pred0[:, 1] - y_true[:, 1], bins=bins_err_y, histtype=u"step", color="blue")
-    plt.plot(ary_y, gaussian(ary_y, *popt01), color="blue",
+    plt.hist(y_pred0[:, 1] - y_true[:, 1], bins=bins_err_y, histtype=u"step", color="red", label=labels[0])
+    plt.plot(ary_y, gaussian(ary_y, *popt01), color="red",
              label=r"$\mu$ = {:.2f}""\n"r"$\sigma$ = {:.2f}".format(popt01[0], popt01[1]))
-    plt.hist(y_pred1[:, 1] - y_true[:, 1], bins=bins_err_y, histtype=u"step", color="red")
-    plt.plot(ary_y, gaussian(ary_y, *popt11), color="red",
+    plt.hist(y_pred1[:, 1] - y_true[:, 1], bins=bins_err_y, histtype=u"step", color="black", alpha=0.5, label=labels[1])
+    plt.plot(ary_y, gaussian(ary_y, *popt11), color="black", alpha=0.5,
              label=r"$\mu$ = {:.2f}""\n"r"$\sigma$ = {:.2f}".format(popt11[0], popt11[1]))
     plt.legend()
     plt.grid()
@@ -272,11 +279,11 @@ def plot_compare_position(y_pred0,
     plt.title("Electron position-z resolution")
     plt.xlabel(r"$e^{Pred}_{z}$ - $e^{True}_{z}$ [mm]")
     plt.ylabel("counts")
-    plt.hist(y_pred0[:, 2] - y_true[:, 2], bins=bins_err_z, histtype=u"step", color="blue")
-    plt.plot(ary_z, gaussian(ary_z, *popt02), color="blue",
+    plt.hist(y_pred0[:, 2] - y_true[:, 2], bins=bins_err_z, histtype=u"step", color="red", label=labels[0])
+    plt.plot(ary_z, gaussian(ary_z, *popt02), color="red",
              label=r"$\mu$ = {:.2f}""\n"r"$\sigma$ = {:.2f}".format(popt02[0], popt02[1]))
-    plt.hist(y_pred1[:, 2] - y_true[:, 2], bins=bins_err_z, histtype=u"step", color="red")
-    plt.plot(ary_z, gaussian(ary_z, *popt12), color="red",
+    plt.hist(y_pred1[:, 2] - y_true[:, 2], bins=bins_err_z, histtype=u"step", color="black", label=labels[1], alpha=0.5)
+    plt.plot(ary_z, gaussian(ary_z, *popt12), color="black", alpha=0.5,
              label=r"$\mu$ = {:.2f}""\n"r"$\sigma$ = {:.2f}".format(popt12[0], popt12[1]))
     plt.legend()
     plt.grid()
@@ -291,11 +298,11 @@ def plot_compare_position(y_pred0,
     plt.title("Photon position-x resolution")
     plt.xlabel(r"$e^{Pred}_{x}$ - $e^{True}_{x}$ [mm]")
     plt.ylabel("counts")
-    plt.hist(y_pred0[:, 3] - y_true[:, 3], bins=bins_err_x, histtype=u"step", color="blue")
-    plt.plot(ary_x, gaussian(ary_x, *popt03), color="blue",
+    plt.hist(y_pred0[:, 3] - y_true[:, 3], bins=bins_err_x, histtype=u"step", color="red", label=labels[0])
+    plt.plot(ary_x, gaussian(ary_x, *popt03), color="red",
              label=r"$\mu$ = {:.2f}""\n"r"$\sigma$ = {:.2f}".format(popt03[0], popt03[1]))
-    plt.hist(y_pred1[:, 3] - y_true[:, 3], bins=bins_err_x, histtype=u"step", color="red")
-    plt.plot(ary_x, gaussian(ary_x, *popt13), color="red",
+    plt.hist(y_pred1[:, 3] - y_true[:, 3], bins=bins_err_x, histtype=u"step", color="black", alpha=0.5, label=labels[1])
+    plt.plot(ary_x, gaussian(ary_x, *popt13), color="black", alpha=0.5,
              label=r"$\mu$ = {:.2f}""\n"r"$\sigma$ = {:.2f}".format(popt13[0], popt13[1]))
     plt.legend()
     plt.grid()
@@ -308,11 +315,11 @@ def plot_compare_position(y_pred0,
     plt.title("Photon position-y resolution")
     plt.xlabel(r"$e^{Pred}_{y}$ - $e^{True}_{y}$ [mm]")
     plt.ylabel("counts")
-    plt.hist(y_pred0[:, 4] - y_true[:, 4], bins=bins_err_y, histtype=u"step", color="blue")
-    plt.plot(ary_y, gaussian(ary_y, *popt04), color="blue",
+    plt.hist(y_pred0[:, 4] - y_true[:, 4], bins=bins_err_y, histtype=u"step", color="red", label=labels[0])
+    plt.plot(ary_y, gaussian(ary_y, *popt04), color="red",
              label=r"$\mu$ = {:.2f}""\n"r"$\sigma$ = {:.2f}".format(popt04[0], popt04[1]))
-    plt.hist(y_pred1[:, 4] - y_true[:, 4], bins=bins_err_y, histtype=u"step", color="red")
-    plt.plot(ary_y, gaussian(ary_y, *popt14), color="red",
+    plt.hist(y_pred1[:, 4] - y_true[:, 4], bins=bins_err_y, histtype=u"step", color="black", alpha=0.5, label=labels[1])
+    plt.plot(ary_y, gaussian(ary_y, *popt14), color="black", alpha=0.5,
              label=r"$\mu$ = {:.2f}""\n"r"$\sigma$ = {:.2f}".format(popt14[0], popt14[1]))
     plt.legend()
     plt.grid()
@@ -325,11 +332,11 @@ def plot_compare_position(y_pred0,
     plt.title("Photon position-z resolution")
     plt.xlabel(r"$e^{Pred}_{z}$ - $e^{True}_{z}$ [mm]")
     plt.ylabel("counts")
-    plt.hist(y_pred0[:, 5] - y_true[:, 5], bins=bins_err_z, histtype=u"step", color="blue")
-    plt.plot(ary_z, gaussian(ary_z, *popt05), color="blue",
+    plt.hist(y_pred0[:, 5] - y_true[:, 5], bins=bins_err_z, histtype=u"step", color="red", label=labels[0])
+    plt.plot(ary_z, gaussian(ary_z, *popt05), color="red",
              label=r"$\mu$ = {:.2f}""\n"r"$\sigma$ = {:.2f}".format(popt05[0], popt05[1]))
-    plt.hist(y_pred1[:, 5] - y_true[:, 5], bins=bins_err_z, histtype=u"step", color="red")
-    plt.plot(ary_z, gaussian(ary_z, *popt15), color="red",
+    plt.hist(y_pred1[:, 5] - y_true[:, 5], bins=bins_err_z, histtype=u"step", color="black", alpha=0.5, label=labels[1])
+    plt.plot(ary_z, gaussian(ary_z, *popt15), color="black", alpha=0.5,
              label=r"$\mu$ = {:.2f}""\n"r"$\sigma$ = {:.2f}".format(popt15[0], popt15[1]))
     plt.legend()
     plt.grid()
@@ -341,6 +348,7 @@ def plot_compare_position(y_pred0,
 def plot_compare_theta(y_pred0,
                        y_pred1,
                        y_true,
+                       labels,
                        figure_name):
     y_pred0 = np.reshape(y_pred0, newshape=(len(y_pred0),))
     y_pred1 = np.reshape(y_pred1, newshape=(len(y_pred1),))
@@ -361,11 +369,11 @@ def plot_compare_theta(y_pred0,
     plt.title("Error scattering angle")
     plt.xlabel(r"$\theta_{Pred}$ - $\theta_{True}$ [rad]")
     plt.ylabel("counts")
-    plt.hist(y_pred0 - y_true, bins=bins_err, histtype=u"step", color="blue")
-    plt.plot(ary_x, gaussian(ary_x, *popt0), color="blue",
+    plt.hist(y_pred0 - y_true, bins=bins_err, histtype=u"step", color="red", label=labels[0])
+    plt.plot(ary_x, gaussian(ary_x, *popt0), color="red",
              label=r"$\mu$ = {:.2f}""\n"r"$\sigma$={:.2f}".format(popt0[0], popt0[1]))
-    plt.hist(y_pred1 - y_true, bins=bins_err, histtype=u"step", color="red")
-    plt.plot(ary_x, gaussian(ary_x, *popt1), color="red",
+    plt.hist(y_pred1 - y_true, bins=bins_err, histtype=u"step", color="black", label=labels[1], alpha=0.5)
+    plt.plot(ary_x, gaussian(ary_x, *popt1), color="black", alpha=0.5,
              label=r"$\mu$ = {:.2f}""\n"r"$\sigma$={:.2f}".format(popt1[0], popt1[1]))
     plt.legend()
     plt.tight_layout()

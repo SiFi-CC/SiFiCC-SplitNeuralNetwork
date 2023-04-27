@@ -5,7 +5,7 @@ from src.SiFiCCNN import Utility
 from src.SiFiCCNN.NeuralNetwork import NNExport, NNAnalysis
 from src.SiFiCCNN.NeuralNetwork import FastROCAUC
 
-from src.SiFiCCNN.Plotter import PTNetworkHistory, PTClassifier, PTRegression
+from src.SiFiCCNN.Plotter import PTNetworkHistory, PTClassifier, PTRegression, PTCompare
 
 
 def evaluate_classifier(NeuralNetwork,
@@ -184,11 +184,28 @@ def eval_reco_compare(NeuralNetwork_regE,
     y_pred_position = NeuralNetwork_regP.predict(DataCluster.features[idx_pos])
     y_pred_theta = NeuralNetwork_regT.predict(DataCluster.features[idx_pos])
 
-    y_reco_energy = ary_reco[[idx_pos], 1:3]
-    y_reco_position = ary_reco[[idx_pos], 3:9]
-    y_reco_theta = ary_reco[[idx_pos], 9]
+    y_reco_energy = ary_reco[idx_pos, 1:3]
+    y_reco_position = ary_reco[idx_pos, 3:9]
+    y_reco_theta = ary_reco[idx_pos, 9]
 
     y_true_energy = DataCluster.targets_reg1[idx_pos, :]
     y_true_position = DataCluster.targets_reg2[idx_pos, :]
     y_true_theta = DataCluster.targets_reg3[idx_pos]
 
+    PTCompare.plot_compare_energy(y_pred_energy,
+                                  y_reco_energy,
+                                  y_true_energy,
+                                  ["DNN", "Reco"],
+                                  "reco_compare_energyregression")
+
+    PTCompare.plot_compare_position(y_pred_position,
+                                    y_reco_position,
+                                    y_true_position,
+                                    ["DNN", "Reco"],
+                                    "reco_compare_positionregression")
+
+    PTCompare.plot_compare_theta(y_pred_theta,
+                                 y_reco_theta,
+                                 y_true_theta,
+                                 ["DNN", "Reco"],
+                                 "reco_compare_thetaregression")
