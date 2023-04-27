@@ -3,6 +3,7 @@ import numpy as np
 
 from src.SiFiCCNN.Root.RootParser import Root
 from src.SiFiCCNN.Root import RootFiles
+from src.SiFiCCNN.Root import RootExport
 
 from src.SiFiCCNN.InputGenerator import IGClusterSXAX
 from src.SiFiCCNN.InputGenerator import IGRNNClusterSXAX
@@ -22,9 +23,12 @@ def generate_sxax(n_cs, n_ca):
     rootcluster_bp0mm = Root(dir_main + RootFiles.OptimisedGeometry_BP0mm_2e10protons_withTimestamps_local)
     rootcluster_bp5mm = Root(dir_main + RootFiles.OptimisedGeometry_BP5mm_4e9protons_withTimestamps_local)
 
-    IGRNNClusterSXAX.export_sxax(rootcluster_cont, dir_npz, n_cs, n_ca)
-    IGRNNClusterSXAX.export_sxax(rootcluster_bp0mm, dir_npz, n_cs, n_ca)
-    IGRNNClusterSXAX.export_sxax(rootcluster_bp5mm, dir_npz, n_cs, n_ca)
+    # IGRNNClusterSXAX.export_sxax(rootcluster_cont, dir_npz, n_cs, n_ca)
+    # IGRNNClusterSXAX.export_sxax(rootcluster_bp0mm, dir_npz, n_cs, n_ca)
+    # IGRNNClusterSXAX.export_sxax(rootcluster_bp5mm, dir_npz, n_cs, n_ca)
+
+    # generate classical cut-based reco output
+    RootExport.export_classicreco(rootcluster_bp0mm, dir_npz)
 
 
 def check_sxax():

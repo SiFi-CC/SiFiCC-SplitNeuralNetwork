@@ -162,3 +162,33 @@ def eval_complete(NeuralNetwork_clas,
     if export_CC6:
         NNExport.export_prediction_cc6(ary_nn_pred=ary_nn_pred,
                                        file_name=file_name)
+
+
+def eval_reco_compare(NeuralNetwork_regE,
+                      NeuralNetwork_regP,
+                      NeuralNetwork_regT,
+                      DataCluster,
+                      reco_file,
+                      file_name=""):
+    # load CB-Reconstruction results from npz file
+    reco_npz_data = np.load(reco_file)
+    ary_reco = reco_npz_data["CB_RECO"]
+
+    # Normalize the evaluation data
+    DataCluster.standardize(NeuralNetwork_regE.norm_mean, NeuralNetwork_regE.norm_std)
+    DataCluster.update_indexing_positives()
+    idx_pos = DataCluster.ary_idx
+
+    # grab all positive identified events by the neural network
+    y_pred_energy = NeuralNetwork_regE.predict(DataCluster.features[idx_pos])
+    y_pred_position = NeuralNetwork_regP.predict(DataCluster.features[idx_pos])
+    y_pred_theta = NeuralNetwork_regT.predict(DataCluster.features[idx_pos])
+
+    y_reco_energy = ary_reco[[idx_pos], 1:3]
+    y_reco_position = ary_reco[[idx_pos], 3:9]
+    y_reco_theta = ary_reco[[idx_pos], 9]
+
+    y_true_energy = DataCluster.targets_reg1[idx_pos, :]
+    y_true_position = DataCluster.targets_reg2[idx_pos, :]
+    y_true_theta = DataCluster.targets_reg3[idx_pos]
+
