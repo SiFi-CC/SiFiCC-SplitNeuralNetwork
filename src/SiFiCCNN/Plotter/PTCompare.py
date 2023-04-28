@@ -147,8 +147,8 @@ def plot_compare_energy(y_pred0,
 
     hist00, _ = np.histogram((y_pred0[:, 0] - y_true[:, 0]) / y_true[:, 0], bins=bins_err)
     hist01, _ = np.histogram((y_pred0[:, 1] - y_true[:, 1]) / y_true[:, 1], bins=bins_err)
-    hist10, _ = np.histogram((y_pred1[idx_pos, 0] - y_true[idx_pos, 0]) / y_true[:, 0], bins=bins_err)
-    hist11, _ = np.histogram((y_pred1[idx_pos, 1] - y_true[idx_pos, 1]) / y_true[:, 1], bins=bins_err)
+    hist10, _ = np.histogram((y_pred1[idx_pos, 0] - y_true[idx_pos, 0]) / y_true[idx_pos, 0], bins=bins_err)
+    hist11, _ = np.histogram((y_pred1[idx_pos, 1] - y_true[idx_pos, 1]) / y_true[idx_pos, 1], bins=bins_err)
 
     # fitting energy resolution
     popt00, pcov00 = curve_fit(gaussian, bins_err_center, hist00, p0=[0.0, 1.0, np.sum(hist00) * width])
