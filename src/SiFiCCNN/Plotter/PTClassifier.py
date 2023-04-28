@@ -100,7 +100,7 @@ def plot_sp_distribution(ary_sp,
     plt.ylabel("counts")
     plt.xlim(-80.0, 20.0)
     # total event histogram
-    plt.hist(ary_sp, bins=bins, color="orange", alpha=0.5, label="All events")
+    plt.hist(ary_sp[ary_sp != 0.0], bins=bins, color="orange", alpha=0.5, label="All events")
     plt.errorbar(bins[1:] - width / 2, hist0, np.sqrt(hist0), color="orange", fmt=".")
     plt.errorbar(bins[1:] - width / 2, hist2, np.sqrt(hist2), color="black", fmt=".", label="Ideal Compton events")
     plt.errorbar(bins[1:] - width / 2, hist1, np.sqrt(hist1), color="red", fmt=".", label="True Positive events")
