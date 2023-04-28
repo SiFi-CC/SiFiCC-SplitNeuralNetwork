@@ -88,7 +88,7 @@ def plot_sp_distribution(ary_sp,
             idx_tp.append(False)
     idx_tp = np.array(idx_tp)
 
-    hist0, _ = np.histogram(ary_sp, bins=bins)
+    hist0, _ = np.histogram(ary_sp[ary_sp != 0.0], bins=bins)
     hist1, _ = np.histogram(ary_sp[idx_tp], bins=bins)
     hist2, _ = np.histogram(ary_sp[ary_true == 1.0], bins=bins)
 
@@ -103,7 +103,7 @@ def plot_sp_distribution(ary_sp,
     plt.hist(ary_sp, bins=bins, color="orange", alpha=0.5, label="All events")
     plt.errorbar(bins[1:] - width / 2, hist0, np.sqrt(hist0), color="orange", fmt=".")
     plt.errorbar(bins[1:] - width / 2, hist2, np.sqrt(hist2), color="black", fmt=".", label="Ideal Compton events")
-    plt.errorbar(bins[1:] - width / 2, hist1, np.sqrt(hist1), color="red", fmt=".", label="True Positive\nevents")
+    plt.errorbar(bins[1:] - width / 2, hist1, np.sqrt(hist1), color="red", fmt=".", label="True Positive events")
     plt.legend()
     plt.grid()
     plt.tight_layout()
@@ -142,7 +142,7 @@ def plot_pe_distribution(ary_pe,
     plt.hist(ary_pe, bins=bins, color="orange", alpha=0.5, label="All events")
     plt.errorbar(bins[1:] - width / 2, hist0, np.sqrt(hist0), color="orange", fmt=".")
     plt.errorbar(bins[1:] - width / 2, hist2, np.sqrt(hist2), color="black", fmt=".", label="Ideal Compton events")
-    plt.errorbar(bins[1:] - width / 2, hist1, np.sqrt(hist1), color="red", fmt=".", label="True Positive\nevents")
+    plt.errorbar(bins[1:] - width / 2, hist1, np.sqrt(hist1), color="red", fmt=".", label="True Positive events")
     plt.yscale("log")
     plt.legend()
     plt.grid()
