@@ -138,14 +138,17 @@ def plot_compare_energy(y_pred0,
                         figure_name):
     plt.rcParams.update({'font.size': 16})
 
+    # reco positives
+    idx_pos = y_pred1[:, 0] != 0.0
+
     width = 0.01
     bins_err = np.arange(-1.0 + width, 1.0 - width, width)
     bins_err_center = bins_err[:-1] + (width / 2)
 
     hist00, _ = np.histogram((y_pred0[:, 0] - y_true[:, 0]) / y_true[:, 0], bins=bins_err)
     hist01, _ = np.histogram((y_pred0[:, 1] - y_true[:, 1]) / y_true[:, 1], bins=bins_err)
-    hist10, _ = np.histogram((y_pred1[:, 0] - y_true[:, 0]) / y_true[:, 0], bins=bins_err)
-    hist11, _ = np.histogram((y_pred1[:, 1] - y_true[:, 1]) / y_true[:, 1], bins=bins_err)
+    hist10, _ = np.histogram((y_pred1[idx_pos, 0] - y_true[idx_pos, 0]) / y_true[:, 0], bins=bins_err)
+    hist11, _ = np.histogram((y_pred1[idx_pos, 1] - y_true[idx_pos, 1]) / y_true[:, 1], bins=bins_err)
 
     # fitting energy resolution
     popt00, pcov00 = curve_fit(gaussian, bins_err_center, hist00, p0=[0.0, 1.0, np.sum(hist00) * width])
@@ -163,7 +166,7 @@ def plot_compare_energy(y_pred0,
              label=labels[0])
     plt.plot(ary_x, gaussian(ary_x, *popt00), color="red",
              label=r"$\mu$ = {:.2f}""\n"r"$\sigma$ = {:.2f}".format(popt00[0], popt00[1]))
-    plt.hist((y_pred1[:, 0] - y_true[:, 0]) / y_true[:, 0], bins=bins_err, histtype=u"step", color="black",
+    plt.hist((y_pred1[idx_pos, 0] - y_true[idx_pos, 0]) / y_true[:, 0], bins=bins_err, histtype=u"step", color="black",
              label=labels[1], alpha=0.5)
     plt.plot(ary_x, gaussian(ary_x, *popt10), color="black", alpha=0.5,
              label=r"$\mu$ = {:.2f}""\n"r"$\sigma$ = {:.2f}".format(popt10[0], popt10[1]))
@@ -182,7 +185,7 @@ def plot_compare_energy(y_pred0,
              label=labels[0])
     plt.plot(ary_x, lorentzian(ary_x, *popt01), color="red",
              label=r"$\mu$ = {:.2f}""\n"r"$FWHM$ = {:.2f}".format(popt01[0], popt01[1] / 2))
-    plt.hist((y_pred1[:, 1] - y_true[:, 1]) / y_true[:, 1], bins=bins_err, histtype=u"step", color="black",
+    plt.hist((y_pred1[idx_pos, 1] - y_true[idx_pos, 1]) / y_true[:, 1], bins=bins_err, histtype=u"step", color="black",
              label=labels[1], alpha=0.5)
     plt.plot(ary_x, lorentzian(ary_x, *popt11), color="black", alpha=0.5,
              label=r"$\mu$ = {:.2f}""\n"r"$FWHM$ = {:.2f}".format(popt11[0], popt11[1] / 2))
@@ -200,6 +203,9 @@ def plot_compare_position(y_pred0,
                           figure_name):
     plt.rcParams.update({'font.size': 16})
 
+    # reco positives
+    idx_pos = y_pred1[:, 0] != 0.0
+
     width = 0.1
     bins_err_x = np.arange(-5.5, 5.5, width)
     bins_err_y = np.arange(-60.5, 60.5, width)
@@ -215,12 +221,12 @@ def plot_compare_position(y_pred0,
     hist03, _ = np.histogram(y_pred0[:, 3] - y_true[:, 3], bins=bins_err_x)
     hist04, _ = np.histogram(y_pred0[:, 4] - y_true[:, 4], bins=bins_err_y)
     hist05, _ = np.histogram(y_pred0[:, 5] - y_true[:, 5], bins=bins_err_z)
-    hist10, _ = np.histogram(y_pred1[:, 0] - y_true[:, 0], bins=bins_err_x)
-    hist11, _ = np.histogram(y_pred1[:, 1] - y_true[:, 1], bins=bins_err_y)
-    hist12, _ = np.histogram(y_pred1[:, 2] - y_true[:, 2], bins=bins_err_z)
-    hist13, _ = np.histogram(y_pred1[:, 3] - y_true[:, 3], bins=bins_err_x)
-    hist14, _ = np.histogram(y_pred1[:, 4] - y_true[:, 4], bins=bins_err_y)
-    hist15, _ = np.histogram(y_pred1[:, 5] - y_true[:, 5], bins=bins_err_z)
+    hist10, _ = np.histogram(y_pred1[idx_pos, 0] - y_true[idx_pos, 0], bins=bins_err_x)
+    hist11, _ = np.histogram(y_pred1[idx_pos, 1] - y_true[idx_pos, 1], bins=bins_err_y)
+    hist12, _ = np.histogram(y_pred1[idx_pos, 2] - y_true[idx_pos, 2], bins=bins_err_z)
+    hist13, _ = np.histogram(y_pred1[idx_pos, 3] - y_true[idx_pos, 3], bins=bins_err_x)
+    hist14, _ = np.histogram(y_pred1[idx_pos, 4] - y_true[idx_pos, 4], bins=bins_err_y)
+    hist15, _ = np.histogram(y_pred1[idx_pos, 5] - y_true[idx_pos, 5], bins=bins_err_z)
 
     # fitting position resolution
     popt00, pcov00 = curve_fit(gaussian, bins_err_x[:-1] + width / 2, hist00, p0=[0.0, 1.0, np.sum(hist00) * width])
@@ -248,7 +254,8 @@ def plot_compare_position(y_pred0,
     plt.hist(y_pred0[:, 0] - y_true[:, 0], bins=bins_err_x, histtype=u"step", color="red", label=labels[0])
     plt.plot(ary_x, gaussian(ary_x, *popt00), color="red",
              label=r"$\mu$ = {:.2f}""\n"r"$\sigma$ = {:.2f}".format(popt00[0], popt00[1]))
-    plt.hist(y_pred1[:, 0] - y_true[:, 0], bins=bins_err_x, histtype=u"step", color="black", alpha=0.5, label=labels[1])
+    plt.hist(y_pred1[idx_pos, 0] - y_true[idx_pos, 0], bins=bins_err_x, histtype=u"step", color="black", alpha=0.5,
+             label=labels[1])
     plt.plot(ary_x, gaussian(ary_x, *popt10), color="black", alpha=0.5,
              label=r"$\mu$ = {:.2f}""\n"r"$\sigma$ = {:.2f}".format(popt10[0], popt10[1]))
     plt.legend()
@@ -265,7 +272,8 @@ def plot_compare_position(y_pred0,
     plt.hist(y_pred0[:, 1] - y_true[:, 1], bins=bins_err_y, histtype=u"step", color="red", label=labels[0])
     plt.plot(ary_y, gaussian(ary_y, *popt01), color="red",
              label=r"$\mu$ = {:.2f}""\n"r"$\sigma$ = {:.2f}".format(popt01[0], popt01[1]))
-    plt.hist(y_pred1[:, 1] - y_true[:, 1], bins=bins_err_y, histtype=u"step", color="black", alpha=0.5, label=labels[1])
+    plt.hist(y_pred1[idx_pos, 1] - y_true[idx_pos, 1], bins=bins_err_y, histtype=u"step", color="black", alpha=0.5,
+             label=labels[1])
     plt.plot(ary_y, gaussian(ary_y, *popt11), color="black", alpha=0.5,
              label=r"$\mu$ = {:.2f}""\n"r"$\sigma$ = {:.2f}".format(popt11[0], popt11[1]))
     plt.legend()
@@ -282,7 +290,8 @@ def plot_compare_position(y_pred0,
     plt.hist(y_pred0[:, 2] - y_true[:, 2], bins=bins_err_z, histtype=u"step", color="red", label=labels[0])
     plt.plot(ary_z, gaussian(ary_z, *popt02), color="red",
              label=r"$\mu$ = {:.2f}""\n"r"$\sigma$ = {:.2f}".format(popt02[0], popt02[1]))
-    plt.hist(y_pred1[:, 2] - y_true[:, 2], bins=bins_err_z, histtype=u"step", color="black", label=labels[1], alpha=0.5)
+    plt.hist(y_pred1[idx_pos, 2] - y_true[idx_pos, 2], bins=bins_err_z, histtype=u"step", color="black",
+             label=labels[1], alpha=0.5)
     plt.plot(ary_z, gaussian(ary_z, *popt12), color="black", alpha=0.5,
              label=r"$\mu$ = {:.2f}""\n"r"$\sigma$ = {:.2f}".format(popt12[0], popt12[1]))
     plt.legend()
@@ -301,7 +310,8 @@ def plot_compare_position(y_pred0,
     plt.hist(y_pred0[:, 3] - y_true[:, 3], bins=bins_err_x, histtype=u"step", color="red", label=labels[0])
     plt.plot(ary_x, gaussian(ary_x, *popt03), color="red",
              label=r"$\mu$ = {:.2f}""\n"r"$\sigma$ = {:.2f}".format(popt03[0], popt03[1]))
-    plt.hist(y_pred1[:, 3] - y_true[:, 3], bins=bins_err_x, histtype=u"step", color="black", alpha=0.5, label=labels[1])
+    plt.hist(y_pred1[idx_pos, 3] - y_true[idx_pos, 3], bins=bins_err_x, histtype=u"step", color="black", alpha=0.5,
+             label=labels[1])
     plt.plot(ary_x, gaussian(ary_x, *popt13), color="black", alpha=0.5,
              label=r"$\mu$ = {:.2f}""\n"r"$\sigma$ = {:.2f}".format(popt13[0], popt13[1]))
     plt.legend()
@@ -318,7 +328,8 @@ def plot_compare_position(y_pred0,
     plt.hist(y_pred0[:, 4] - y_true[:, 4], bins=bins_err_y, histtype=u"step", color="red", label=labels[0])
     plt.plot(ary_y, gaussian(ary_y, *popt04), color="red",
              label=r"$\mu$ = {:.2f}""\n"r"$\sigma$ = {:.2f}".format(popt04[0], popt04[1]))
-    plt.hist(y_pred1[:, 4] - y_true[:, 4], bins=bins_err_y, histtype=u"step", color="black", alpha=0.5, label=labels[1])
+    plt.hist(y_pred1[idx_pos, 4] - y_true[idx_pos, 4], bins=bins_err_y, histtype=u"step", color="black", alpha=0.5,
+             label=labels[1])
     plt.plot(ary_y, gaussian(ary_y, *popt14), color="black", alpha=0.5,
              label=r"$\mu$ = {:.2f}""\n"r"$\sigma$ = {:.2f}".format(popt14[0], popt14[1]))
     plt.legend()
@@ -335,7 +346,8 @@ def plot_compare_position(y_pred0,
     plt.hist(y_pred0[:, 5] - y_true[:, 5], bins=bins_err_z, histtype=u"step", color="red", label=labels[0])
     plt.plot(ary_z, gaussian(ary_z, *popt05), color="red",
              label=r"$\mu$ = {:.2f}""\n"r"$\sigma$ = {:.2f}".format(popt05[0], popt05[1]))
-    plt.hist(y_pred1[:, 5] - y_true[:, 5], bins=bins_err_z, histtype=u"step", color="black", alpha=0.5, label=labels[1])
+    plt.hist(y_pred1[idx_pos, 5] - y_true[idx_pos, 5], bins=bins_err_z, histtype=u"step", color="black", alpha=0.5,
+             label=labels[1])
     plt.plot(ary_z, gaussian(ary_z, *popt15), color="black", alpha=0.5,
              label=r"$\mu$ = {:.2f}""\n"r"$\sigma$ = {:.2f}".format(popt15[0], popt15[1]))
     plt.legend()
@@ -375,7 +387,8 @@ def plot_compare_theta(y_pred0,
     plt.hist(y_pred0 - y_true, bins=bins_err, histtype=u"step", color="red", label=labels[0])
     plt.plot(ary_x, gaussian(ary_x, *popt0), color="red",
              label=r"$\mu$ = {:.2f}""\n"r"$\sigma$={:.2f}".format(popt0[0], popt0[1]))
-    plt.hist(y_pred1[idx_pos] - y_true[idx_pos], bins=bins_err, histtype=u"step", color="black", label=labels[1], alpha=0.5)
+    plt.hist(y_pred1[idx_pos] - y_true[idx_pos], bins=bins_err, histtype=u"step", color="black", label=labels[1],
+             alpha=0.5)
     plt.plot(ary_x, gaussian(ary_x, *popt1), color="black", alpha=0.5,
              label=r"$\mu$ = {:.2f}""\n"r"$\sigma$={:.2f}".format(popt1[0], popt1[1]))
     plt.legend()
