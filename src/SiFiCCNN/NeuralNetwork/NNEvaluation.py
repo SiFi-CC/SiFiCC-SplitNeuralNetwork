@@ -44,13 +44,13 @@ def evaluate_classifier(NeuralNetwork,
     PTClassifier.plot_score_distribution(y_scores, y_true, "score_dist")
 
     # plot source position distributions
-    PTClassifier.plot_sp_distribution(ary_sp=DataCluster.meta[:, 2],
+    PTClassifier.plot_sp_distribution(ary_sp=DataCluster.meta[DataCluster.idx_test(), 2],
                                       ary_score=y_scores,
                                       ary_true=y_true,
                                       figure_name="sp_distribution")
 
     # plot primary energy distribution
-    PTClassifier.plot_pe_distribution(ary_pe=DataCluster.meta[:, 1],
+    PTClassifier.plot_pe_distribution(ary_pe=DataCluster.meta[DataCluster.idx_test(), 1],
                                       ary_score=y_scores,
                                       ary_true=y_true,
                                       figure_name="ep_distribution")
