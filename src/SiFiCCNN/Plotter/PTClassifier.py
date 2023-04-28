@@ -80,8 +80,16 @@ def plot_sp_distribution(ary_sp,
     width = 1.0
     bins = np.arange(int(min(ary_sp)), int(max(ary_sp)), width)
 
+    idx_tp = []
+    for i in range(ary_sp):
+        if ary_score[i] > 0.5 and ary_true[i] == 1.0:
+            idx_tp.append(True)
+        else:
+            idx_tp.append(False)
+    idx_tp = np.array(idx_tp)
+
     hist0, _ = np.histogram(ary_sp, bins=bins)
-    hist1, _ = np.histogram(ary_sp[(ary_score >= 0.5) and (ary_true == 1.0)], bins=bins)
+    hist1, _ = np.histogram(ary_sp[idx_tp], bins=bins)
     hist2, _ = np.histogram(ary_sp[ary_true == 1.0], bins=bins)
 
     # generate plots
@@ -111,8 +119,16 @@ def plot_pe_distribution(ary_pe,
     width = 0.1
     bins = np.arange(0.0, 10.0, width)
 
+    idx_tp = []
+    for i in range(ary_sp):
+        if ary_score[i] > 0.5 and ary_true[i] == 1.0:
+            idx_tp.append(True)
+        else:
+            idx_tp.append(False)
+    idx_tp = np.array(idx_tp)
+
     hist0, _ = np.histogram(ary_pe, bins=bins)
-    hist1, _ = np.histogram(ary_pe[(ary_score >= 0.5) and (ary_true == 1.0)], bins=bins)
+    hist1, _ = np.histogram(ary_pe[idx_tp], bins=bins)
     hist2, _ = np.histogram(ary_pe[ary_true == 1.0], bins=bins)
 
     # generate plots
