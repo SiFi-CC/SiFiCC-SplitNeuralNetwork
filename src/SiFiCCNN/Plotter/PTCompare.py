@@ -354,11 +354,14 @@ def plot_compare_theta(y_pred0,
     y_pred1 = np.reshape(y_pred1, newshape=(len(y_pred1),))
     y_true = np.reshape(y_true, newshape=(len(y_true),))
 
+    # reco positives
+    idx_pos = y_pred1 != 0.0
+
     width = 0.01
     bins_err = np.arange(-np.pi, np.pi, width)
     bins_err_center = bins_err[:-1] + (width / 2)
     hist0, _ = np.histogram(y_pred0 - y_true, bins=bins_err)
-    hist1, _ = np.histogram(y_pred1 - y_true, bins=bins_err)
+    hist1, _ = np.histogram(y_pred1[idx_pos] - y_true[idx_pos], bins=bins_err)
 
     # fitting energy resolution
     popt0, pcov0 = curve_fit(gaussian, bins_err_center, hist0, p0=[0.0, 1.0, np.sum(hist0) * width])
@@ -372,7 +375,7 @@ def plot_compare_theta(y_pred0,
     plt.hist(y_pred0 - y_true, bins=bins_err, histtype=u"step", color="red", label=labels[0])
     plt.plot(ary_x, gaussian(ary_x, *popt0), color="red",
              label=r"$\mu$ = {:.2f}""\n"r"$\sigma$={:.2f}".format(popt0[0], popt0[1]))
-    plt.hist(y_pred1 - y_true, bins=bins_err, histtype=u"step", color="black", label=labels[1], alpha=0.5)
+    plt.hist(y_pred1[idx_pos] - y_true[idx_pos], bins=bins_err, histtype=u"step", color="black", label=labels[1], alpha=0.5)
     plt.plot(ary_x, gaussian(ary_x, *popt1), color="black", alpha=0.5,
              label=r"$\mu$ = {:.2f}""\n"r"$\sigma$={:.2f}".format(popt1[0], popt1[1]))
     plt.legend()
