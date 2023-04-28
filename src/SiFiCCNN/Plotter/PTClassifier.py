@@ -70,3 +70,66 @@ def plot_efficiencymap(y_pred, y_true, y_sp, figure_name, theta=0.5, sr=100):
     plt.tight_layout()
     plt.savefig(figure_name + ".png")
     plt.close()
+
+
+def plot_sp_distribution(ary_sp,
+                         ary_score,
+                         ary_true,
+                         figure_name):
+    # plot MC Source Position z-direction
+    width = 1.0
+    bins = np.arange(int(min(ary_sp)), int(max(ary_sp)), width)
+
+    hist0, _ = np.histogram(ary_sp, bins=bins)
+    hist1, _ = np.histogram(ary_sp[(ary_score >= 0.5) and (ary_true == 1.0)], bins=bins)
+    hist2, _ = np.histogram(ary_sp[ary_true == 1.0], bins=bins)
+
+    # generate plots
+    # MC Total / MC Ideal Compton
+    plt.figure()
+    plt.title("MC Source Position z")
+    plt.xlabel("z-position [mm]")
+    plt.ylabel("counts")
+    plt.xlim(-80.0, 20.0)
+    # total event histogram
+    plt.hist(ary_sp, bins=bins, color="orange", alpha=0.5, label="All events")
+    plt.errorbar(bins[1:] - width / 2, hist0, np.sqrt(hist0), color="orange", fmt=".")
+    plt.errorbar(bins[1:] - width / 2, hist2, np.sqrt(hist2), color="black", fmt=".", label="Ideal Compton events")
+    plt.errorbar(bins[1:] - width / 2, hist1, np.sqrt(hist1), color="red", fmt=".", label="True Positive\nevents")
+    plt.legend()
+    plt.grid()
+    plt.tight_layout()
+    plt.savefig(figure_name + ".png")
+    plt.close()
+
+
+def plot_pe_distribution(ary_pe,
+                         ary_score,
+                         ary_true,
+                         figure_name):
+    # plot MC Source Position z-direction
+    width = 0.1
+    bins = np.arange(0.0, 10.0, width)
+
+    hist0, _ = np.histogram(ary_pe, bins=bins)
+    hist1, _ = np.histogram(ary_pe[(ary_score >= 0.5) and (ary_true == 1.0)], bins=bins)
+    hist2, _ = np.histogram(ary_pe[ary_true == 1.0], bins=bins)
+
+    # generate plots
+    # MC Total / MC Ideal Compton
+    plt.figure()
+    plt.title("MC Energy Primary")
+    plt.xlabel("Energy [MeV]")
+    plt.ylabel("counts (normalized)")
+    plt.xlim(0.0, 10.0)
+    # total event histogram
+    plt.hist(ary_pe, bins=bins, color="orange", alpha=0.5, label="All events")
+    plt.errorbar(bins[1:] - width / 2, hist0, np.sqrt(hist0), color="orange", fmt=".")
+    plt.errorbar(bins[1:] - width / 2, hist2, np.sqrt(hist2), color="black", fmt=".", label="Ideal Compton events")
+    plt.errorbar(bins[1:] - width / 2, hist1, np.sqrt(hist1), color="red", fmt=".", label="True Positive\nevents")
+    plt.yscale("log")
+    plt.legend()
+    plt.grid()
+    plt.tight_layout()
+    plt.savefig(figure_name + ".png")
+    plt.close()
