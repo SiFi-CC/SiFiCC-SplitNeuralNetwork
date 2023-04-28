@@ -166,7 +166,8 @@ def plot_compare_energy(y_pred0,
              label=labels[0])
     plt.plot(ary_x, gaussian(ary_x, *popt00), color="red",
              label=r"$\mu$ = {:.2f}""\n"r"$\sigma$ = {:.2f}".format(popt00[0], popt00[1]))
-    plt.hist((y_pred1[idx_pos, 0] - y_true[idx_pos, 0]) / y_true[:, 0], bins=bins_err, histtype=u"step", color="black",
+    plt.hist((y_pred1[idx_pos, 0] - y_true[idx_pos, 0]) / y_true[idx_pos, 0], bins=bins_err, histtype=u"step",
+             color="black",
              label=labels[1], alpha=0.5)
     plt.plot(ary_x, gaussian(ary_x, *popt10), color="black", alpha=0.5,
              label=r"$\mu$ = {:.2f}""\n"r"$\sigma$ = {:.2f}".format(popt10[0], popt10[1]))
@@ -185,7 +186,8 @@ def plot_compare_energy(y_pred0,
              label=labels[0])
     plt.plot(ary_x, lorentzian(ary_x, *popt01), color="red",
              label=r"$\mu$ = {:.2f}""\n"r"$FWHM$ = {:.2f}".format(popt01[0], popt01[1] / 2))
-    plt.hist((y_pred1[idx_pos, 1] - y_true[idx_pos, 1]) / y_true[:, 1], bins=bins_err, histtype=u"step", color="black",
+    plt.hist((y_pred1[idx_pos, 1] - y_true[idx_pos, 1]) / y_true[idx_pos, 1], bins=bins_err, histtype=u"step",
+             color="black",
              label=labels[1], alpha=0.5)
     plt.plot(ary_x, lorentzian(ary_x, *popt11), color="black", alpha=0.5,
              label=r"$\mu$ = {:.2f}""\n"r"$FWHM$ = {:.2f}".format(popt11[0], popt11[1] / 2))
