@@ -81,7 +81,7 @@ def plot_sp_distribution(ary_sp,
     bins = np.arange(int(min(ary_sp)), int(max(ary_sp)), width)
 
     idx_tp = []
-    for i in range(ary_sp):
+    for i in range(len(ary_sp)):
         if ary_score[i] > 0.5 and ary_true[i] == 1.0:
             idx_tp.append(True)
         else:
@@ -120,7 +120,7 @@ def plot_pe_distribution(ary_pe,
     bins = np.arange(0.0, 10.0, width)
 
     idx_tp = []
-    for i in range(ary_sp):
+    for i in range(len(ary_pe)):
         if ary_score[i] > 0.5 and ary_true[i] == 1.0:
             idx_tp.append(True)
         else:
