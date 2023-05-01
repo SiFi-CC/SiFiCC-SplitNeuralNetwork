@@ -15,7 +15,8 @@ def return_model(timesteps, features):
     model = keras.models.Sequential()
     # add first dense layer with predefined input dimension
     model.add(tf.keras.layers.Masking(mask_value=0., input_shape=(timesteps, features)))
-    model.add(tf.keras.layers.LSTM(32, input_dim=features))
+    model.add(tf.keras.layers.LSTM(32, input_dim=features, return_sequences=True))
+    model.add(tf.keras.layers.LSTM(32))
     model.add(tf.keras.layers.Dropout(0.05))
     model.add(tf.keras.layers.Dense(2, activation="relu"))
     model.compile(loss="mean_absolute_error",
