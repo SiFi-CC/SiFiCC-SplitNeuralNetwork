@@ -172,7 +172,7 @@ def eval_complete(NeuralNetwork_clas,
                                        file_name=file_name)
 
     if export_CC6:
-        NNExport.export_prediction_cc6(ary_nn_pred=ary_nn_pred,
+        NNExport.export_prediction_cc6(ary_nn_pred=ary_nn_pred[idx_clas_pos, :],
                                        file_name=file_name)
 
 
@@ -207,17 +207,17 @@ def eval_reco_compare(NeuralNetwork_regE,
     PTCompare.plot_compare_energy(y_pred_energy,
                                   y_reco_energy,
                                   y_true_energy,
-                                  ["DNN", "Reco"],
+                                  ["RNN", "Reco"],
                                   "reco_compare_energyregression")
 
     PTCompare.plot_compare_position(y_pred_position,
                                     y_reco_position,
                                     y_true_position,
-                                    ["DNN", "Reco"],
+                                    ["RNN", "Reco"],
                                     "reco_compare_positionregression")
 
     PTCompare.plot_compare_theta(y_pred_theta,
                                  y_reco_theta,
                                  y_true_theta,
-                                 ["DNN", "Reco"],
+                                 ["RNN", "Reco"],
                                  "reco_compare_thetaregression")
