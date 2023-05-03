@@ -5,10 +5,10 @@ from uproot_methods.classes.TVector3 import TVector3
 # ----------------------------------------------------------------------------------------------------------------------
 
 class Event:
-    """represents a single event of a root tree.
-
+    """
+    Represents a single event of a root tree. For detailed description of the attributes consult the gccb-wiki
     Attributes:
-        ### For detailed description of the attributes consult the gccb-wiki
+
         EventNumber (int)
         MCEnergy_Primary (double)
         MCEnergy_e (double)
@@ -24,11 +24,6 @@ class Event:
         MCInteractions_p (vector<int>)
 
         Identified (int)
-        RecoEnergy_e (vector<PhysicVar>)
-        RecoEnergy_p (vector<PhysicVar>)
-        RecoPosition_e (vector<PhysicVec>)
-        RecoPosition_p (vector<PhysicVec>)
-        RecoDirection_scatter (vector<PhysicVec>)
 
         RecoClusterPosition (vector<TVector3>)
         RecoClusterPosition_uncertainty (vector<TVector3>)
@@ -104,7 +99,7 @@ class Event:
 
         # Reco information (Cut-Based Reconstruction)
         self.Identified = Identified
-        # Cut-Based reco data can not be accessed in python due to the entries being branches
+        # Cut-Based reco data can not be accessed in python due to the entries being branches!
 
         # Cluster information
         self.RecoClusterPosition = RecoClusterPosition
@@ -149,227 +144,124 @@ class Event:
         # correction of photon absorber position
 
         # --------------------------------------------------------------------------------------------------------------
-        # Event tagging
-        # event identification steps:
-        #
-        # - compton event: A compton event took place on Monte Carlo level
-        # - full compton event: A compton event with Monte Carlo entries of electron in scatterer and
-        #                       absorber entries of scattered photon
-        # - ideal compton event: Full compton event, with single scattering in scatterer and next interaction in
-        #                        absorber
+        # Event tagging and deep learning targets
 
-        # check if simulated event type is a real coincidence ( + pileup)
-        self.is_real_coincidence = True if self.MCSimulatedEventType in [2, 5] else False
+        # initialize neural network targets
+        self.target_position_e = TVector3(0, 0, 0)
+        self.target_position_p = TVector3(0, 0, 0)
+        self.target_energy_e = 0.0
+        self.target_energy_p = 0.0
+        self.target_angle_theta = 0.0
+        self.compton_tag = False
 
-        # check if the event is a Compton event
-        # Compton events have a positive MC electron energy
-        self.is_compton = False
-        if self.is_real_coincidence:
-            if self.MCEnergy_e != 0:
-                self.is_compton = True
+        # set correct targets
+        self.set_target_positions()
+        self.set_target_energy()
+        self.set_target_angle()
+        self.set_compton_tag()
 
-        # check if event is distributed
-        # distributed = electron interaction in scatterer and photon interaction in absorber
-        self.is_compton_distributed = False
-        self.is_compton_pseudo_distributed = False
-        self.is_compton_pseudo_complete = False
-        self.MCPosition_p_first = TVector3(0, 0, 0)
-        self.MCPosition_e_first = TVector3(0, 0, 0)
+    # ------------------------------------------------------------------------------------------------------------------
+    # neural network targets
 
-        # compton distributed
-        if self.is_compton:
-            if len(self.MCPosition_p) >= 2 and len(self.MCPosition_e) >= 1:
-                if (self.MCInteractions_e[0] >= 10) & (self.MCInteractions_e[0] < 20):
-                    if scatterer.is_vec_in_module(self.MCPosition_e):
-                        if ((self.MCInteractions_p[1:] > 0) & (self.MCInteractions_p[1:] < 10)).any():
-                            if scatterer.is_vec_in_module(self.MCPosition_p[0]) \
-                                    and absorber.is_vec_in_module(self.MCPosition_p[1]):
-                                self.is_compton_distributed = True
-                                for idx in range(0, len(self.MCInteractions_e)):
-                                    if 10 <= self.MCInteractions_e[idx] < 20 and scatterer.is_vec_in_module(
-                                            self.MCPosition_e[idx]):
-                                        self.MCPosition_e_first = self.MCPosition_e[idx]
-                                        break
+    def set_target_positions(self):
+        """
+        Set scatterer and absorber target interaction position for neural network regression
 
-                                for idx in range(1, len(self.MCInteractions_p)):
-                                    if 0 < self.MCInteractions_p[idx] < 10 and absorber.is_vec_in_module(
-                                            self.MCPosition_p[idx]):
-                                        self.MCPosition_p_first = self.MCPosition_p[idx]
-                                        break
+        return:
+            None
+        """
 
-        # compton pseudo distributed
-        if self.is_compton:
-            if len(self.MCPosition_p) >= 2 and len(self.MCPosition_e) >= 1:
-                if (self.MCInteractions_e[0] >= 10) & (self.MCInteractions_e[0] < 20):
-                    if scatterer.is_vec_in_module(self.MCPosition_e):
-                        if ((self.MCInteractions_p[1:] > 0) & (self.MCInteractions_p[1:] < 10)).any():
-                            if scatterer.is_vec_in_module(self.MCPosition_p[0]) \
-                                    and absorber.is_vec_in_module(self.MCPosition_p[1:]):
-                                self.is_compton_pseudo_distributed = True
-                                for idx in range(0, len(self.MCInteractions_e)):
-                                    if 10 <= self.MCInteractions_e[idx] < 20 and scatterer.is_vec_in_module(
-                                            self.MCPosition_e[idx]):
-                                        self.MCPosition_e_first = self.MCPosition_e[idx]
-                                        break
+        self.target_position_e = self.MCComptonPosition
 
-                                for idx in range(1, len(self.MCInteractions_p)):
-                                    if 0 < self.MCInteractions_p[idx] < 10 and absorber.is_vec_in_module(
-                                            self.MCPosition_p[idx]):
-                                        self.MCPosition_p_first = self.MCPosition_p[idx]
-                                        break
+        # scan for first absorber interaction that has the correct scattering direction
+        for idx in range(0, len(self.MCInteractions_p)):
+            if 0 <= self.MCInteractions_p[idx] < 20 and self.absorber.is_vec_in_module(
+                    self.MCPosition_p[idx]):
 
-        # compton pseudo complete
-        if self.is_compton:
-            if len(self.MCPosition_p) >= 2 and len(self.MCPosition_e) >= 1:
-                if (self.MCInteractions_e[0] >= 10) & (self.MCInteractions_e[0] < 20):
-                    if scatterer.is_vec_in_module(self.MCPosition_e):
-                        if scatterer.is_vec_in_module(self.MCPosition_p[0]) \
-                                and absorber.is_vec_in_module(self.MCPosition_p[1:]):
-                            self.is_compton_pseudo_complete = True
-                            for idx in range(0, len(self.MCInteractions_e)):
-                                if 10 <= self.MCInteractions_e[idx] < 20 and scatterer.is_vec_in_module(
-                                        self.MCPosition_e[idx]):
-                                    self.MCPosition_e_first = self.MCPosition_e[idx]
-                                    break
+                # check additionally if the interaction is in the scattering direction
+                tmp_angle = self.calc_theta_dotvec(self.MCPosition_p[idx] - self.MCComptonPosition,
+                                                   self.MCDirection_scatter)
+                if tmp_angle < 1e-3:
+                    self.target_position_p = self.MCPosition_p[idx]
+                    break
 
-                            for idx in range(1, len(self.MCInteractions_p)):
-                                if absorber.is_vec_in_module(self.MCPosition_p[idx]):
-                                    self.MCPosition_p_first = self.MCPosition_p[idx]
-                                    break
+    def set_target_energy(self):
+        """
 
-        # OVERWRITING TRUE ELECTRON POSITION WITH THE TRUE COMPTON SCATTERING POSITION
-        self.MCPosition_e_first = self.MCComptonPosition
+        return:
+            None
+        """
 
-        # new better super optimal tagging
-        self.is_ideal_compton = False
-        self.ideal_compton_con = 0
-        if self.is_compton:
-            # baseline conditions:
-            # - event is a compton event
-            # - at least 2 photon interactions, first one in scatterer, at least one in absorber
-            # - at least 1 electron interaction, in scatterer
+        self.target_energy_e = self.MCEnergy_e
+        self.target_energy_p = self.MCEnergy_p
+
+    def set_target_angle(self):
+        """
+
+        return:
+            None
+        """
+
+        self.target_angle_theta = self.theta_dotvec
+
+    def set_compton_tag(self):
+        """
+        Scans if a given event is an ideal Compton event and sets the corresponding tag. This tag is used as a neural
+        network classification target.
+
+        Ideal Compton event:
+            - Compton energy stored in event
+            - Interaction of primary gamma in scatterer and at least one interaction in the absorber (any)
+
+        return:
+            None
+        """
+        self.compton_tag = False
+        # check for electron energy (compton event took place)
+        if self.MCEnergy_e > 0.0:
+            # check if primary gamma interacted at least 2 times
             if len(self.MCPosition_p) >= 2:
-                # set compton scattering position
-                if ((self.MCInteractions_p > 0) & (self.MCInteractions_p < 10)).any():
-                    for idx in range(0, len(self.MCInteractions_p)):
-                        if 0 <= self.MCInteractions_p[idx] < 10 and scatterer.is_vec_in_module(
-                                self.MCPosition_p[idx]):
-                            self.MCPosition_e_first = self.MCComptonPosition
-                            self.ideal_compton_con += 1
-                            break
-                # set absorption position
-                for idx in range(0, len(self.MCInteractions_p)):
-                    if 0 <= self.MCInteractions_p[idx] < 20 and absorber.is_vec_in_module(
-                            self.MCPosition_p[idx]):
-                        # check additionally if the interaction is in the scattering direction
-                        tmp_angle = self.calc_theta_dotvec(self.MCPosition_p[idx] - self.MCComptonPosition,
-                                                           self.MCDirection_scatter)
-                        if tmp_angle < 0.01:
-                            self.MCPosition_p_first = self.MCPosition_p[idx]
-                            self.ideal_compton_con += 1
-                            break
-        if self.ideal_compton_con == 2:
-            self.is_ideal_compton = True
+                if self.scatterer.is_vec_in_module(self.target_position_e) and self.absorber.is_vec_in_module(
+                        self.target_position_p):
+                    self.compton_tag = True
 
-        """
-        # check if the event is a Compton event
-        # Compton events have a positive MC electron energy
-        self.is_compton = True if self.MCEnergy_e != 0 else False
-
-        # check if the event is a full compton event
-        # TODO: need to do this nicer
-        self.e_pos = False
-        self.p_pos = False
-        self.MCPosition_p_first = TVector3(0, 0, 0)
-        self.MCPosition_e_first = TVector3(0, 0, 0)
-
-        if self.is_compton:
-            # check if enough interaction of electron and photon took place
-            if len(self.MCPosition_p) >= 2 and len(self.MCPosition_e) >= 1:
-                # check for the correct type of events
-                if ((self.MCInteractions_p[1:] > 0) & (self.MCInteractions_p[1:] < 10)).any() and (
-                        (self.MCInteractions_e[0] >= 10) & (self.MCInteractions_e[0] < 20)):
-                    # initialize the compton scattering and photon absorption interation positions
-                    # condition on first interaction position initialization:
-                    # - electron interaction is in scatterer
-                    # - photon interaction is in absorber
-                    for idx in range(0, len(self.MCInteractions_e)):
-                        if 10 <= self.MCInteractions_e[idx] < 20 and scatterer.is_vec_in_module(self.MCPosition_e[idx]):
-                            self.MCPosition_e_first = self.MCPosition_e[idx]
-                            self.e_pos = True
-                            break
-
-                    for idx in range(1, len(self.MCInteractions_p)):
-                        if 0 < self.MCInteractions_p[idx] < 10 and absorber.is_vec_in_module(self.MCPosition_p[idx]):
-                            self.MCPosition_p_first = self.MCPosition_p[idx]
-                            self.p_pos = True
-                            break
-
-        if self.e_pos and self.p_pos:
-            self.is_fullcompton = True
+    # ------------------------------------------------------------------------------------------------------------------
+    # SiPM and fibre feature map generation
+    # Code manly written by Philippe Clement from NN fibre identification
+    @staticmethod
+    def sipm_id_to_position(sipm_id):
+        # determine y
+        y = sipm_id // 368
+        # remove third dimension
+        sipm_id -= (y * 368)
+        # x and z in scatterer
+        if sipm_id < 112:
+            x = sipm_id // 28
+            z = (sipm_id % 28) + 2
+        # x and z in absorber
         else:
-            self.is_fullcompton = False
+            x = (sipm_id + 16) // 32
+            z = (sipm_id + 16) % 32
+        return int(x), int(y), int(z)
 
-        # check if the event is a complete Compton event
-        # complete Compton event= Compton event + both e and p go through a second interation in which
-        # 0 < p interaction < 10
-        # 10 <= e interaction < 20
-        # Note: first interaction of p is the compton event
-        if (self.is_compton
-                and len(self.MCPosition_p) >= 2
-                and len(self.MCPosition_e) >= 1
-                and ((self.MCInteractions_p[1:] > 0) & (self.MCInteractions_p[1:] < 10)).any()
-                and ((self.MCInteractions_e[0] >= 10) & (self.MCInteractions_e[0] < 20))):
-            self.is_complete_compton = True
-        else:
-            self.is_complete_compton = False
+    def get_sipm_feature_map(self, padding=2, gap_padding=4):
+        # hardcoded detector size
+        dimx = 12
+        dimy = 2
+        dimz = 32
 
-        # initialize e & p first interaction position
-        if self.is_complete_compton:
-            for idx in range(1, len(self.MCInteractions_p)):
-                if 0 < self.MCInteractions_p[idx] < 10:
-                    self.MCPosition_p_first = self.MCPosition_p[idx]
-                    break
-            for idx in range(0, len(self.MCInteractions_e)):
-                if 10 <= self.MCInteractions_e[idx] < 20:
-                    self.MCPosition_e_first = self.MCPosition_e[idx]
-                    break
-        else:
-            self.MCPosition_p_first = TVector3(0, 0, 0)
-            self.MCPosition_e_first = TVector3(0, 0, 0)
+        ary_feature = np.zeros(shape=(dimx + 2 * padding + gap_padding, dimy + 2 * padding, dimz + 2 * padding, 2))
 
-        # check if the event is a complete distributed Compton event
-        # complete distributed Compton event= complete Compton event + each e and p go through a secondary
-        # interaction in a different module of the SiFiCC
-        if (self.is_complete_compton
-                and scatterer.is_vec_in_module(self.MCPosition_e)
-                and absorber.is_vec_in_module(self.MCPosition_p)):
-            self.is_complete_distributed_compton = True
-        else:
-            self.is_complete_distributed_compton = False
+        for i, sipm_id in enumerate(self.SiPM_id):
+            x, y, z = self.sipm_id_to_position(sipm_id=sipm_id)
+            x_final = x + padding if x < 4 else x + padding + gap_padding
+            y_final = y + padding
+            z_final = z + padding
 
-        # check if the event is an ideal Compton event and what type is it (EP or PE)
-        # ideal Compton event = complete distributed Compton event where the next interaction of both
-        # e and p is in the different modules of SiFiCC
-        if (self.is_complete_compton
-                and scatterer.is_vec_in_module(self.MCPosition_e_first)
-                and absorber.is_vec_in_module(self.MCPosition_p_first)
-                and self.MCSimulatedEventType == 2):
-            self.is_ideal_compton = True
-            self.is_ep = True
-            self.is_pe = False
-        elif (self.is_complete_compton
-              and scatterer.is_vec_in_module(self.MCPosition_p_first)
-              and absorber.is_vec_in_module(self.MCPosition_e_first)
-              and self.MCSimulatedEventType == 2):
-            self.is_ideal_compton = True
-            self.is_ep = False
-            self.is_pe = True
-        else:
-            self.is_ideal_compton = False
-            self.is_ep = False
-            self.is_pe = False
-        """
+            ary_feature[x_final, y_final, z_final, 0] = self.SiPM_qdc[i]
+            ary_feature[x_final, y_final, z_final, 1] = self.SiPM_triggertime[i]
+
+        return ary_feature
 
     # ------------------------------------------------------------------------------------------------------------------
 
