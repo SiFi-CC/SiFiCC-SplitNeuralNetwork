@@ -4,6 +4,7 @@ from mpl_toolkits.mplot3d.axes3d import Axes3D
 from mpl_toolkits.mplot3d import proj3d
 
 from src.SiFiCCNN.EventDisplay import EDBuilder
+from src.SiFiCCNN.Root import RootLogger
 
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -14,20 +15,7 @@ def display(event):
     fig = plt.figure(figsize=(12, 8))
     ax = fig.add_subplot(111, projection='3d')
     ax.set_box_aspect(aspect=(3, 1, 1))
-    """
-    # axis scaling
-    x_scale = 1
-    y_scale = 0.3
-    z_scale = 0.3
-    scale = np.diag([x_scale, y_scale, z_scale, 1.0])
-    scale = scale * (1.0 / scale.max())
-    scale[3, 3] = 0.8
 
-    def short_proj():
-        return np.dot(Axes3D.get_proj(ax), scale)
-
-    ax.get_proj = short_proj
-    """
     ax.set_xlim3d(-10, 300)
     ax.set_ylim3d(-55, 55)
     ax.set_zlim3d(-55, 55)
@@ -98,9 +86,9 @@ def display(event):
 
     # ------------------------------------------------------------------------------------------------------------------
     # Marker for MC-Truth (Later definition standard for Neural Network)
-    ax.plot3D(event.MCPosition_e_first.x, event.MCPosition_e_first.y, event.MCPosition_e_first.z,
+    ax.plot3D(event.target_position_e.x, event.target_position_e.y, event.target_position_e.z,
               "x", color="red", markersize=event.MCEnergy_e * 10)
-    ax.plot3D(event.MCPosition_p_first.x, event.MCPosition_p_first.y, event.MCPosition_p_first.z,
+    ax.plot3D(event.target_position_p.x, event.target_position_p.y, event.target_position_p.z,
               "x", color="red", markersize=event.MCEnergy_p * 10)
     ax.plot3D(event.MCPosition_source.x, event.MCPosition_source.y, event.MCPosition_source.z,
               "o", color="red", markersize=4)
@@ -108,18 +96,25 @@ def display(event):
     # ------------------------------------------------------------------------------------------------------------------
     # SiPM and Fibre hits
     # Only drawn if event file contains SiPM and Fibre information
-    """
-    if event.bsipm:
-        for i in range(len(event.SiPM_position)):
-            print(event.SiPM_position.x[i], event.SiPM_position.y[i], event.SiPM_position.z[i])
-            ax.plot3D(event.SiPM_position.x[i], event.SiPM_position.y[i], event.SiPM_position.z[i], "o", color="red",
-                      markersize=10)
-        for i in range(len(event.fibre_position)):
-            print(event.fibre_position.x[i], event.fibre_position.y[i], event.fibre_position.z[i])
-            ax.plot3D(event.fibre_position.x[i], event.fibre_position.y[i], event.fibre_position.z[i], "o",
-                      color="blue", markersize=5)
 
-    """
+    if event.bsipm:
+        # fibre hits plus boxes
+        for i in range(len(event.fibre_position)):
+            ax.plot3D(event.fibre_position.x[i], event.fibre_position.y[i], event.fibre_position.z[i], "o",
+                      color="lime")
+            list_fibre_edges = EDBuilder.get_edges(event.fibre_position.x[i], 0, event.fibre_position.z[i],
+                                                   1.94, 100, 1.94)
+            for j in range(len(list_fibre_edges)):
+                ax.plot3D(list_fibre_edges[j][0], list_fibre_edges[j][1], list_fibre_edges[j][2], color="lime")
+
+        for i in range(len(event.SiPM_position)):
+            list_sipm_edges = EDBuilder.get_edges(event.SiPM_position.x[i],
+                                                  event.SiPM_position.y[i],
+                                                  event.SiPM_position.z[i],
+                                                  4.0, 0, 4.0)
+            for j in range(len(list_sipm_edges)):
+                ax.plot3D(list_sipm_edges[j][0], list_sipm_edges[j][1], list_sipm_edges[j][2], color="darkgreen")
+
     # ------------------------------------------------------------------------------------------------------------------
     # True and reconstructed compton cone
 
@@ -128,8 +123,8 @@ def display(event):
         # on MC-Truth level
 
         # Main vectors needed for cone calculations
-        vec_ax1 = event.MCPosition_e_first
-        vec_ax2 = event.MCPosition_p_first - event.MCPosition_e_first
+        vec_ax1 = event.target_position_e
+        vec_ax2 = event.target_position_p - event.target_position_e
         vec_src = event.MCPosition_source
 
         list_cone = EDBuilder.get_compton_cone(vec_ax1, vec_ax2, vec_src, event.theta_dotvec, sr=128)
@@ -195,12 +190,12 @@ def display(event):
     # ------------------------------------------------------------------------------------------------------------------
     # Control prints
     print("\nControl: ")
-    print("True E Position: ({:.3f}, {:.3f}, {:.3f})".format(event.MCPosition_e_first.x,
-                                                             event.MCPosition_e_first.y,
-                                                             event.MCPosition_e_first.z))
-    print("True P Position: ({:.3f}, {:.3f}, {:.3f})".format(event.MCPosition_p_first.x,
-                                                             event.MCPosition_p_first.y,
-                                                             event.MCPosition_p_first.z))
+    print("True E Position: ({:.3f}, {:.3f}, {:.3f})".format(event.target_position_e.x,
+                                                             event.target_position_e.y,
+                                                             event.target_position_e.z))
+    print("True P Position: ({:.3f}, {:.3f}, {:.3f})".format(event.target_position_p.x,
+                                                             event.target_position_p.y,
+                                                             event.target_position_p.z))
     print("\nCompton Scattering Angle theta:")
     print("theta (Energy):",
           "{:5.3f} [rad] | {:5.1f} [deg]".format(event.theta_energy, event.theta_energy * 360 / 2 / np.pi))
