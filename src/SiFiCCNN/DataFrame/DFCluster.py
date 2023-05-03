@@ -74,7 +74,7 @@ class DFCluster:
     def num_features(self):
         return self.features.shape[1]
 
-    def get_standardization(self):
+    def get_standardization(self, n_feat=10, n_cluster=10):
         # save mean and std of every feature in terms of physical feature
         list_mean = []
         list_std = []
@@ -87,9 +87,10 @@ class DFCluster:
             # updating needs to be done manually later on
             # padding = [0.0, -1.0, -1.0, 0.0, -55.0, -55.0, 0.0, 0.0, 0.0, 0.0]
 
-            list_idx = np.arange(0, 10 * 10, 10)
+            list_idx = np.arange(0, n_feat * n_cluster, n_feat)
             for i in range(len(list_idx)):
-                ary_con = np.reshape(self.features[:, np.array(list_idx) + i], (self.features.shape[0] * 10,))
+                ary_con = np.reshape(self.features[:, np.array(list_idx) + i],
+                                     (self.features.shape[0] * n_feat * n_cluster,))
                 ary_con = ary_con[ary_con != 0.0]
                 list_mean.append(np.mean(ary_con))
                 list_std.append(np.std(ary_con))
@@ -98,8 +99,8 @@ class DFCluster:
             list_std = list_std * 10
 
         if self.features.ndim == 3:
-            for i in range(10):
-                ary_con = np.reshape(self.features[:, :, i], (self.features.shape[0] * 10,))
+            for i in range(n_feat):
+                ary_con = np.reshape(self.features[:, :, i], (self.features.shape[0] * n_cluster,))
                 ary_con = ary_con[ary_con != 0.0]
                 list_mean.append(np.mean(ary_con))
                 list_std.append(np.std(ary_con))
