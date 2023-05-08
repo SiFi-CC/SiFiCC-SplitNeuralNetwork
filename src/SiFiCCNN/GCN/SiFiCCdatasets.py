@@ -74,9 +74,14 @@ class SiFiCCdatasets(Dataset):
             x_list = [None] * len(n_nodes)
 
         # Edge features
-        # TODO: add edge features
-        # Edge features
         e_list = []
+        e_attr = io.load_txt(
+            self.path + "/" + self.name + "_edge_attributes" + ".txt",
+            delimiter=",")
+        if e_attr.ndim == 1:
+            e_attr = e_attr[:, None]
+        e_attr = e_attr[mask]
+        e_list.append(e_attr)
         if len(e_list) > 0:
             e_available = True
             e_list = np.concatenate(e_list, -1)

@@ -47,7 +47,7 @@ def gen_SiFiCCCluster(RootParser, n=None):
     file_graph_attributes = open(
         dir_final + dataset_name + "_graph_attributes.txt", "w")
     file_edge_attributes = open(
-        dir_final + dataset_name + "_edfe_attributes.txt", "w")
+        dir_final + dataset_name + "_edge_attributes.txt", "w")
 
     node_id = 0
     edge_id = 0
