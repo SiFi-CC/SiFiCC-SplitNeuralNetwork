@@ -20,8 +20,9 @@ from tensorflow import keras
 from keras.models import Model
 from keras.layers import Dense, Input, Dropout
 from keras.losses import BinaryCrossentropy
+from keras.metrics import Recall, Precision, binary_accuracy
 from keras.optimizers import Adam
-from spektral.layers import GlobalSumPool, ECCConv
+from spektral.layers import GlobalSumPool, ECCConv, GCNConv
 
 # ------------------------------------------------------------------------------
 # Global settings
@@ -82,10 +83,13 @@ dataset_va = dataset[idx1:idx2]
 dataset_te = dataset[idx2:]
 
 loader_tr = DisjointLoader(dataset_tr, batch_size=batch_size, epochs=epochs)
+loader_va = DisjointLoader(dataset_va, batch_size=batch_size)
 loader_te = DisjointLoader(dataset_te, batch_size=batch_size, epochs=1)
 
 # create class weight dictionary
 class_weights = dataset.get_classweight_dict()
+class_wts = tf.constant([class_weights[0], class_weights[1]])
+class_wts = tf.cast(class_wts, dtype=tf.float32)
 
 # ------------------------------------------------------------------------------
 # Build Model
@@ -95,8 +99,8 @@ A_in = Input(shape=(None,), sparse=True)
 E_in = Input(shape=(S,))
 I_in = Input(shape=(), dtype=tf.int64)
 
-X_1 = ECCConv(32, activation="relu")([X_in, A_in, E_in])
-X_2 = ECCConv(32, activation="relu")([X_1, A_in, E_in])
+X_1 = GCNConv(32, activation="relu")([X_in, A_in])
+X_2 = GCNConv(32, activation="relu")([X_1, A_in])
 X_3 = GlobalSumPool()([X_2, I_in])
 output = Dense(n_out, activation="sigmoid")(X_3)
 
@@ -108,25 +112,67 @@ loss_fn = BinaryCrossentropy()
 # ------------------------------------------------------------------------------
 # Fit model
 
+def weighted_binary_crossentropy(labels, predictions, weights):
+    labels = tf.cast(labels, tf.int32)
+    loss = loss_fn(labels, predictions) + sum(model.losses)
+    class_weights = tf.gather(weights, labels)
+    return tf.reduce_mean(class_weights * loss)
+
+
 @tf.function(input_signature=loader_tr.tf_signature(),
              experimental_relax_shapes=True)
 def train_step(inputs, target):
     with tf.GradientTape() as tape:
         predictions = model(inputs, training=True)
-        loss = loss_fn(target, predictions) + sum(model.losses)
+        loss = weighted_binary_crossentropy(target, predictions, class_wts)
     gradients = tape.gradient(loss, model.trainable_variables)
     optimizer.apply_gradients(zip(gradients, model.trainable_variables))
-    return loss
+    acc = tf.reduce_mean(binary_accuracy(target, predictions))
+    eff = 0  # tf.reduce_mean(Recall(target, predictions))
+    pur = 0  # tf.reduce_mean(Precision(target, predictions))
+    return loss, acc, eff, pur
 
 
-step = loss = 0
+def evaluate(loader):
+    output = []
+    step = 0
+    for batch in loader:
+        step += 1
+        inputs, target = batch
+        predictions = model(inputs, training=False)
+        loss = loss_fn(target, predictions)
+        acc = tf.reduce_mean(binary_accuracy(target, predictions))
+        output.append(
+            (loss, acc, 0, 0, len(target)))  # Keep track of batch size
+        if step == loader.steps_per_epoch:
+            output = np.array(output)
+            return np.average(output[:, :-1], 0, weights=output[:, -1])
+
+
+epoch = step = 0
+results = []
 for batch in loader_tr:
     step += 1
-    loss += train_step(*batch)
+
+    # Training step
+    inputs, target = batch
+
+    loss, acc, eff, pur = train_step(inputs, target)
+    results.append((loss, acc, eff, pur, len(target)))
     if step == loader_tr.steps_per_epoch:
+        results_va = evaluate(loader_va)
+        results = np.array(results)
+        results = np.average(results[:, :-1], 0, weights=results[:, -1])
+
         step = 0
-        print("Loss: {}".format(loss / loader_tr.steps_per_epoch))
-        loss = 0
+        epoch += 1
+
+        print("Ep. {} - Loss: {:.3f} - Acc: {:.3f} |"
+              "Test Loss: {:.3f} - Test Acc: {:.3f} |".format(
+            epoch, *results[:2], *results_va[:2])
+        )
+
+        results = []
 
 # ------------------------------------------------------------------------------
 # Evaluate Network
@@ -149,7 +195,12 @@ for file in [DATASET_TRAIN]:
 
     y_true = np.vstack(y_true)
     y_pred = np.vstack(y_pred)
+    y_true = np.reshape(y_true, newshape=(y_true.shape[0],))
+    y_pred = np.reshape(y_pred, newshape=(y_pred.shape[0],))
     model_loss = loss_fn(y_true, y_pred)
+
+    for i in range(20):
+        print(y_true[i], y_pred[i])
 
     # ROC-AUC Analysis
     FastROCAUC.fastROCAUC(y_pred, y_true, save_fig="ROCAUC")

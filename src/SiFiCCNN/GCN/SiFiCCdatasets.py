@@ -63,7 +63,6 @@ class SiFiCCdatasets(Dataset):
             x_list = np.concatenate(x_list, -1)
             ary_mean, ary_std = _get_standardization(x_list)
             x_list = _standardize(x_list, ary_mean, ary_std)
-            # x_list = _standardize(x_list)
             x_list = np.split(x_list, n_nodes_cum[1:])
         else:
             print(
@@ -108,7 +107,7 @@ class SiFiCCdatasets(Dataset):
 
         # Labels
         labels = io.load_txt(
-            self.path + "/" + self.name + "_graph_labels" + ".txt")
+            self.path + "/" + self.name + "_graph_labels" + ".txt").astype(np.float32)
         # labels = _normalize(labels[:, None], "ohe")
 
         # Convert to Graph
