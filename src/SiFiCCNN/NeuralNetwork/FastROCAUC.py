@@ -19,7 +19,7 @@ def fastROCAUC(y_pred, y_true, weighted=False, return_score=False, save_fig=None
 
     # sort input array by possibilities
     full_array = np.zeros((len(y_pred), 2))
-    full_array[:, 0] = y_pred[:, 0]
+    full_array[:, 0] = y_pred
     full_array[:, 1] = y_true
     full_array = full_array[full_array[:, 0].argsort()]
 

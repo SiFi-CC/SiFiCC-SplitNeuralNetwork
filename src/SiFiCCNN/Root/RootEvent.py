@@ -263,7 +263,19 @@ class Event:
 
         return ary_feature
 
-    # ------------------------------------------------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
+    # Graph generation methods
+
+    def get_edge_features(self, idx1, idx2):
+        vec = self.RecoClusterPosition[idx2] - self.RecoClusterPosition[idx1]
+        r = vec.mag
+        phi = vec.phi
+        theta = vec.theta
+
+        return r, phi, theta
+
+
+    # --------------------------------------------------------------------------
 
     def calc_theta_energy(self, e1, e2):
         """
