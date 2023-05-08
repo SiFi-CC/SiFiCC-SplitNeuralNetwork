@@ -1,7 +1,7 @@
 import numpy as np
 
-from src.SiFiCCNN.DataFrame import DFCluster
-from src.SiFiCCNN.DataFrame import DFSiPM
+from src.SiFiCCNN.Data import DFCluster
+from src.SiFiCCNN.Data import DFSiPM
 
 
 def parse_cluster(npz_file,

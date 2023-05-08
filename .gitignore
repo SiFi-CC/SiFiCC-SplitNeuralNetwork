@@ -17,6 +17,8 @@ root_files/*.root
 # npz_files in the directory are ignored due to their size
 npz_files/*.npz
 
+datasets/
+
 # ignore the toy subdirectoy
 toy/
 

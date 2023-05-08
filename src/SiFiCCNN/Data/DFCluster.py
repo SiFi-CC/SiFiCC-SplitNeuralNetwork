@@ -26,9 +26,9 @@ class DFCluster:
         self.targets = ary_targets_clas
 
         # Train-Test-Valid split
-        self.p_train = 0.5
+        self.p_train = 0.7
         self.p_test = 0.1
-        self.p_valid = 0.4
+        self.p_valid = 0.2
         self.entries = len(ary_targets_clas)
 
         # generate shuffled indices with a random generator
