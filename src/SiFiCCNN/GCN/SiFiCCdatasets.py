@@ -41,8 +41,9 @@ class SiFiCCdatasets(Dataset):
 
         # Remove duplicates and self-loops from edges
         _, mask = np.unique(edges, axis=0, return_index=True)
-        mask = mask[edges[mask, 0] != edges[mask, 1]]
+        # mask = mask[edges[mask, 0] != edges[mask, 1]]
         edges = edges[mask]
+
         # Split edges into separate edge lists
         edge_batch_idx = node_batch_index[edges[:, 0]]
         n_edges = np.bincount(edge_batch_idx)

@@ -54,8 +54,11 @@ def gen_SiFiCCCluster(RootParser, n=None):
     for i, event in enumerate(RootParser.iterate_events(n=n)):
         # get number of cluster
         n_cluster = int(len(event.RecoClusterEntries))
+        idx_scat, idx_abs = event.sort_clusters_by_module()
         for j in range(n_cluster):
             for k in range(n_cluster):
+                if j in idx_abs and k in idx_scat:
+                    continue
 
                 file_A.write(
                     str(node_id) + ", " + str(node_id - j + k) + "\n")
