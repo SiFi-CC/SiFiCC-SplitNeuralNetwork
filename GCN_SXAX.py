@@ -131,7 +131,7 @@ class Net(tf.keras.models.Model):
         self.dense2 = tf.keras.layers.Dense(1, activation="sigmoid")
 
     def call(self, inputs):
-        x, a, e, i = inputs
+        x, a, i = inputs
 
         x = self.gcn([x, a])
         x = self.pool([x, i])
@@ -166,7 +166,7 @@ model = setupModel(**modelParameters)
 
 # model version 2
 model = Net(32, 0.2)
-optimizer = tf.keras.optimizer.Adam(learning_rate=learning_rate)
+optimizer = tf.keras.optimizers.Adam(learning_rate=learning_rate)
 model.compile(optimizer=optimizer, loss="binary_crossentropy")
 model.comile()
 
