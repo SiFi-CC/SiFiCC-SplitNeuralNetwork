@@ -11,7 +11,6 @@ import os
 import numpy as np
 import spektral
 
-
 from src.SiFiCCNN.GCN import SiFiCCdatasets, IGSiFICCCluster
 from src.SiFiCCNN.GCN import Spektral_NeuralNetwork
 
@@ -86,22 +85,23 @@ class ConcatAdj(tf.keras.layers.Layer):
 
 # ------------------------------------------------------------------------------
 # Build Model
-
+"""
 def setupModel(dropout,
                learning_rate,
                nFilter=32,
                activation="relu"):
     # original feature dimensionality
     F = 10
+    S = 3
     # Model definition
-    xIn = tf.keras.layer.Input(shape=(F,))
-    aIn = tf.keras.layer.Input(shape=(None,), sparse=True)
-    eIn = tf.keras.layers.Input(shape=())
-    iIn = tf.keras.layer.Input(shape=(), dtype=tf.int64)
+    xIn = tf.keras.layers.Input(shape=(F,))
+    aIn = tf.keras.layers.Input(shape=(None,), sparse=True)
+    eIn = tf.keras.layers.Input(shape=(S, ))
+    iIn = tf.keras.layers.Input(shape=(), dtype=tf.int64)
 
     x = GCNConv(nFilter, activation=activation, use_bias=True)([xIn, aIn])
-    x = GlobalSumPool([x, iIn])
-    x = tf.keras.layer.Flatten()(x)
+    x = GlobalSumPool()([x, iIn])
+    x = tf.keras.layers.Flatten()(x)
 
     if dropout > 0:
         x = tf.keras.layers.Dropout(dropout)(x)
@@ -109,11 +109,35 @@ def setupModel(dropout,
     output = tf.keras.layers.Dense(1, activation="sigmoid")(x)
 
     # Build model
-    model = tf.keras.models.Model(input=[xIn, aIn, eIn, iIn])
+    model = tf.keras.models.Model(inputs=[xIn, aIn, eIn, iIn], outputs=output)
     optimizer = tf.keras.optimizer.Adam(learning_rate=learning_rate)
     model.compile(optimizer=optimizer, loss="binary_crossentropy")
 
     return model
+"""
+
+
+# ------------------------------------------------------------------------------
+# Model version 2
+
+class Net(tf.keras.models.Model):
+    def __init__(self, channels, dropout):
+        super().__init__()
+
+        self.gcn = GCNConv(channels)
+        self.pool = GlobalSumPool()
+        self.dense1 = tf.keras.layers.Dense(channels, activation="relu")
+        self.dropout = tf.keras.layers.Dropout(dropout)
+        self.dense2 = tf.keras.layers.Dense(1, activation="sigmoid")
+
+    def call(self, inputs):
+        x, a, e, i = inputs
+
+        x = self.gcn([x, a])
+        x = self.pool([x, i])
+        x = self.dense1(x)
+        x = self.dropout(x)
+        return self.dense2(x)
 
 
 # ------------------------------------------------------------------------------
@@ -128,14 +152,25 @@ activation = "relu"
 
 trainsplit = 0.8
 valsplit = 0.1
-nEpochs = 60
+nEpochs = 10
 
+"""
+# model version 1
 modelParameters = {"dropout": dropout,
                    "learning_rate": learning_rate,
                    "nFilter": nFilter,
                    "activation": activation}
 
 model = setupModel(**modelParameters)
+"""
+
+# model version 2
+model = Net(32, 0.2)
+optimizer = tf.keras.optimizer.Adam(learning_rate=learning_rate)
+model.compile(optimizer=optimizer, loss="binary_crossentropy")
+model.comile()
+
+
 model.summary()
 
 # generator setup
