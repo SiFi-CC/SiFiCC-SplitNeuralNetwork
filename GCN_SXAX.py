@@ -9,6 +9,7 @@ Graphs are created using the spektral package
 
 import os
 import numpy as np
+import spektral
 
 from src.SiFiCCNN.GCN import SiFiCCdatasets, IGSiFICCCluster
 from src.SiFiCCNN.GCN import Spektral_NeuralNetwork
@@ -16,12 +17,6 @@ from src.SiFiCCNN.GCN import Spektral_NeuralNetwork
 from spektral.data.loaders import DisjointLoader
 
 import tensorflow as tf
-from tensorflow import keras
-from keras.models import Model
-from keras.layers import Dense, Input, Dropout
-from keras.losses import BinaryCrossentropy
-from keras.metrics import Recall, Precision, binary_accuracy
-from keras.optimizers import Adam
 from spektral.layers import GlobalSumPool, ECCConv, GCNConv
 
 # ------------------------------------------------------------------------------
@@ -32,12 +27,7 @@ RUN_NAME = "GCN_SXAX"
 DATASET = "SiFiCCCluster"
 DATASET_TRAIN = "OptimisedGeometry_Continuous_2e10protons_SiFiCCCluster"
 
-# Neural Network settings
-learning_rate = 1e-3  # Learning rate
-epochs = 10  # Number of training epochs
-batch_size = 32  # Batch size
-
-gen_datasets = False
+gen_datasets = True
 
 # ------------------------------------------------------------------------------
 # Set paths, check for datasets
@@ -64,115 +54,111 @@ if gen_datasets:
 
     rootparser_cont = RootParser.Root(
         dir_main + RootFiles.OptimisedGeometry_Continuous_2e10protons_withTimestamps_local)
-    IGSiFICCCluster.gen_SiFiCCCluster(rootparser_cont, n=100000)
+    IGSiFICCCluster.gen_SiFiCCCluster(rootparser_cont, n=10000)
 
 dataset = SiFiCCdatasets.SiFiCCdatasets(
     name="OptimisedGeometry_Continuous_2e10protons_SiFiCCCluster",
     dataset_path=dir_datasets)
 
-# Parameters
-F = dataset.n_node_features
-S = dataset.n_edge_features
-n_out = dataset.n_labels
 
-# Train/test split
-idx1 = int(0.7 * len(dataset))
-idx2 = int(0.8 * len(dataset))
-dataset_tr = dataset[:idx1]
-dataset_va = dataset[idx1:idx2]
-dataset_te = dataset[idx2:]
+# ------------------------------------------------------------------------------
+# Custom adj layer from 3B deeplearning wiki
 
-loader_tr = DisjointLoader(dataset_tr, batch_size=batch_size, epochs=epochs)
-loader_va = DisjointLoader(dataset_va, batch_size=batch_size)
-loader_te = DisjointLoader(dataset_te, batch_size=batch_size, epochs=1)
 
-# create class weight dictionary
-class_weights = dataset.get_classweight_dict()
-class_wts = tf.constant([class_weights[0], class_weights[1]])
-class_wts = tf.cast(class_wts, dtype=tf.float32)
+class ConcatAdj(tf.keras.layers.Layer):
+    def __init__(self, adj, **kwargs):
+        super(ConcatAdj, self).__init__(**kwargs)
+        self.adj = adj
+
+        # Set the tf tensor
+        adj = spektral.utils.gcn_filter(adj)
+        self.adj_tensor = tf.constant(adj)
+
+    def call(self, input):
+        return [input, self.adj_tensor]
+
+    def get_config(self):
+        base_config = super().get_config()
+        return {**base_config,
+                "adj": self.adj}
+
 
 # ------------------------------------------------------------------------------
 # Build Model
 
-X_in = Input(shape=(F,))
-A_in = Input(shape=(None,), sparse=True)
-E_in = Input(shape=(S,))
-I_in = Input(shape=(), dtype=tf.int64)
+def setupModel(dropout,
+               learning_rate,
+               nFilter=32,
+               activation="relu"):
+    # original feature dimensionality
+    F = 10
+    # Model definition
+    xIn = tf.keras.layer.Input(shape=(F,))
+    aIn = tf.keras.layer.Input(shape=(None,), sparse=True)
+    eIn = tf.keras.layers.Input(shape=())
+    iIn = tf.keras.layer.Input(shape=(), dtype=tf.int64)
 
-X_1 = GCNConv(32, activation="relu")([X_in, A_in])
-X_2 = GCNConv(32, activation="relu")([X_1, A_in])
-X_3 = GlobalSumPool()([X_2, I_in])
-output = Dense(n_out, activation="sigmoid")(X_3)
+    a = spektral.utils.gcn_filter(aIn)
+    x = GCNConv(nFilter, activation=activation, use_bias=True)([xIn, a])
+    x = GlobalSumPool([x, iIn])
+    x = tf.keras.layer.Flatten()(x)
 
-model = Model(inputs=[X_in, A_in, E_in, I_in], outputs=output)
-optimizer = Adam(learning_rate)
-loss_fn = BinaryCrossentropy()
+    if dropout > 0:
+        x = tf.keras.layers.Dropout(dropout)(x)
+
+    output = tf.keras.layers.Dense(1, activation="sigmoid")(x)
+
+    # Build model
+    model = tf.keras.models.Model(input=[xIn, aIn, eIn, iIn])
+    optimizer = tf.keras.optimizer.Adam(learning_rate=learning_rate)
+    model.compile(optimizer=optimizer, loss="binary_crossentropy")
+
+    return model
 
 
 # ------------------------------------------------------------------------------
-# Fit model
+# Create model and train
 
-def weighted_binary_crossentropy(labels, predictions, weights):
-    labels = tf.cast(labels, tf.int32)
-    loss = loss_fn(labels, predictions) + sum(model.losses)
-    class_weights = tf.gather(weights, labels)
-    return tf.reduce_mean(class_weights * loss)
+dropout = 0.2
+learning_rate = 1e-3
+nConnectedNodes = 32
+nFilter = 32
+batch_size = 64
+activation = "relu"
 
+trainsplit = 0.8
+valsplit = 0.1
+nEpochs = 60
 
-@tf.function(input_signature=loader_tr.tf_signature(),
-             experimental_relax_shapes=True)
-def train_step(inputs, target):
-    with tf.GradientTape() as tape:
-        predictions = model(inputs, training=True)
-        loss = weighted_binary_crossentropy(target, predictions, class_wts)
-    gradients = tape.gradient(loss, model.trainable_variables)
-    optimizer.apply_gradients(zip(gradients, model.trainable_variables))
-    acc = tf.reduce_mean(binary_accuracy(target, predictions))
-    eff = 0  # tf.reduce_mean(Recall(target, predictions))
-    pur = 0  # tf.reduce_mean(Precision(target, predictions))
-    return loss, acc, eff, pur
+modelParameters = {"dropout": dropout,
+                   "learning_rate": learning_rate,
+                   "nFilter": nFilter,
+                   "activation": activation}
 
+model = setupModel(**modelParameters)
+model.summary()
 
-def evaluate(loader):
-    output = []
-    step = 0
-    for batch in loader:
-        step += 1
-        inputs, target = batch
-        predictions = model(inputs, training=False)
-        loss = loss_fn(target, predictions)
-        acc = tf.reduce_mean(binary_accuracy(target, predictions))
-        output.append(
-            (loss, acc, 0, 0, len(target)))  # Keep track of batch size
-        if step == loader.steps_per_epoch:
-            output = np.array(output)
-            return np.average(output[:, :-1], 0, weights=output[:, -1])
+# generator setup
+idx1 = int(trainsplit * len(dataset))
+idx2 = int((trainsplit + valsplit) * len(dataset))
+dataset_tr = dataset[:idx1]
+dataset_va = dataset[idx1:idx2]
+dataset_te = dataset[idx2:]
 
+loader_train = DisjointLoader(dataset_tr, batch_size=batch_size, epochs=nEpochs)
+loader_valid = DisjointLoader(dataset_va, batch_size=batch_size)
+loader_test = DisjointLoader(dataset_te, batch_size=batch_size, epochs=1)
 
-epoch = step = 0
-results = []
-for batch in loader_tr:
-    step += 1
+# create class weight dictionary
+class_weights = dataset.get_classweight_dict()
 
-    # Training step
-    inputs, target = batch
-
-    loss, acc, eff, pur = train_step(inputs, target)
-    results.append((loss, acc, eff, pur, len(target)))
-    if step == loader_tr.steps_per_epoch:
-        results_va = evaluate(loader_va)
-        results = np.array(results)
-        results = np.average(results[:, :-1], 0, weights=results[:, -1])
-
-        step = 0
-        epoch += 1
-
-        print("Ep. {} - Loss: {:.3f} - Acc: {:.3f} |"
-              "Test Loss: {:.3f} - Test Acc: {:.3f} |".format(
-            epoch, *results[:2], *results_va[:2])
-        )
-
-        results = []
+model.fit(loader_train,
+          epochs=nEpochs,
+          steps_per_epoch=loader_train.steps_per_epoch,
+          validation_data=loader_valid,
+          validation_steps=loader_valid.steps_per_epoch,
+          class_weight=class_weights,
+          verbose=1)
 
 # ------------------------------------------------------------------------------
 # Evaluate Network
@@ -187,7 +173,7 @@ for file in [DATASET_TRAIN]:
 
     y_true = []
     y_pred = []
-    for batch in loader_te:
+    for batch in loader_test:
         inputs, target = batch
         p = model(inputs, training=False)
         y_true.append(target)
@@ -197,7 +183,6 @@ for file in [DATASET_TRAIN]:
     y_pred = np.vstack(y_pred)
     y_true = np.reshape(y_true, newshape=(y_true.shape[0],))
     y_pred = np.reshape(y_pred, newshape=(y_pred.shape[0],))
-    model_loss = loss_fn(y_true, y_pred)
 
     for i in range(20):
         print(y_true[i], y_pred[i])
