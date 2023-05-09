@@ -56,15 +56,19 @@ def gen_SiFiCCCluster(RootParser, n=None):
         n_cluster = int(len(event.RecoClusterEntries))
         for j in range(n_cluster):
             for k in range(n_cluster):
-                if j != k:
-                    file_A.write(
-                        str(node_id) + ", " + str(node_id - j + k) + "\n")
 
+                file_A.write(
+                    str(node_id) + ", " + str(node_id - j + k) + "\n")
+
+                # exception for self loops
+                if j != k:
                     # grab edge features
                     r, phi, theta = event.get_edge_features(j, k)
-                    file_edge_attributes.write(
-                        str(r) + "," + str(phi) + "," + str(theta) + "\n"
-                    )
+                else:
+                    r, phi, theta = 0, 0, 0
+                file_edge_attributes.write(
+                    str(r) + "," + str(phi) + "," + str(theta) + "\n"
+                )
 
             file_graph_indicator.write(str(i) + "\n")
             file_node_attributes.write(

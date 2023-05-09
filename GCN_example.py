@@ -144,7 +144,6 @@ class Net(Model):
         else:
             x, a, _ = inputs
 
-        a = spektral.utils.add_self_loops(a, value=1)
         a = spektral.utils.gcn_filter(a, symmetric=True)
 
         x = self._gcn0([x, a])
@@ -159,7 +158,7 @@ optimizer = Adam(learning_rate)
 pur = Precision
 eff = Recall
 loss_fn = BinaryCrossentropy()
-model.compile(optimizer=optimizer, loss=loss_fn, metrics=[eff, pur])
+model.compile(optimizer=optimizer, loss=loss_fn, metrics=["BinaryAccuracy"])
 
 # ------------------------------------------------------------------------------
 # Fit model
