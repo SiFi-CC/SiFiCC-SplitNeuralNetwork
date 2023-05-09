@@ -11,6 +11,7 @@ import os
 import numpy as np
 import spektral
 
+
 from src.SiFiCCNN.GCN import SiFiCCdatasets, IGSiFICCCluster
 from src.SiFiCCNN.GCN import Spektral_NeuralNetwork
 
@@ -98,8 +99,7 @@ def setupModel(dropout,
     eIn = tf.keras.layers.Input(shape=())
     iIn = tf.keras.layer.Input(shape=(), dtype=tf.int64)
 
-    a = spektral.utils.gcn_filter(aIn)
-    x = GCNConv(nFilter, activation=activation, use_bias=True)([xIn, a])
+    x = GCNConv(nFilter, activation=activation, use_bias=True)([xIn, aIn])
     x = GlobalSumPool([x, iIn])
     x = tf.keras.layer.Flatten()(x)
 

@@ -114,7 +114,7 @@ class SiFiCCdatasets(Dataset):
         # Convert to Graph
         print("Successfully loaded {}.".format(self.name))
         return [
-            Graph(x=x, a=a, e=e, y=y)
+            Graph(x=x, a=spektral.utils.gcn_filter(a), e=e, y=y)
             for x, a, e, y in zip(x_list, a_list, e_list, labels)
         ]
 
