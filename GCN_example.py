@@ -18,11 +18,11 @@ from spektral.data.loaders import DisjointLoader
 
 import tensorflow as tf
 from tensorflow import keras
-from keras.models import Model
-from keras.layers import Dense, Input, Dropout, Flatten
-from keras.losses import BinaryCrossentropy
-from keras.metrics import Recall, Precision, binary_accuracy
-from keras.optimizers import Adam
+from tensorflow.keras.models import Model
+from tensorflow.keras.layers import Dense, Input, Dropout, Flatten
+from tensorflow.keras.losses import BinaryCrossentropy
+from tensorflow.keras.metrics import Recall, Precision, binary_accuracy
+from tensorflow.keras.optimizers import Adam
 from spektral.layers import GlobalSumPool, ECCConv, GCNConv
 
 # ------------------------------------------------------------------------------
@@ -95,68 +95,17 @@ class_wts = tf.constant([class_weights[0], class_weights[1]])
 # ------------------------------------------------------------------------------
 # Build Model
 
-class Net(Model):
+X_in = Input(shape=(F,))
+A_in = Input(shape=(None,), sparse=True)
+I_in = Input(shape=(), dtype=tf.int64)
 
-    def __init__(
-            self,
-            n_labels,
-            channels=16,
-            activation="relu",
-            output_activation="sigmoid",
-            use_bias=True,
-            dropout_rate=0.2,
-            l2_reg=2.5e-4,
-            **kwargs,
-    ):
-        super().__init__(**kwargs)
+X_1 = GCNConv(32, activation="relu")([X_in, A_in])
+X_2 = Flatten(X_1)
+X_3 = Dense(16, activation="relu")(X_2)
+output = Dense(1, activation="sigmoid")(X_3)
 
-        self.n_labels = n_labels
-        self.channels = channels
-        self.activation = activation
-        self.output_activation = output_activation
-        self.use_bias = use_bias
-        self.dropout_rate = dropout_rate
-        self.l2_reg = l2_reg
-        reg = tf.keras.regularizers.l2(l2_reg)
-
-        self._gcn0 = GCNConv(
-            channels,
-            activation=activation,
-            kernel_regularizer=reg,
-            use_bias=use_bias
-        )
-
-        self._drop = tf.keras.layers.Dropout(dropout_rate)
-        self._pooling = GlobalSumPool()
-        self._flatten = Flatten()
-        self._dense1 = Dense(
-            channels,
-            activation=self.activation,
-        )
-        self._dense2 = Dense(
-            1,
-            activation=self.output_activation
-        )
-
-    def call(self, inputs):
-        if len(inputs) == 2:
-            x, a = inputs
-        else:
-            x, a, _ = inputs
-
-        a = spektral.utils.gcn_filter(a, symmetric=True)
-
-        x = self._gcn0([x, a])
-        x = self._flatten(x)
-        x = self._dense1(x)
-        x = self._dense2(x)
-        return x
-
-
-model = Net(n_labels=1)
+model = Model(inputs=[X_in, A_in], outputs=output)
 optimizer = Adam(learning_rate)
-pur = Precision
-eff = Recall
 loss_fn = BinaryCrossentropy()
 model.compile(optimizer=optimizer, loss=loss_fn, metrics=["BinaryAccuracy"])
 
