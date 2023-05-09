@@ -91,7 +91,7 @@ class SiFiCCdatasets(Dataset):
         else:
             e_available = False
             e_list = [None] * len(n_nodes)
-
+        """
         # Create sparse adjacency matrices and re-sort edge attributes in
         # lexicographic order
         a_e_list = [
@@ -103,6 +103,16 @@ class SiFiCCdatasets(Dataset):
             )
             for el, e, n in zip(el_list, e_list, n_nodes)
         ]
+        """
+        # create adjacency matrices
+        a_e_list = []
+        for i in range(len(el_list)):
+            adj = np.zeros(shape=(n_nodes[i], n_nodes[i]),
+                           dtype=np.float32)
+            for j in range(len(el_list[i])):
+                adj[el_list[i][j][0], el_list[i][j][1]] = 1.0
+            a_e_list.append(spektral.utils.gcn_filter(adj))
+
         if e_available:
             a_list, e_list = list(zip(*a_e_list))
         else:
@@ -110,13 +120,14 @@ class SiFiCCdatasets(Dataset):
 
         # Labels
         labels = io.load_txt(
-            self.path + "/" + self.name + "_graph_labels" + ".txt").astype(np.float32)
+            self.path + "/" + self.name + "_graph_labels" + ".txt").astype(
+            np.float32)
         # labels = _normalize(labels[:, None], "ohe")
 
         # Convert to Graph
         print("Successfully loaded {}.".format(self.name))
         return [
-            Graph(x=x, a=spektral.utils.gcn_filter(a), e=e, y=y)
+            Graph(x=x, a=a, e=e, y=y)
             for x, a, e, y in zip(x_list, a_list, e_list, labels)
         ]
 

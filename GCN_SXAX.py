@@ -27,7 +27,7 @@ RUN_NAME = "GCN_SXAX"
 DATASET = "SiFiCCCluster"
 DATASET_TRAIN = "OptimisedGeometry_Continuous_2e10protons_SiFiCCCluster"
 
-gen_datasets = False
+gen_datasets = True
 
 # ------------------------------------------------------------------------------
 # Set paths, check for datasets
@@ -141,85 +141,6 @@ class Net(tf.keras.models.Model):
 
 
 # ------------------------------------------------------------------------------
-# model version 3
-
-
-class GCN(tf.keras.Model):
-    """
-    This model, with its default hyperparameters, implements the architecture
-    from the paper:
-    > [Semi-Supervised Classification with Graph Convolutional Networks](https://arxiv.org/abs/1609.02907)<br>
-    > Thomas N. Kipf and Max Welling
-    **Mode**: single, disjoint, mixed, batch.
-    **Input**
-    - Node features of shape `([batch], n_nodes, n_node_features)`
-    - Weighted adjacency matrix of shape `([batch], n_nodes, n_nodes)`
-    **Output**
-    - Softmax predictions with shape `([batch], n_nodes, n_labels)`.
-    **Arguments**
-    - `n_labels`: number of channels in output;
-    - `channels`: number of channels in first GCNConv layer;
-    - `activation`: activation of the first GCNConv layer;
-    - `output_activation`: activation of the second GCNConv layer;
-    - `use_bias`: whether to add a learnable bias to the two GCNConv layers;
-    - `dropout_rate`: `rate` used in `Dropout` layers;
-    - `l2_reg`: l2 regularization strength;
-    - `**kwargs`: passed to `Model.__init__`.
-    """
-
-    def __init__(
-        self,
-        n_labels,
-        channels=16,
-        activation="relu",
-        output_activation="softmax",
-        use_bias=False,
-        dropout_rate=0.5,
-        l2_reg=2.5e-4,
-        **kwargs,
-    ):
-        super().__init__(**kwargs)
-
-        self.n_labels = n_labels
-        self.channels = channels
-        self.activation = activation
-        self.output_activation = output_activation
-        self.use_bias = use_bias
-        self.dropout_rate = dropout_rate
-        self.l2_reg = l2_reg
-        reg = tf.keras.regularizers.l2(l2_reg)
-        self._d0 = tf.keras.layers.Dropout(dropout_rate)
-        self._gcn0 = GCNConv(
-            channels, activation=activation, kernel_regularizer=reg, use_bias=use_bias
-        )
-        self._d1 = tf.keras.layers.Dropout(dropout_rate)
-        self._gcn1 = GCNConv(
-            n_labels, activation=output_activation, use_bias=use_bias
-        )
-
-    def get_config(self):
-        return dict(
-            n_labels=self.n_labels,
-            channels=self.channels,
-            activation=self.activation,
-            output_activation=self.output_activation,
-            use_bias=self.use_bias,
-            dropout_rate=self.dropout_rate,
-            l2_reg=self.l2_reg,
-        )
-
-    def call(self, inputs):
-        if len(inputs) == 2:
-            x, a = inputs
-        else:
-            x, a, _ = inputs  # So that the model can be used with DisjointLoader
-
-        x = self._d0(x)
-        x = self._gcn0([x, a])
-        x = self._d1(x)
-        return self._gcn1([x, a])
-
-# ------------------------------------------------------------------------------
 # Create model and train
 
 dropout = 0.2
@@ -244,8 +165,7 @@ model = setupModel(**modelParameters)
 """
 
 # model version 2
-# model = Net(32, 0.2)
-model = GCN(1, channels=32, use_bias=True, output_activation="sigmoid")
+model = Net(32, 0.2)
 optimizer = tf.keras.optimizers.Adam(learning_rate=learning_rate)
 model.compile(optimizer=optimizer, loss="binary_crossentropy")
 
