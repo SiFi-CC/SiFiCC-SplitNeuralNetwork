@@ -75,7 +75,7 @@ class SiFiCCdatasets(Dataset):
 
         # Edge features
         e_list = []
-        """
+
         e_attr = io.load_txt(
             self.path + "/" + self.name + "_edge_attributes" + ".txt",
             delimiter=",")
@@ -83,7 +83,7 @@ class SiFiCCdatasets(Dataset):
             e_attr = e_attr[:, None]
         e_attr = e_attr[mask]
         e_list.append(e_attr)
-        """
+
         if len(e_list) > 0:
             e_available = True
             e_list = np.concatenate(e_list, -1)
