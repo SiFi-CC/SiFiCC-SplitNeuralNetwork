@@ -91,7 +91,7 @@ class SiFiCCdatasets(Dataset):
         else:
             e_available = False
             e_list = [None] * len(n_nodes)
-        """
+
         # Create sparse adjacency matrices and re-sort edge attributes in
         # lexicographic order
         a_e_list = [
@@ -112,7 +112,7 @@ class SiFiCCdatasets(Dataset):
             for j in range(len(el_list[i])):
                 adj[el_list[i][j][0], el_list[i][j][1]] = 1.0
             a_e_list.append(spektral.utils.gcn_filter(adj))
-
+        """
         if e_available:
             a_list, e_list = list(zip(*a_e_list))
         else:

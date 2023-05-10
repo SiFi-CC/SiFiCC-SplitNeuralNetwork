@@ -54,7 +54,7 @@ def export_sxax(RootParser,
 
         # get indices of clusters sorted by position in reverse order
         idx_scatterer, idx_absorber = event.sort_clusters_by_module(use_energy=False)
-        
+
         if len(idx_scatterer) > 1:
             continue
 
