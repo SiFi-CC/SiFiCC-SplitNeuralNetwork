@@ -106,15 +106,15 @@ class SiFiCCdatasets(Dataset):
         # Create sparse adjacency matrices and re-sort edge attributes in
         # lexicographic order
         if self.adj_arg == "binary":
-            a_e_list = [
-                sparse.edge_index_to_matrix(
-                    edge_index=el,
-                    edge_weight=np.ones(el.shape[0]),
-                    edge_features=e,
-                    shape=(n, n),
-                )
-                for el, e, n in zip(el_list, e_list, n_nodes)
-            ]
+            # create adjacency matrices
+            a_e_list = []
+            for i in range(len(el_list)):
+                adj = np.zeros(shape=(n_nodes[i], n_nodes[i]),
+                               dtype=np.float32)
+                for j in range(len(el_list[i])):
+                    adj[el_list[i][j][0], el_list[i][j][1]] = 1.0
+                a_e_list.append(adj)
+
         if self.adj_arg == "gcn_binary":
             # create adjacency matrices
             a_e_list = []
@@ -148,10 +148,7 @@ class SiFiCCdatasets(Dataset):
             e_available = False
             e_list = [None] * len(n_nodes)
 
-        if e_available:
-            a_list, e_list = list(zip(*a_e_list))
-        else:
-            a_list = a_e_list
+        a_list = a_e_list
 
         # Labels
         labels = io.load_txt(

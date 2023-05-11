@@ -17,13 +17,14 @@ from src.SiFiCCNN.GCN.dl_layers import ConcatAdj, ReZero, GCNConvResNetBlock
 from spektral.data.loaders import DisjointLoader
 
 import tensorflow as tf
-from spektral.layers import ECCConv, GCNConv
-from spektral.layers import GlobalMaxPool, GlobalAttentionPool
+from spektral.layers import CensNetConv
+from spektral.layers import GlobalMaxPool
+from spektral.utils.convolution import gcn_filter, line_graph, incidence_matrix
 
 # ------------------------------------------------------------------------------
 # Global settings
 
-RUN_NAME = "GCN_example"
+RUN_NAME = "CensNet_example"
 
 DATASET = "SiFiCCCluster"
 DATASET_TRAIN = "OptimisedGeometry_Continuous_2e10protons_SiFiCCCluster"
@@ -49,8 +50,8 @@ for file in [DATASET_TRAIN]:
 
 dataset = SiFiCCdatasets.SiFiCCdatasets(
     name="OptimisedGeometry_Continuous_2e10protons_SiFiCCCluster",
-    edge_atr=False,
-    adj_arg="gcn_distance",
+    edge_atr=True,
+    adj_arg="binary",
     dataset_path=dir_datasets)
 
 
@@ -67,15 +68,16 @@ def setupModel(dropout,
     S = 3
     # Model definition
     xIn = tf.keras.layers.Input(shape=(F,))
-    aIn = tf.keras.layers.Input(shape=(None,), sparse=True)
+    eIn = tf.keras.layers.Input(shape=(S,))
+    aIn = tf.keras.layers.Input(shape=(None, None))
     iIn = tf.keras.layers.Input(shape=(), dtype=tf.int64)
 
-    x = GCNConv(nFilter, activation=activation, use_bias=True)([xIn, aIn])
-    x = GCNConvResNetBlock(*[x, aIn], nFilter, activation)
-    x = GCNConvResNetBlock(*[x, aIn], nFilter, activation)
-    x = GCNConvResNetBlock(*[x, aIn], nFilter, activation)
-    x = GCNConvResNetBlock(*[x, aIn], nFilter, activation)
-    x = GlobalAttentionPool(32)([x, iIn])
+    incIn = incidence_matrix(aIn)
+    lgIn = line_graph(incIn)
+    a = gcn_filter(aIn)
+
+    x, e = CensNetConv([xIn, a, lgIn, incIn, eIn])
+    x = GlobalMaxPool(32)([x, iIn])
     x = tf.keras.layers.Flatten()(x)
 
     if dropout > 0:
@@ -101,14 +103,14 @@ def setupModel(dropout,
 
 dropout = 0.2
 learning_rate = 1e-4
-nConnectedNodes = 16
-nFilter = 16
+nConnectedNodes = 32
+nFilter = 32
 batch_size = 64
 activation = "relu"
 
 trainsplit = 0.7
 valsplit = 0.2
-nEpochs = 50
+nEpochs = 10
 
 # model version 1
 modelParameters = {"dropout": dropout,
