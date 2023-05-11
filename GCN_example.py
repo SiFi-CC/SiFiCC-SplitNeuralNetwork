@@ -12,26 +12,24 @@ import numpy as np
 import spektral
 
 from src.SiFiCCNN.GCN import SiFiCCdatasets, IGSiFICCCluster
-from src.SiFiCCNN.GCN import Spektral_NeuralNetwork
+from src.SiFiCCNN.GCN.dl_layers import ConcatAdj, ReZero, GCNConvResNetBlock
 
 from spektral.data.loaders import DisjointLoader
 
 import tensorflow as tf
-from spektral.layers import GlobalSumPool, ECCConv, GCNConv
+from spektral.layers import GlobalMaxPool, ECCConv, GCNConv
 
 # ------------------------------------------------------------------------------
 # Global settings
 
-RUN_NAME = "GCN_SXAX"
+RUN_NAME = "GCN_example"
 
 DATASET = "SiFiCCCluster"
 DATASET_TRAIN = "OptimisedGeometry_Continuous_2e10protons_SiFiCCCluster"
 
-gen_datasets = True
-
-# ------------------------------------------------------------------------------
-# Set paths, check for datasets
-
+################################################################################
+# Set paths
+################################################################################
 dir_main = os.getcwd()
 dir_root = dir_main + "/root_files/"
 dir_datasets = dir_main + "/datasets/"
@@ -44,48 +42,21 @@ for file in [DATASET_TRAIN]:
     if not os.path.isdir(dir_results + RUN_NAME + "/" + file[:-4] + "/"):
         os.mkdir(dir_results + RUN_NAME + "/" + file[:-4] + "/")
 
-# ------------------------------------------------------------------------------
-# Load dataset, generate Datasets if needed
-# Create a disjoint loader
-
-if gen_datasets:
-    from src.SiFiCCNN.Root import RootFiles
-    from src.SiFiCCNN.Root import RootParser
-
-    rootparser_cont = RootParser.Root(
-        dir_main + RootFiles.OptimisedGeometry_Continuous_2e10protons_withTimestamps_local)
-    IGSiFICCCluster.gen_SiFiCCCluster(rootparser_cont, n=10000)
+################################################################################
+# Load dataset , custom setting possible
+################################################################################
 
 dataset = SiFiCCdatasets.SiFiCCdatasets(
     name="OptimisedGeometry_Continuous_2e10protons_SiFiCCCluster",
+    edge_atr=False,
+    adj_arg="gcn_distance",
     dataset_path=dir_datasets)
 
 
-# ------------------------------------------------------------------------------
-# Custom adj layer from 3B deeplearning wiki
-
-
-class ConcatAdj(tf.keras.layers.Layer):
-    def __init__(self, adj, **kwargs):
-        super(ConcatAdj, self).__init__(**kwargs)
-        self.adj = adj
-
-        # Set the tf tensor
-        adj = spektral.utils.gcn_filter(adj)
-        self.adj_tensor = tf.constant(adj)
-
-    def call(self, input):
-        return [input, self.adj_tensor]
-
-    def get_config(self):
-        base_config = super().get_config()
-        return {**base_config,
-                "adj": self.adj}
-
-
-# ------------------------------------------------------------------------------
+################################################################################
 # Build Model
-"""
+################################################################################
+
 def setupModel(dropout,
                learning_rate,
                nFilter=32,
@@ -96,52 +67,37 @@ def setupModel(dropout,
     # Model definition
     xIn = tf.keras.layers.Input(shape=(F,))
     aIn = tf.keras.layers.Input(shape=(None,), sparse=True)
-    eIn = tf.keras.layers.Input(shape=(S, ))
     iIn = tf.keras.layers.Input(shape=(), dtype=tf.int64)
 
     x = GCNConv(nFilter, activation=activation, use_bias=True)([xIn, aIn])
-    x = GlobalSumPool()([x, iIn])
+    x = GCNConvResNetBlock(*[x, aIn], nFilter, activation)
+    x = GCNConvResNetBlock(*[x, aIn], nFilter, activation)
+    x = GCNConvResNetBlock(*[x, aIn], nFilter, activation)
+    x = GCNConvResNetBlock(*[x, aIn], nFilter, activation)
+    x = GlobalMaxPool()([x, iIn])
     x = tf.keras.layers.Flatten()(x)
 
     if dropout > 0:
         x = tf.keras.layers.Dropout(dropout)(x)
 
+    x = tf.keras.layers.Dense(nFilter, activation="relu")(x)
+    x = tf.keras.layers.Dense(nFilter, activation="relu")(x)
     output = tf.keras.layers.Dense(1, activation="sigmoid")(x)
 
     # Build model
-    model = tf.keras.models.Model(inputs=[xIn, aIn, eIn, iIn], outputs=output)
-    optimizer = tf.keras.optimizer.Adam(learning_rate=learning_rate)
-    model.compile(optimizer=optimizer, loss="binary_crossentropy")
+    model = tf.keras.models.Model(inputs=[xIn, aIn, iIn], outputs=output)
+    optimizer = tf.keras.optimizers.Adam(learning_rate=learning_rate)
+    model.compile(optimizer=optimizer,
+                  loss="binary_crossentropy",
+                  metrics=["Precision", "Recall"])
 
     return model
-"""
 
 
-# ------------------------------------------------------------------------------
-# Model version 2
+################################################################################
+# Training
+################################################################################
 
-class Net(tf.keras.models.Model):
-    def __init__(self, channels, dropout):
-        super().__init__()
-
-        self.gcn = GCNConv(channels)
-        self.pool = GlobalSumPool()
-        self.dense1 = tf.keras.layers.Dense(channels, activation="relu")
-        self.dropout = tf.keras.layers.Dropout(dropout)
-        self.dense2 = tf.keras.layers.Dense(1, activation="sigmoid")
-
-    def call(self, inputs):
-        x, a, i = inputs
-
-        x = self.gcn([x, a])
-        x = self.pool([x, i])
-        x = self.dense1(x)
-        x = self.dropout(x)
-        return self.dense2(x)
-
-
-# ------------------------------------------------------------------------------
-# Create model and train
 
 dropout = 0.2
 learning_rate = 1e-3
@@ -150,11 +106,10 @@ nFilter = 32
 batch_size = 64
 activation = "relu"
 
-trainsplit = 0.8
-valsplit = 0.1
-nEpochs = 10
+trainsplit = 0.7
+valsplit = 0.2
+nEpochs = 20
 
-"""
 # model version 1
 modelParameters = {"dropout": dropout,
                    "learning_rate": learning_rate,
@@ -162,12 +117,6 @@ modelParameters = {"dropout": dropout,
                    "activation": activation}
 
 model = setupModel(**modelParameters)
-"""
-
-# model version 2
-model = Net(32, 0.2)
-optimizer = tf.keras.optimizers.Adam(learning_rate=learning_rate)
-model.compile(optimizer=optimizer, loss="binary_crossentropy")
 
 # generator setup
 idx1 = int(trainsplit * len(dataset))
@@ -193,8 +142,10 @@ model.fit(loader_train,
           class_weight=class_weights,
           verbose=1)
 
-# ------------------------------------------------------------------------------
-# Evaluate Network
+################################################################################
+# Evaluate model
+################################################################################
+
 
 from src.SiFiCCNN.NeuralNetwork import NNAnalysis
 from src.SiFiCCNN.NeuralNetwork import FastROCAUC
@@ -216,9 +167,6 @@ for file in [DATASET_TRAIN]:
     y_pred = np.vstack(y_pred)
     y_true = np.reshape(y_true, newshape=(y_true.shape[0],))
     y_pred = np.reshape(y_pred, newshape=(y_pred.shape[0],))
-
-    for i in range(20):
-        print(y_true[i], y_pred[i])
 
     # ROC-AUC Analysis
     FastROCAUC.fastROCAUC(y_pred, y_true, save_fig="ROCAUC")

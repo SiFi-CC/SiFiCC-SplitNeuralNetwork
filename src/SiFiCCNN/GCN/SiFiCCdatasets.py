@@ -8,12 +8,18 @@ from spektral.utils import io, sparse
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
 
 
-# ----------------------------------------------------------------------------------------------------------------------
+################################################################################
+#
+################################################################################
 
 class SiFiCCdatasets(Dataset):
-    def __init__(self, name, dataset_path, **kwargs):
+    def __init__(self, name, dataset_path, edge_atr=False, adj_arg="Binary",
+                 **kwargs):
         self.name = name
         self.dataset_path = dataset_path
+
+        self.edge_atr = edge_atr
+        self.adj_arg = adj_arg
         super().__init__(**kwargs)
 
     @property
@@ -76,17 +82,22 @@ class SiFiCCdatasets(Dataset):
         # Edge features
         e_list = []
 
-        e_attr = io.load_txt(
-            self.path + "/" + self.name + "_edge_attributes" + ".txt",
-            delimiter=",")
-        if e_attr.ndim == 1:
-            e_attr = e_attr[:, None]
-        e_attr = e_attr[mask]
-        e_list.append(e_attr)
+        if self.edge_atr:
+            e_attr = io.load_txt(
+                self.path + "/" + self.name + "_edge_attributes" + ".txt",
+                delimiter=",")
+            if e_attr.ndim == 1:
+                e_attr = e_attr[:, None]
+            e_attr = e_attr[mask]
+            e_list.append(e_attr)
 
         if len(e_list) > 0:
             e_available = True
             e_list = np.concatenate(e_list, -1)
+
+            ary_mean, ary_std = _get_standardization(e_list)
+            e_list = _standardize(e_list, ary_mean, ary_std)
+
             e_list = np.split(e_list, n_edges_cum)
         else:
             e_available = False
@@ -94,25 +105,49 @@ class SiFiCCdatasets(Dataset):
 
         # Create sparse adjacency matrices and re-sort edge attributes in
         # lexicographic order
-        a_e_list = [
-            sparse.edge_index_to_matrix(
-                edge_index=el,
-                edge_weight=np.ones(el.shape[0]),
-                edge_features=e,
-                shape=(n, n),
-            )
-            for el, e, n in zip(el_list, e_list, n_nodes)
-        ]
-        """
-        # create adjacency matrices
-        a_e_list = []
-        for i in range(len(el_list)):
-            adj = np.zeros(shape=(n_nodes[i], n_nodes[i]),
-                           dtype=np.float32)
-            for j in range(len(el_list[i])):
-                adj[el_list[i][j][0], el_list[i][j][1]] = 1.0
-            a_e_list.append(spektral.utils.gcn_filter(adj))
-        """
+        if self.adj_arg == "binary":
+            a_e_list = [
+                sparse.edge_index_to_matrix(
+                    edge_index=el,
+                    edge_weight=np.ones(el.shape[0]),
+                    edge_features=e,
+                    shape=(n, n),
+                )
+                for el, e, n in zip(el_list, e_list, n_nodes)
+            ]
+        if self.adj_arg == "gcn_binary":
+            # create adjacency matrices
+            a_e_list = []
+            for i in range(len(el_list)):
+                adj = np.zeros(shape=(n_nodes[i], n_nodes[i]),
+                               dtype=np.float32)
+                for j in range(len(el_list[i])):
+                    adj[el_list[i][j][0], el_list[i][j][1]] = 1.0
+                a_e_list.append(spektral.utils.gcn_filter(adj))
+
+        if self.adj_arg == "gcn_distance":
+            # prepare edge attribute for distance weight
+            e_attr = io.load_txt(
+                self.path + "/" + self.name + "_edge_attributes" + ".txt",
+                delimiter=",")
+
+            e_list = []
+            e_list.append(e_attr)
+            e_list = np.concatenate(e_list, -1)
+            e_list = np.split(e_list, n_edges_cum)
+
+            # create adjacency matrices
+            a_e_list = []
+            for i in range(len(el_list)):
+                adj = np.zeros(shape=(n_nodes[i], n_nodes[i]),
+                               dtype=np.float32)
+                for j in range(len(el_list[i])):
+                    adj[el_list[i][j][0], el_list[i][j][1]] = e_list[i][j][0]
+                a_e_list.append(spektral.utils.gcn_filter(adj))
+
+            e_available = False
+            e_list = [None] * len(n_nodes)
+
         if e_available:
             a_list, e_list = list(zip(*a_e_list))
         else:
