@@ -9,7 +9,7 @@ def gen_SiFiCCCluster(RootParser, n=None):
     Script to generate a dataset for spektral package usage.
 
     Args:
-        RootParser  (Root Object): Root object containing root file
+        RootParser  (root Object): root object containing root file
         n                   (int): Number of events sampled from root file
 
     Return:
@@ -20,9 +20,9 @@ def gen_SiFiCCCluster(RootParser, n=None):
 
     # grab correct filepath, generate dataset in target directory.
     # If directory doesn't exist, it will be created.
-    # "MAIN/datasets/$dataset_name$/"
+    # "MAIN/dataset/$dataset_name$/"
     dir_main = os.getcwd()
-    dir_datasets = dir_main + "/datasets/"
+    dir_datasets = dir_main + "/dataset/"
     dir_final = dir_datasets + "/SiFiCCdatasets/" + dataset_name + "/"
 
     if not os.path.isdir(dir_final):

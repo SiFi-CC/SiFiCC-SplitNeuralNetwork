@@ -4,11 +4,10 @@ import tqdm
 import sys
 import os
 
-from src.SiFiCCNN.Root.RootEvent import Event
-from src.SiFiCCNN.Root.RootDetector import Detector
+from src.SiFiCCNN.root.Event import Event
+from src.SiFiCCNN.root.Detector import Detector
+from src.SiFiCCNN.utils.physics import compton_scattering_angle
 
-
-########################################################################################################################
 
 class Root:
     """loading and preprocessing of root data for events and setup tree.
@@ -27,7 +26,8 @@ class Root:
         self.events_keys = self.events.keys()
 
         # List of root leaves expected for all possible root file structures
-        # (Note: b in front of the string account for byte stare of strings in root)
+        # Note: b in front of the string account for
+        # byte stare of strings in root
         self.leaves_global = [b"EventNumber",
                               b'MCSimulatedEventType',
                               b'MCEnergy_Primary',
@@ -103,8 +103,8 @@ class Root:
         """iteration over the events root tree
 
         Args:
-            n (int) or (None): total number of events being returned, if None the maximum number
-                               will be iterated.
+            n (int) or (None):  total number of events being returned,
+                                if None the maximum number will be iterated.
 
         Returns:
             yield event at every root tree entry
@@ -116,7 +116,8 @@ class Root:
         # TODO: exception for negative entries
 
         # define progress bar
-        progbar = tqdm.tqdm(total=n, ncols=100, file=sys.stdout, desc="iterating root tree")
+        progbar = tqdm.tqdm(total=n, ncols=100, file=sys.stdout,
+                            desc="iterating root tree")
         progbar_step = 0
         progbar_update_size = 1000
 
@@ -196,10 +197,14 @@ class Root:
         param_RecoClusterTimestamps = 0
 
         if self.ifcluster:
-            param_RecoClusterPosition = basket['RecoClusterPositions.position'][idx]
-            param_RecoClusterPosition_uncertainty = basket['RecoClusterPositions.uncertainty'][idx]
-            param_RecoClusterEnergies_values = basket['RecoClusterEnergies.value'][idx]
-            param_RecoClusterEnergies_uncertainty = basket['RecoClusterEnergies.uncertainty'][idx]
+            param_RecoClusterPosition = basket['RecoClusterPositions.position'][
+                idx]
+            param_RecoClusterPosition_uncertainty = \
+                basket['RecoClusterPositions.uncertainty'][idx]
+            param_RecoClusterEnergies_values = \
+                basket['RecoClusterEnergies.value'][idx]
+            param_RecoClusterEnergies_uncertainty = \
+                basket['RecoClusterEnergies.uncertainty'][idx]
             param_RecoClusterEntries = basket['RecoClusterEntries'][idx]
             param_RecoClusterTimestamps = basket["RecoClusterTimestamps"][idx]
 
@@ -266,20 +271,24 @@ class Root:
                                           namedecode='utf-8'):
             return self.__event_at_basket(basket, 0)
 
-    ####################################################################################################################
-
     def export_npz_lookup(self, n=None, is_s1ax=False):
-        """generates compressed npz file containing MC-Truth data and Cut-based reco data.
+        """generates compressed npz file containing MC-Truth data and Cut-based
+        reco data.
 
         Args:
-            n (int or none): number of events parsed from root tree, None if all events are iterated
-            is_s1ax (bool): If true, skip events with more than 1 scatterer cluster
+            n (int or none):    number of events parsed from root tree,
+                                None if all events are iterated
+            is_s1ax (bool):     If true, skip events with more
+                                than 1 scatterer cluster
 
         """
 
         # create empty arrays for full export to compressed .npz format
         # root data will be split into:
-        # - Meta data: (EventNumber, MCSimulatedEventType, IdealCompton event tag, CB-identified)
+        # - Meta data: (EventNumber,
+        #               MCSimulatedEventType,
+        #               IdealCompton event tag,
+        #               CB-identified)
         # - MonteCarlo-data: Monte-Carlo Event data
         # - CutBased-data: Cut-based reconstruction data
 
@@ -289,11 +298,13 @@ class Root:
         ary_tags = np.zeros(shape=(self.events_entries, 5))
 
         # Fill Meta-data, Monte-Carlo data and Cluster data into empty arrays
-        # Cut-based reco data is not iterable since uproot can't handle the reco data stored in branches
+        # Cut-based reco data is not iterable since uproot can't handle
+        # the reco data stored in branches
         counter = 0
         for i, event in enumerate(self.iterate_events(n=n)):
             if is_s1ax:
-                idx_scatterer, idx_absorber = event.sort_clusters_by_module(use_energy=True)
+                idx_scatterer, idx_absorber = event.sort_clusters_by_module(
+                    use_energy=True)
                 if not len(idx_scatterer) == 1:
                     continue
 
@@ -305,16 +316,16 @@ class Root:
                                     event.is_ideal_compton * 1,
                                     event.Identified]
 
-            ary_mc[counter, :] = [event.is_ideal_compton * 1,
-                                  event.MCEnergy_e,
-                                  event.MCEnergy_p,
-                                  event.MCPosition_e_first.x,
-                                  event.MCPosition_e_first.y,
-                                  event.MCPosition_e_first.z,
-                                  event.MCPosition_p_first.x,
-                                  event.MCPosition_p_first.y,
-                                  event.MCPosition_p_first.z,
-                                  event.calculate_theta(event.MCEnergy_e, event.MCEnergy_p)]
+            ary_mc[counter, :] = [event.compton_tag * 1,
+                                  event.target_energy_e,
+                                  event.target_energy_p,
+                                  event.target_position_e.x,
+                                  event.target_position_e.y,
+                                  event.target_position_e.z,
+                                  event.target_position_p.x,
+                                  event.target_position_p.y,
+                                  event.target_position_p.z,
+                                  event.target_angle_theta]
 
             e1, _ = event.get_electron_energy()
             e2, _ = event.get_photon_energy()
@@ -354,3 +365,33 @@ class Root:
                                 TAGS=ary_tags)
 
         print("file saved: ", self.file_name + "_lookup.npz")
+
+    def export_classic_reco(self, destination):
+        # create empty array for classical cut-based reconstruction
+        ary_cb = np.zeros(shape=(self.events_entries, 10))
+
+        # fill up Cut-Based reconstruction values manually due to
+        # them being stored in branches
+        ary_cb[:, 0] = self.events["Identified"].array()
+        ary_cb[:, 1] = self.events["RecoEnergy_e"]["value"].array()
+        ary_cb[:, 2] = self.events["RecoEnergy_p"]["value"].array()
+        ary_cb[:, 3] = self.events["RecoPosition_e"]["position"].array().x
+        ary_cb[:, 4] = self.events["RecoPosition_e"]["position"].array().y
+        ary_cb[:, 5] = self.events["RecoPosition_e"]["position"].array().z
+        ary_cb[:, 6] = self.events["RecoPosition_p"]["position"].array().x
+        ary_cb[:, 7] = self.events["RecoPosition_p"]["position"].array().y
+        ary_cb[:, 8] = self.events["RecoPosition_p"]["position"].array().z
+        # add compton scattering angle calculated from energy
+        e = self.events["RecoEnergy_e"]["value"].array()
+        p = self.events["RecoEnergy_p"]["value"].array()
+        for i in range(len(e)):
+            ary_cb[i, 9] = compton_scattering_angle(e[i] + p[i], p[i])
+
+        # export dataframe to compressed .npz
+
+        with open(destination + "/" + self.file_name + "_CBRECO.npz",
+                  'wb') as file:
+            np.savez_compressed(file, CB_RECO=ary_cb)
+
+        print("file saved at: ",
+              destination + "/" + self.file_name + "_CBRECO.npz")

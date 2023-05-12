@@ -4,15 +4,13 @@ import matplotlib.pyplot as plt
 
 def fastROCAUC(y_pred, y_true,
                weighted=False,
-               return_score=False,
-               save_fig=None):
+               return_score=False):
     """
 
     :param y_pred: Predicted probabilities of shape [n,1]
     :param y_true: True probabilities of shape [n,1]
     :param weighted: True: use y_pred as weights for AUC Score
     :param return_score: True: returns results: AUC Score
-    :param save_fig: str: saves ROC courve plot
     :return:
     """
 
@@ -32,12 +30,14 @@ def fastROCAUC(y_pred, y_true,
         auc_label = "weightedAUC Score"
 
         for i in range(len(y_pred)):
-            # model predicts X_i in A with probability p_i, contributes with weight wa
+            # model predicts X_i in A with probability p_i,
+            # contributes with weight wa
             score.append(1)
             p.append(full_array[i][0])
             weight.append(full_array[i][2])
 
-            # model incorrectly predicts X_i in A with probability p_i, contributes with weight wb
+            # model incorrectly predicts X_i in A with probability p_i,
+            # contributes with weight wb
             score.append(0)
             p.append(full_array[i][0])
             weight.append(full_array[i][3])
@@ -115,7 +115,8 @@ def fastROCAUC(y_pred, y_true,
     for i in range(len(fpr_list) - 1):
         # Riemann-sum to calculate area under curve
         area = (fpr_list[i + 1] - fpr_list[i]) * tpr_list[i]
-        # multiply result by -1, since x values are ordered from highest to lowest
+        # multiply result by -1, since x values are ordered from highest to
+        # lowest
         auc_score += area * (-1)
 
     """ 
@@ -127,7 +128,9 @@ def fastROCAUC(y_pred, y_true,
     """
 
     if return_score:
-        return auc_score, theta
+        return auc_score, theta, (fpr_list, tpr_list)
+
+    """
     if save_fig is not None:
         print("Plotting ROC curve and {}...".format(auc_label))
         plt.figure()
@@ -142,3 +145,5 @@ def fastROCAUC(y_pred, y_true,
         plt.ylabel("True Positive Rate")
         plt.legend()
         plt.savefig(save_fig)
+    """
+

@@ -6,7 +6,8 @@ from uproot_methods.classes.TVector3 import TVector3
 
 class Event:
     """
-    Represents a single event of a root tree. For detailed description of the attributes consult the gccb-wiki
+    Represents a single event of a root tree. For detailed description of the
+    attributes consult the gccb-wiki
     Attributes:
 
         EventNumber (int)
@@ -99,7 +100,8 @@ class Event:
 
         # Reco information (Cut-Based Reconstruction)
         self.Identified = Identified
-        # Cut-Based reco data can not be accessed in python due to the entries being branches!
+        # Cut-Based reco data can not be accessed in python due to the entries
+        # being branches!
 
         # Cluster information
         self.RecoClusterPosition = RecoClusterPosition
@@ -109,7 +111,8 @@ class Event:
         self.RecoClusterEntries = RecoClusterEntries
         self.RecoClusterTimestamps = RecoClusterTimestamps
         if self.bcluster:
-            self.RecoClusterTimestamps_relative = RecoClusterTimestamps - min(RecoClusterTimestamps)
+            self.RecoClusterTimestamps_relative = RecoClusterTimestamps - min(
+                RecoClusterTimestamps)
 
         # SiPM and Fibre information
         self.SiPM_triggertime = SiPM_triggertime
@@ -125,7 +128,7 @@ class Event:
         self.scatterer = scatterer
         self.absorber = absorber
 
-        # --------------------------------------------------------------------------------------------------------------
+        # ----------------------------------------------------------------------
         # Temporary corrections to MC-Truth with additional control tagging
 
         # correction of MCDirection_source quantity
@@ -137,13 +140,16 @@ class Event:
             self.MCDirection_source /= self.MCDirection_source.mag
 
         # scattering angle
-        # calculated from energy and vector dot product of direction vectors given by simulation output
-        self.theta_energy = self.calc_theta_energy(self.MCEnergy_e, self.MCEnergy_p)
-        self.theta_dotvec = self.calc_theta_dotvec(self.MCDirection_source, self.MCDirection_scatter)
+        # calculated from energy and vector dot product of direction vectors
+        # given by simulation output
+        self.theta_energy = self.calc_theta_energy(self.MCEnergy_e,
+                                                   self.MCEnergy_p)
+        self.theta_dotvec = self.calc_theta_dotvec(self.MCDirection_source,
+                                                   self.MCDirection_scatter)
 
         # correction of photon absorber position
 
-        # --------------------------------------------------------------------------------------------------------------
+        # ----------------------------------------------------------------------
         # Event tagging and deep learning targets
 
         # initialize neural network targets
@@ -160,12 +166,13 @@ class Event:
         self.set_target_angle()
         self.set_compton_tag()
 
-    # ------------------------------------------------------------------------------------------------------------------
+    # ---------------------------------------------------------------------------
     # neural network targets
 
     def set_target_positions(self):
         """
-        Set scatterer and absorber target interaction position for neural network regression
+        Set scatterer and absorber target interaction position for neural
+        network regression
 
         return:
             None
@@ -173,14 +180,18 @@ class Event:
 
         self.target_position_e = self.MCComptonPosition
 
-        # scan for first absorber interaction that has the correct scattering direction
+        # scan for first absorber interaction that has the correct scattering
+        # direction
         for idx in range(0, len(self.MCInteractions_p)):
-            if 0 <= self.MCInteractions_p[idx] < 20 and self.absorber.is_vec_in_module(
-                    self.MCPosition_p[idx]):
+            if 0 <= self.MCInteractions_p[
+                idx] < 20 and self.absorber.is_vec_in_module(
+                self.MCPosition_p[idx]):
 
-                # check additionally if the interaction is in the scattering direction
-                tmp_angle = self.calc_theta_dotvec(self.MCPosition_p[idx] - self.MCComptonPosition,
-                                                   self.MCDirection_scatter)
+                # check additionally if the interaction is in the scattering
+                # direction
+                tmp_angle = self.calc_theta_dotvec(
+                    self.MCPosition_p[idx] - self.MCComptonPosition,
+                    self.MCDirection_scatter)
                 if tmp_angle < 1e-3:
                     self.target_position_p = self.MCPosition_p[idx]
                     break
@@ -206,12 +217,14 @@ class Event:
 
     def set_compton_tag(self):
         """
-        Scans if a given event is an ideal Compton event and sets the corresponding tag. This tag is used as a neural
-        network classification target.
+        Scans if a given event is an ideal Compton event and sets the
+        corresponding tag. This tag is used as a neural network classification
+        target.
 
         Ideal Compton event:
-            - Compton energy stored in event
-            - Interaction of primary gamma in scatterer and at least one interaction in the absorber (any)
+            -   Compton energy stored in event
+            -   Interaction of primary gamma in scatterer and at least
+                one interaction in the absorber (any)
 
         return:
             None
@@ -221,11 +234,12 @@ class Event:
         if self.MCEnergy_e > 0.0:
             # check if primary gamma interacted at least 2 times
             if len(self.MCPosition_p) >= 2:
-                if self.scatterer.is_vec_in_module(self.target_position_e) and self.absorber.is_vec_in_module(
-                        self.target_position_p):
+                if self.scatterer.is_vec_in_module(
+                        self.target_position_e) and self.absorber.is_vec_in_module(
+                    self.target_position_p):
                     self.compton_tag = True
 
-    # ------------------------------------------------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     # SiPM and fibre feature map generation
     # Code manly written by Philippe Clement from NN fibre identification
     @staticmethod
@@ -250,7 +264,9 @@ class Event:
         dimy = 2
         dimz = 32
 
-        ary_feature = np.zeros(shape=(dimx + 2 * padding + gap_padding, dimy + 2 * padding, dimz + 2 * padding, 2))
+        ary_feature = np.zeros(shape=(
+            dimx + 2 * padding + gap_padding, dimy + 2 * padding,
+            dimz + 2 * padding, 2))
 
         for i, sipm_id in enumerate(self.SiPM_id):
             x, y, z = self.sipm_id_to_position(sipm_id=sipm_id)
@@ -274,12 +290,13 @@ class Event:
 
         return r, phi, theta
 
-
     # --------------------------------------------------------------------------
 
-    def calc_theta_energy(self, e1, e2):
+    @staticmethod
+    def calc_theta_energy(e1, e2):
         """
-        Calculate scattering angle theta in radiant from Compton scattering formula.
+        Calculate scattering angle theta in radiant from Compton scattering
+        formula.
 
         Args:
              e1 (double): Initial gamma energy
@@ -297,13 +314,16 @@ class Event:
             theta = np.arccos(costheta)  # rad
             return theta
 
-    def calc_theta_dotvec(self, vec1, vec2):
+    @staticmethod
+    def calc_theta_dotvec(vec1, vec2):
         """
-        Calculate scattering angle theta in radiant from the dot product of 2 vectors.
+        Calculate scattering angle theta in radiant from the dot product of 2
+        vectors.
 
         Args:
              vec1 (TVector3): 3-dim origin vector, direction vector of source
-             vec2 (TVector3): 3-dim origin vector, direction vector of compton scattering
+             vec2 (TVector3): 3-dim origin vector, direction vector of compton
+                              scattering
         """
         if vec1.mag == 0 or vec2.mag == 0:
             return 0.0
@@ -318,21 +338,26 @@ class Event:
 
     def get_electron_energy(self):
         idx_scatterer, _ = self.sort_clusters_by_module(use_energy=True)
-        return self.RecoClusterEnergies_values[idx_scatterer[0]], self.RecoClusterEnergies_uncertainty[idx_scatterer[0]]
+        return self.RecoClusterEnergies_values[idx_scatterer[0]], \
+               self.RecoClusterEnergies_uncertainty[idx_scatterer[0]]
 
     def get_photon_energy(self):
         _, idx_absorber = self.sort_clusters_by_module(use_energy=True)
-        photon_energy_value = np.sum(self.RecoClusterEnergies_values[idx_absorber])
-        photon_energy_uncertainty = np.sqrt(np.sum(self.RecoClusterEnergies_uncertainty[idx_absorber] ** 2))
+        photon_energy_value = np.sum(
+            self.RecoClusterEnergies_values[idx_absorber])
+        photon_energy_uncertainty = np.sqrt(
+            np.sum(self.RecoClusterEnergies_uncertainty[idx_absorber] ** 2))
         return photon_energy_value, photon_energy_uncertainty
 
     def get_electron_position(self):
         idx_scatterer, _ = self.sort_clusters_by_module(use_energy=True)
-        return self.RecoClusterPosition[idx_scatterer[0]], self.RecoClusterPosition_uncertainty[idx_scatterer[0]]
+        return self.RecoClusterPosition[idx_scatterer[0]], \
+               self.RecoClusterPosition_uncertainty[idx_scatterer[0]]
 
     def get_photon_position(self):
         _, idx_absorber = self.sort_clusters_by_module(use_energy=True)
-        return self.RecoClusterPosition[idx_absorber[0]], self.RecoClusterPosition_uncertainty[idx_absorber[0]]
+        return self.RecoClusterPosition[idx_absorber[0]], \
+               self.RecoClusterPosition_uncertainty[idx_absorber[0]]
 
     def sort_clusters_energy(self):
         """ sort events by highest energy in descending order
@@ -351,10 +376,12 @@ class Event:
         return np.argsort(self.RecoClusterPosition.x)
 
     def sort_clusters_by_module(self, use_energy=True):
-        """ sort clusters (sorted by energy) by corresponding module only creates list of array idx's.
+        """ sort clusters (sorted by energy) by corresponding module only
+        creates list of array idx's.
 
         Args:
-            use_energy (bool): True if clusters are sorted by energy before, else sorted by position
+            use_energy (bool): True if clusters are sorted by energy before,
+                               else sorted by position
 
         return: sorted array idx scatterer, absorber
 
@@ -378,7 +405,8 @@ class Event:
         return RecoCluster_idx_scatterer, RecoCluster_idx_absorber
 
     def argmatch_cluster(self, tvec3, indexing=None, a=1):
-        """ takes a point and finds the first cluster matching the point within the cluster uncertainty.
+        """ takes a point and finds the first cluster matching the point within
+        the cluster uncertainty.
 
         Args:
             tvec3 (TVector3): vector pointing to the cluster
@@ -393,10 +421,12 @@ class Event:
             for i in range(len(self.RecoClusterPosition)):
                 tcluster = self.RecoClusterPosition[i]
                 tcluster_unc = self.RecoClusterPosition_uncertainty[i]
-                # check if absolute x,y,z difference is smaller than absolute uncertainty
+                # check if absolute x,y,z difference is smaller than
+                # absolute uncertainty
                 if (abs(tvec3.x - tcluster.x) <= a * abs(tcluster_unc.x)
                         and abs(tvec3.y - tcluster.y) <= a * abs(tcluster_unc.y)
-                        and abs(tvec3.z - tcluster.z) <= a * abs(tcluster_unc.z)):
+                        and abs(tvec3.z - tcluster.z) <= a * abs(
+                            tcluster_unc.z)):
                     return i
             else:
                 return -1
@@ -405,7 +435,8 @@ class Event:
             for i, idx in enumerate(indexing):
                 tcluster = self.RecoClusterPosition[idx]
                 tcluster_unc = self.RecoClusterPosition_uncertainty[idx]
-                # check if absolute x,y,z difference is smaller than absolute uncertainty
+                # check if absolute x,y,z difference is smaller than
+                # absolute uncertainty
                 if (abs(tvec3.x - tcluster.x) <= abs(tcluster_unc.x)
                         and abs(tvec3.y - tcluster.y) <= abs(tcluster_unc.y)
                         and abs(tvec3.z - tcluster.z) <= abs(tcluster_unc.z)):
@@ -423,11 +454,12 @@ class Event:
         if subtract_prime:
             tvec3 = tvec3 - tvec3_prime
         # rotate tvec3 so that the prime vector aligns with the x-axis
-        tvec3 = tvec3.rotatez(-tvec3_prime.phi).rotatey(-tvec3_prime.theta + np.pi / 2)
+        tvec3 = tvec3.rotatez(-tvec3_prime.phi).rotatey(
+            -tvec3_prime.theta + np.pi / 2)
 
         return tvec3
 
-    # ------------------------------------------------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     # correction functions
 
     def check_absorber_interaction(self):
@@ -446,8 +478,9 @@ class Event:
         for i in range(len(self.MCInteractions_p)):
             if self.absorber.is_vec_in_module(self.MCPosition_p[i]):
                 if 0 < self.MCInteractions_p[i] < 10:
-                    tmp_angle = self.calc_theta_dotvec(self.MCPosition_p[i] - self.MCComptonPosition,
-                                                       self.MCDirection_scatter)
+                    tmp_angle = self.calc_theta_dotvec(
+                        self.MCPosition_p[i] - self.MCComptonPosition,
+                        self.MCDirection_scatter)
                     if tmp_angle < 0.01:
                         if returner in [2, 4]:
                             returner = 3
@@ -458,13 +491,14 @@ class Event:
                     else:
                         returner = 2
                 if 10 <= self.MCInteractions_p[i]:
-                    tmp_angle = self.calc_theta_dotvec(self.MCPosition_p[i] - self.MCComptonPosition,
-                                                       self.MCDirection_scatter)
+                    tmp_angle = self.calc_theta_dotvec(
+                        self.MCPosition_p[i] - self.MCComptonPosition,
+                        self.MCDirection_scatter)
                     if tmp_angle < 0.01:
                         returner = 4
                     else:
                         returner = 2
-                # print("DEBUG: RETURNER", returner, self.MCInteractions_p[i], tmp_angle)
+
             else:
                 continue
 

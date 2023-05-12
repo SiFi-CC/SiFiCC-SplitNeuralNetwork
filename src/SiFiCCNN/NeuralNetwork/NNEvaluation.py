@@ -5,7 +5,7 @@ from src.SiFiCCNN import Utility
 from src.SiFiCCNN.NeuralNetwork import NNExport, NNAnalysis
 from src.SiFiCCNN.NeuralNetwork import FastROCAUC
 
-from src.SiFiCCNN.Plotter import PTNetworkHistory, PTClassifier, PTRegression, PTCompare
+from src.SiFiCCNN.plotting import PTNetworkHistory, mpl_classifier, PTRegression, PTCompare
 
 
 def evaluate_classifier(NeuralNetwork,

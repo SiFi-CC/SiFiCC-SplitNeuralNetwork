@@ -4,7 +4,7 @@ from mpl_toolkits.mplot3d.axes3d import Axes3D
 from mpl_toolkits.mplot3d import proj3d
 
 from src.SiFiCCNN.EventDisplay import EDBuilder
-from src.SiFiCCNN.Root import RootLogger
+from src.SiFiCCNN.root import RootLogger
 
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -40,10 +40,13 @@ def display(event):
                                              event.absorber.dimz)
 
     for i in range(len(list_edge_scatterer)):
-        ax.plot3D(list_edge_scatterer[i][0], list_edge_scatterer[i][1], list_edge_scatterer[i][2], color="blue")
-        ax.plot3D(list_edge_absorber[i][0], list_edge_absorber[i][1], list_edge_absorber[i][2], color="blue")
+        ax.plot3D(list_edge_scatterer[i][0], list_edge_scatterer[i][1],
+                  list_edge_scatterer[i][2], color="blue")
+        ax.plot3D(list_edge_absorber[i][0], list_edge_absorber[i][1],
+                  list_edge_absorber[i][2], color="blue")
     # plot reference axis
-    ax.plot3D([0, 270 + 46.8 / 2], [0, 0], [0, 0], color="black", linestyle="--")
+    ax.plot3D([0, 270 + 46.8 / 2], [0, 0], [0, 0], color="black",
+              linestyle="--")
 
     # ------------------------------------------------------------------------------------------------------------------
     # plot primary gamma trajectory
@@ -52,9 +55,19 @@ def display(event):
               [event.MCPosition_source.y, event.MCComptonPosition.y],
               [event.MCPosition_source.z, event.MCComptonPosition.z],
               color="red")
-    ax.plot3D([event.MCComptonPosition.x, event.MCComptonPosition.x + a * event.MCDirection_scatter.x],
-              [event.MCComptonPosition.y, event.MCComptonPosition.y + a * event.MCDirection_scatter.y],
-              [event.MCComptonPosition.z, event.MCComptonPosition.z + a * event.MCDirection_scatter.z],
+    ax.plot3D([event.MCPosition_source.x,
+               event.MCPosition_source.x + a * event.MCDirection_source.x],
+              [event.MCPosition_source.y,
+               event.MCPosition_source.y + a * event.MCDirection_source.y],
+              [event.MCPosition_source.z,
+               event.MCPosition_source.z + a * event.MCDirection_source.z],
+              color="purple")
+    ax.plot3D([event.MCComptonPosition.x,
+               event.MCComptonPosition.x + a * event.MCDirection_scatter.x],
+              [event.MCComptonPosition.y,
+               event.MCComptonPosition.y + a * event.MCDirection_scatter.y],
+              [event.MCComptonPosition.z,
+               event.MCComptonPosition.z + a * event.MCDirection_scatter.z],
               color="red")
     # True source direction as control plot
     """
@@ -65,32 +78,42 @@ def display(event):
     """
     # ------------------------------------------------------------------------------------------------------------------
     # electron interaction plotting
-    list_e_interaction, list_p_interaction = EDBuilder.get_interaction(event.MCInteractions_e, event.MCInteractions_p)
+    list_e_interaction, list_p_interaction = EDBuilder.get_interaction(
+        event.MCInteractions_e, event.MCInteractions_p)
 
     # plot secondary electron reaction chain
     for i in range(len(list_e_interaction)):
         for j in range(1, len(list_e_interaction[i])):
             ax.plot3D(
-                [event.MCPosition_e.x[list_e_interaction[i][j - 1]], event.MCPosition_e.x[list_e_interaction[i][j]]],
-                [event.MCPosition_e.y[list_e_interaction[i][j - 1]], event.MCPosition_e.y[list_e_interaction[i][j]]],
-                [event.MCPosition_e.z[list_e_interaction[i][j - 1]], event.MCPosition_e.z[list_e_interaction[i][j]]],
+                [event.MCPosition_e.x[list_e_interaction[i][j - 1]],
+                 event.MCPosition_e.x[list_e_interaction[i][j]]],
+                [event.MCPosition_e.y[list_e_interaction[i][j - 1]],
+                 event.MCPosition_e.y[list_e_interaction[i][j]]],
+                [event.MCPosition_e.z[list_e_interaction[i][j - 1]],
+                 event.MCPosition_e.z[list_e_interaction[i][j]]],
                 color="green", linestyle="--")
     # plot secondary photon reaction chain
     for i in range(len(list_p_interaction)):
         for j in range(1, len(list_p_interaction[i])):
             ax.plot3D(
-                [event.MCPosition_p.x[list_p_interaction[i][j - 1]], event.MCPosition_p.x[list_p_interaction[i][j]]],
-                [event.MCPosition_p.y[list_p_interaction[i][j - 1]], event.MCPosition_p.y[list_p_interaction[i][j]]],
-                [event.MCPosition_p.z[list_p_interaction[i][j - 1]], event.MCPosition_p.z[list_p_interaction[i][j]]],
+                [event.MCPosition_p.x[list_p_interaction[i][j - 1]],
+                 event.MCPosition_p.x[list_p_interaction[i][j]]],
+                [event.MCPosition_p.y[list_p_interaction[i][j - 1]],
+                 event.MCPosition_p.y[list_p_interaction[i][j]]],
+                [event.MCPosition_p.z[list_p_interaction[i][j - 1]],
+                 event.MCPosition_p.z[list_p_interaction[i][j]]],
                 color="purple", linestyle="--")
 
     # ------------------------------------------------------------------------------------------------------------------
     # Marker for MC-Truth (Later definition standard for Neural Network)
-    ax.plot3D(event.target_position_e.x, event.target_position_e.y, event.target_position_e.z,
+    ax.plot3D(event.target_position_e.x, event.target_position_e.y,
+              event.target_position_e.z,
               "x", color="red", markersize=event.MCEnergy_e * 10)
-    ax.plot3D(event.target_position_p.x, event.target_position_p.y, event.target_position_p.z,
+    ax.plot3D(event.target_position_p.x, event.target_position_p.y,
+              event.target_position_p.z,
               "x", color="red", markersize=event.MCEnergy_p * 10)
-    ax.plot3D(event.MCPosition_source.x, event.MCPosition_source.y, event.MCPosition_source.z,
+    ax.plot3D(event.MCPosition_source.x, event.MCPosition_source.y,
+              event.MCPosition_source.z,
               "o", color="red", markersize=4)
 
     # ------------------------------------------------------------------------------------------------------------------
@@ -100,12 +123,15 @@ def display(event):
     if event.bsipm:
         # fibre hits plus boxes
         for i in range(len(event.fibre_position)):
-            ax.plot3D(event.fibre_position.x[i], event.fibre_position.y[i], event.fibre_position.z[i], "o",
+            ax.plot3D(event.fibre_position.x[i], event.fibre_position.y[i],
+                      event.fibre_position.z[i], "o",
                       color="lime")
-            list_fibre_edges = EDBuilder.get_edges(event.fibre_position.x[i], 0, event.fibre_position.z[i],
+            list_fibre_edges = EDBuilder.get_edges(event.fibre_position.x[i], 0,
+                                                   event.fibre_position.z[i],
                                                    1.94, 100, 1.94)
             for j in range(len(list_fibre_edges)):
-                ax.plot3D(list_fibre_edges[j][0], list_fibre_edges[j][1], list_fibre_edges[j][2], color="lime")
+                ax.plot3D(list_fibre_edges[j][0], list_fibre_edges[j][1],
+                          list_fibre_edges[j][2], color="lime")
 
         for i in range(len(event.SiPM_position)):
             list_sipm_edges = EDBuilder.get_edges(event.SiPM_position.x[i],
@@ -113,7 +139,8 @@ def display(event):
                                                   event.SiPM_position.z[i],
                                                   4.0, 0, 4.0)
             for j in range(len(list_sipm_edges)):
-                ax.plot3D(list_sipm_edges[j][0], list_sipm_edges[j][1], list_sipm_edges[j][2], color="darkgreen")
+                ax.plot3D(list_sipm_edges[j][0], list_sipm_edges[j][1],
+                          list_sipm_edges[j][2], color="darkgreen")
 
     # ------------------------------------------------------------------------------------------------------------------
     # True and reconstructed compton cone
@@ -127,7 +154,8 @@ def display(event):
         vec_ax2 = event.target_position_p - event.target_position_e
         vec_src = event.MCPosition_source
 
-        list_cone = EDBuilder.get_compton_cone(vec_ax1, vec_ax2, vec_src, event.theta_dotvec, sr=128)
+        list_cone = EDBuilder.get_compton_cone(vec_ax1, vec_ax2, vec_src,
+                                               event.theta_dotvec, sr=128)
         for i in range(1, len(list_cone)):
             ax.plot3D([list_cone[i - 1][0], list_cone[i][0]],
                       [list_cone[i - 1][1], list_cone[i][1]],
@@ -148,7 +176,8 @@ def display(event):
         reco_theta = event.calc_theta_energy(e1, e2)
         vec_src = event.MCPosition_source
 
-        list_cone = EDBuilder.get_compton_cone(vec_ax1, vec_ax2 - vec_ax1, vec_src, reco_theta, sr=128)
+        list_cone = EDBuilder.get_compton_cone(vec_ax1, vec_ax2 - vec_ax1,
+                                               vec_src, reco_theta, sr=128)
         for i in range(1, len(list_cone)):
             ax.plot3D([list_cone[i - 1][0], list_cone[i][0]],
                       [list_cone[i - 1][1], list_cone[i][1]],
@@ -186,21 +215,26 @@ def display(event):
             """
             # cluster hits
             ax.plot3D(list_cluster_x[i], list_cluster_y[i], list_cluster_z[i],
-                      "X", color="orange", markersize=event.RecoClusterEnergies_values[i] * b)
+                      "X", color="orange",
+                      markersize=event.RecoClusterEnergies_values[i] * b)
     # ------------------------------------------------------------------------------------------------------------------
     # Control prints
     print("\nControl: ")
-    print("True E Position: ({:.3f}, {:.3f}, {:.3f})".format(event.target_position_e.x,
-                                                             event.target_position_e.y,
-                                                             event.target_position_e.z))
-    print("True P Position: ({:.3f}, {:.3f}, {:.3f})".format(event.target_position_p.x,
-                                                             event.target_position_p.y,
-                                                             event.target_position_p.z))
+    print("True E Position: ({:.3f}, {:.3f}, {:.3f})".format(
+        event.target_position_e.x,
+        event.target_position_e.y,
+        event.target_position_e.z))
+    print("True P Position: ({:.3f}, {:.3f}, {:.3f})".format(
+        event.target_position_p.x,
+        event.target_position_p.y,
+        event.target_position_p.z))
     print("\nCompton Scattering Angle theta:")
     print("theta (Energy):",
-          "{:5.3f} [rad] | {:5.1f} [deg]".format(event.theta_energy, event.theta_energy * 360 / 2 / np.pi))
+          "{:5.3f} [rad] | {:5.1f} [deg]".format(event.theta_energy,
+                                                 event.theta_energy * 360 / 2 / np.pi))
     print("theta (Vector):",
-          "{:5.3f} [rad] | {:5.1f} [deg]".format(event.theta_dotvec, event.theta_dotvec * 360 / 2 / np.pi))
+          "{:5.3f} [rad] | {:5.1f} [deg]".format(event.theta_dotvec,
+                                                 event.theta_dotvec * 360 / 2 / np.pi))
 
     # print("RETURNER:", event.check_absorber_interaction())
     """

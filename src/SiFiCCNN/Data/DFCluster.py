@@ -43,10 +43,12 @@ class DFCluster:
 
     def idx_valid(self):
         return self.ary_idx[
-               int(len(self.ary_idx) * self.p_train): int(len(self.ary_idx) * (self.p_train + self.p_valid))]
+               int(len(self.ary_idx) * self.p_train): int(
+                   len(self.ary_idx) * (self.p_train + self.p_valid))]
 
     def idx_test(self):
-        return self.ary_idx[int(len(self.ary_idx) * (self.p_train + self.p_valid)):]
+        return self.ary_idx[
+               int(len(self.ary_idx) * (self.p_train + self.p_valid)):]
 
     # classification
     def x_train(self):
@@ -90,7 +92,8 @@ class DFCluster:
             list_idx = np.arange(0, n_feat * n_cluster, n_feat)
             for i in range(len(list_idx)):
                 ary_con = np.reshape(self.features[:, np.array(list_idx) + i],
-                                     (self.features.shape[0] * n_feat * n_cluster,))
+                                     (self.features.shape[
+                                          0] * n_feat * n_cluster,))
                 ary_con = ary_con[ary_con != 0.0]
                 list_mean.append(np.mean(ary_con))
                 list_std.append(np.std(ary_con))
@@ -100,7 +103,8 @@ class DFCluster:
 
         if self.features.ndim == 3:
             for i in range(n_feat):
-                ary_con = np.reshape(self.features[:, :, i], (self.features.shape[0] * n_cluster,))
+                ary_con = np.reshape(self.features[:, :, i],
+                                     (self.features.shape[0] * n_cluster,))
                 ary_con = ary_con[ary_con != 0.0]
                 list_mean.append(np.mean(ary_con))
                 list_std.append(np.std(ary_con))
@@ -116,10 +120,13 @@ class DFCluster:
                 if np.std(self.features[:, i]) == 0.0:
                     print("Zero Division in feature :", i)
 
-                self.features[self.ary_idx, i] = (self.features[self.ary_idx, i] - list_mean[i]) / list_std[i]
+                self.features[self.ary_idx, i] = (self.features[
+                                                      self.ary_idx, i] -
+                                                  list_mean[i]) / list_std[i]
         if self.features.ndim == 3:
             for i in range(10):
-                self.features[:, :, i] = (self.features[:, :, i] - list_mean[i]) / list_std[i]
+                self.features[:, :, i] = (self.features[:, :, i] - list_mean[
+                    i]) / list_std[i]
 
     def de_standardize(self, list_mean, list_std):
         for i in range(self.features.shape[1]):
@@ -158,7 +165,8 @@ class DFCluster:
     def get_classweights(self):
         # set sample weights to class weights
         _, counts = np.unique(self.targets_clas, return_counts=True)
-        class_weights = [len(self.targets_clas) / (2 * counts[0]), len(self.targets_clas) / (2 * counts[1])]
+        class_weights = [len(self.targets_clas) / (2 * counts[0]),
+                         len(self.targets_clas) / (2 * counts[1])]
 
         ary_weights = np.ones(shape=(self.targets_clas.shape[0],))
         for i in range(len(self.targets_clas)):
@@ -171,7 +179,8 @@ class DFCluster:
         ary_mc_energy_primary = self.meta[:, 1]
 
         # set manual energy bins and weights
-        bins = np.array([0.0, 2.5, 4.3, 4.5, 8.0, int(max(ary_mc_energy_primary))])
+        bins = np.array(
+            [0.0, 2.5, 4.3, 4.5, 8.0, int(max(ary_mc_energy_primary))])
         ary_energy_weights = np.array([0.1, 1.0, 5.0, 3.0, 5.0])
 
         ary_w = np.ones(shape=(self.entries,))
