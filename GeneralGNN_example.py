@@ -12,10 +12,13 @@ with an 80/20 split.
 
 import os
 import numpy as np
+import sys
 import spektral.utils
 
 from src.SiFiCCNN.GCN import SiFiCCdatasets, IGSiFICCCluster
-from src.SiFiCCNN.GCN import Spektral_NeuralNetwork
+from src.SiFiCCNN.models import DNN_SXAX, GNN_SXAX
+from src.SiFiCCNN.analysis import evaluation
+from src.SiFiCCNN.plotting import plt_history
 
 from spektral.data import DisjointLoader
 from spektral.datasets import TUDataset
@@ -28,17 +31,29 @@ from keras.optimizers import Adam
 from keras.metrics import binary_accuracy
 
 ################################################################################
-# Config
+# Global settings
 ################################################################################
-batch_size = 32
-learning_rate = 0.01
-epochs = 10
 
-RUN_NAME = "GeneralGNN"
+RUN_NAME = "GeneralGNN_master"
+
+train_classifier = True
+train_regression_energy = False
+train_regression_position = False
+train_regression_theta = False
+
+eval_classifier = False
+eval_regression_energy = False
+eval_regression_position = False
+eval_regression_theta = False
+
+generate_datasets = False
+
+################################################################################
+# Datasets
+################################################################################
+
 DATASET = "SiFiCCCluster"
 DATASET_TRAIN = "OptimisedGeometry_Continuous_2e10protons_SiFiCCCluster"
-gen_datasets = True
-n = 10000
 
 ################################################################################
 # Set paths, check for datasets
@@ -61,45 +76,106 @@ for file in [DATASET_TRAIN]:
 ################################################################################
 # Create a disjoint loader
 
-if gen_datasets:
+if generate_datasets:
     from src.SiFiCCNN.Root import RootFiles
-    from src.SiFiCCNN.Root import RootParser
+    from src.SiFiCCNN.Root import Root
 
-    rootparser_cont = RootParser.Root(
+    rootparser_cont = Root.Root(
         dir_main + RootFiles.OptimisedGeometry_Continuous_2e10protons_withTimestamps_local)
-    IGSiFICCCluster.gen_SiFiCCCluster(rootparser_cont, n=n)
+    IGSiFICCCluster.gen_SiFiCCCluster(rootparser_cont, n=None)
 
-dataset = SiFiCCdatasets.SiFiCCdatasets(
-    name="OptimisedGeometry_Continuous_2e10protons_SiFiCCCluster",
-    dataset_path=dir_datasets)
-
-# Train/test split
-idx1 = int(0.7 * len(dataset))
-idx2 = int(0.8 * len(dataset))
-dataset_tr = dataset[:idx1]
-dataset_va = dataset[idx1:idx2]
-dataset_te = dataset[idx2:]
-
-loader_tr = DisjointLoader(dataset_tr, batch_size=batch_size, epochs=epochs)
-loader_va = DisjointLoader(dataset_va, batch_size=batch_size)
-loader_te = DisjointLoader(dataset_te, batch_size=batch_size, epochs=1)
-
-# create class weight dictionary
-class_weights = dataset.get_classweight_dict()
-class_wts = tf.constant([class_weights[0], class_weights[1]])
+    sys.exit()
 
 ################################################################################
-# Build model
+# Training
 ################################################################################
-model = GeneralGNN(dataset.n_labels, activation="sigmoid")
-optimizer = Adam(learning_rate)
-loss_fn = BinaryCrossentropy()
 
+batch_size = 32
+learning_rate = 0.01
+nEpochs = 50
+
+trainsplit = 0.6
+valsplit = 0.2
+
+l_callbacks = [
+    tf.keras.callbacks.LearningRateScheduler(DNN_SXAX.lr_scheduler)]
+
+if train_classifier:
+    dataset = SiFiCCdatasets.SiFiCCdatasets(
+        name="OptimisedGeometry_Continuous_2e10protons_SiFiCCCluster",
+        edge_atr=False,
+        adj_arg="binary",
+        dataset_path=dir_datasets)
+
+    # Train/test split
+    idx1 = int(trainsplit * len(dataset))
+    idx2 = int((trainsplit + valsplit) * len(dataset))
+    dataset_tr = dataset[:idx1]
+    dataset_va = dataset[idx1:idx2]
+    dataset_te = dataset[idx2:]
+
+    loader_train = DisjointLoader(dataset_tr,
+                                  batch_size=batch_size,
+                                  epochs=nEpochs)
+    loader_valid = DisjointLoader(dataset_va,
+                                  batch_size=batch_size)
+
+    # create class weight dictionary
+    class_weights = dataset.get_classweight_dict()
+    class_wts = tf.constant([class_weights[0], class_weights[1]])
+
+    m_clas = GeneralGNN(dataset.n_labels, activation="sigmoid")
+    optimizer = Adam(learning_rate)
+    loss_fn = BinaryCrossentropy()
+
+    m_clas.compile(optimizer=optimizer,
+                   loss=loss_fn,
+                   metrics=["Precision", "Recall"])
+
+    history = m_clas.fit(loader_train,
+                         epochs=nEpochs,
+                         steps_per_epoch=loader_train.steps_per_epoch,
+                         validation_data=loader_valid,
+                         validation_steps=loader_valid.steps_per_epoch,
+                         class_weight=class_weights,
+                         verbose=1,
+                         callbacks=[l_callbacks])
+
+    plt_history.plot_history_classifier(history.history,
+                                        RUN_NAME + "_history_classifier")
+
+    loader_test = DisjointLoader(dataset_te,
+                                 batch_size=batch_size,
+                                 epochs=1)
+
+    # predict test dataset
+    os.chdir(dir_results + RUN_NAME + "/" + file[:-4] + "/")
+
+    y_true = []
+    y_scores = []
+    for batch in loader_test:
+        inputs, target = batch
+        p = m_clas(inputs, training=False)
+        y_true.append(target)
+        y_scores.append(p.numpy())
+
+    y_true = np.vstack(y_true)
+    y_scores = np.vstack(y_scores)
+    y_true = np.reshape(y_true, newshape=(y_true.shape[0],))
+    y_scores = np.reshape(y_scores, newshape=(y_scores.shape[0],))
+
+    evaluation.eval_classifier(y_scores=y_scores,
+                               y_true=y_true,
+                               theta=0.5)
+
+    # save model
+    GNN_SXAX.save_model(m_clas, RUN_NAME + "_classifier")
+    GNN_SXAX.save_history(RUN_NAME + "_classifier", history.history)
 
 ################################################################################
 # Fit model
 ################################################################################
-
+"""
 def weighted_binary_crossentropy(labels, predictions, weights):
     labels = tf.cast(labels, tf.int32)
     loss = loss_fn(labels, predictions) + sum(model.losses)
@@ -153,10 +229,11 @@ for batch in loader_tr:
             )
         )
         results = []
-
+"""
 ################################################################################
 # Evaluate model
 ################################################################################
+"""
 from src.SiFiCCNN.NeuralNetwork import NNAnalysis
 from src.SiFiCCNN.NeuralNetwork import FastROCAUC
 
@@ -193,3 +270,48 @@ for file in [DATASET_TRAIN]:
 
     # write general binary classifier metrics into console and .txt file
     NNAnalysis.write_metrics_classifier(y_pred, y_true)
+"""
+
+if eval_classifier:
+
+    os.chdir(dir_results + RUN_NAME + "/")
+    m_clas = GeneralGNN(1, activation="sigmoid")
+    m_clas = DNN_SXAX.load_model(m_clas, RUN_NAME + "_classifier")
+
+    for file in [DATASET_TRAIN]:
+        dataset = SiFiCCdatasets.SiFiCCdatasets(
+            name="OptimisedGeometry_Continuous_2e10protons_SiFiCCCluster",
+            edge_atr=False,
+            adj_arg="binary",
+            dataset_path=dir_datasets)
+
+        # Train/test split
+        idx1 = int(trainsplit * len(dataset))
+        idx2 = int((trainsplit + valsplit) * len(dataset))
+        dataset_tr = dataset[:idx1]
+        dataset_va = dataset[idx1:idx2]
+        dataset_te = dataset[idx2:]
+
+        loader_test = DisjointLoader(dataset_te,
+                                     batch_size=batch_size,
+                                     epochs=1)
+
+        # predict test dataset
+        os.chdir(dir_results + RUN_NAME + "/" + file[:-4] + "/")
+
+        y_true = []
+        y_scores = []
+        for batch in loader_test:
+            inputs, target = batch
+            p = m_clas(inputs, training=False)
+            y_true.append(target)
+            y_scores.append(p.numpy())
+
+        y_true = np.vstack(y_true)
+        y_scores = np.vstack(y_scores)
+        y_true = np.reshape(y_true, newshape=(y_true.shape[0],))
+        y_scores = np.reshape(y_scores, newshape=(y_scores.shape[0],))
+
+        evaluation.eval_classifier(y_scores=y_scores,
+                                   y_true=y_true,
+                                   theta=0.5)

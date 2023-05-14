@@ -2,7 +2,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-def fastROCAUC(y_pred, y_true,
+def fastROCAUC(y_pred,
+               y_true,
                weighted=False,
                return_score=False):
     """

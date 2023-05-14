@@ -5,18 +5,18 @@ import matplotlib.pyplot as plt
 plt.rcParams.update({'font.size': 12})
 
 
-def plot_history_classifier(nn_classifier, figure_name):
+def plot_history_classifier(history, figure_name):
     plt.rcParams.update({'font.size': 16})
     # plot model performance
-    loss = nn_classifier.history['loss']
-    val_loss = nn_classifier.history['val_loss']
+    loss = history['loss']
+    val_loss = history['val_loss']
     # mse = nn_classifier.history["accuracy"]
     # val_mse = nn_classifier.history["val_accuracy"]
 
-    eff = nn_classifier.history["precision"]
-    val_eff = nn_classifier.history["val_precision"]
-    pur = nn_classifier.history["recall"]
-    val_pur = nn_classifier.history["val_recall"]
+    eff = history["precision"]
+    val_eff = history["val_precision"]
+    pur = history["recall"]
+    val_pur = history["val_recall"]
 
     fig = plt.figure(figsize=(8, 5))
     ax1 = fig.add_subplot(211)
@@ -41,13 +41,13 @@ def plot_history_classifier(nn_classifier, figure_name):
     plt.close()
 
 
-def plot_history_regression(nn_regression, figure_name):
+def plot_history_regression(history, figure_name):
     plt.rcParams.update({'font.size': 16})
 
-    loss = nn_regression.history['loss']
-    val_loss = nn_regression.history['val_loss']
-    mse = nn_regression.history["mean_absolute_error"]
-    val_mse = nn_regression.history["val_mean_absolute_error"]
+    loss = history['loss']
+    val_loss = history['val_loss']
+    mse = history["mean_absolute_error"]
+    val_mse = history["val_mean_absolute_error"]
 
     plt.figure(figsize=(8, 5))
     plt.plot(loss, label="Loss", linestyle='-', color="blue")
@@ -79,17 +79,21 @@ def plot_efficiency_sourceposition(ary_sp_pred, ary_sp_true, figure_name):
         else:
             ary_eff[i] = hist1[i] / hist0[i]
             list_eff_err.append(np.sqrt((np.sqrt(hist1[i]) / hist0[i]) ** 2 +
-                                        (hist1[i] * np.sqrt(hist0[i]) / hist0[i] ** 2) ** 2))
+                                        (hist1[i] * np.sqrt(hist0[i]) / hist0[
+                                            i] ** 2) ** 2))
 
     fig, axs = plt.subplots(2, 1)
     axs[0].set_title("Source position efficiency")
     axs[0].set_ylabel("Counts")
-    axs[0].hist(ary_sp_true, bins=bins, histtype=u"step", color="black", label="All Ideal Compton")
-    axs[0].hist(ary_sp_pred, bins=bins, histtype=u"step", color="red", linestyle="--", label="True Positives")
+    axs[0].hist(ary_sp_true, bins=bins, histtype=u"step", color="black",
+                label="All Ideal Compton")
+    axs[0].hist(ary_sp_pred, bins=bins, histtype=u"step", color="red",
+                linestyle="--", label="True Positives")
     axs[0].legend(loc="lower center")
     axs[1].set_xlabel("Source Position z-axis [mm]")
     axs[1].set_ylabel("Efficiency")
-    axs[1].errorbar(bins[:-1] + 0.1, ary_eff, list_eff_err, ary_bin_err, fmt=".", color="blue")
+    axs[1].errorbar(bins[:-1] + 0.1, ary_eff, list_eff_err, ary_bin_err,
+                    fmt=".", color="blue")
     # axs[1].plot(bins[:-1] + 0.5, ary_eff, ".", color="darkblue")
     plt.tight_layout()
     plt.savefig(figure_name + ".png")

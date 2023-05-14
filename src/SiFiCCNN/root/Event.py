@@ -2,7 +2,7 @@ import numpy as np
 from uproot_methods.classes.TVector3 import TVector3
 
 
-# ----------------------------------------------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 
 class Event:
     """
@@ -166,7 +166,7 @@ class Event:
         self.set_target_angle()
         self.set_compton_tag()
 
-    # ---------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     # neural network targets
 
     def set_target_positions(self):
@@ -410,7 +410,8 @@ class Event:
 
         Args:
             tvec3 (TVector3): vector pointing to the cluster
-            indexing (list): list of cluster indices to define an iteration order
+            indexing (list): list of cluster indices to define an iteration
+                             order
             a: sigma range (factor multiplied to sigma)
 
         return: idx if cluster is matched, else -1

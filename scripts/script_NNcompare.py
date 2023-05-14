@@ -4,7 +4,7 @@ import pickle as pkl
 
 from src.SiFiCCNN.Plotter import PTNetworkCompare
 from src.SiFiCCNN.NeuralNetwork import NeuralNetwork
-from src.SiFiCCNN.DataFrame import DFParser
+from src.SiFiCCNN.Data import DFParser
 
 dir_main = os.getcwd() + "/.."
 dir_root = dir_main + "/root_files/"

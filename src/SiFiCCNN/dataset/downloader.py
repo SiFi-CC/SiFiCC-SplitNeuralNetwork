@@ -9,13 +9,15 @@ def sificcnn_dense_sxax(Root,
     # definitions
     dataset_name = Root.file_name + "_SiFiCCNNDense"
     dataset_name += "DNN_" + "S" + str(sx) + "A" + str(ax)
-    n_features = 10 * (sx + ax)
+    n_timesteps = (sx + ax)
+    n_features = 10
+    n_cluster = sx + ax
 
     # grab correct filepath, generate dataset in target directory.
     # If directory doesn't exist, it will be created.
     # "MAIN/dataset/$dataset_name$/"
     dir_main = os.getcwd()
-    dir_datasets = dir_main + "/dataset/"
+    dir_datasets = dir_main + "/datasets/"
     dir_final = dir_datasets + "/SiFiCCNN/" + dataset_name + "/"
 
     if not os.path.isdir(dir_final):
@@ -29,10 +31,12 @@ def sificcnn_dense_sxax(Root,
 
     print("Input feature shape: ")
     print("Samples: ", n_samples)
+    print("Timesteps: ", n_timesteps)
     print("Features: ", n_features)
 
     # create empty arrays for storage
-    features = np.zeros(shape=(n_samples, n_features), dtype=np.float32)
+    features = np.zeros(shape=(n_samples, n_timesteps, n_features),
+                        dtype=np.float32)
     targets_clas = np.zeros(shape=(n_samples,), dtype=np.float32)
     targets_energy = np.zeros(shape=(n_samples, 2), dtype=np.float32)
     targets_position = np.zeros(shape=(n_samples, 6), dtype=np.float32)
@@ -49,46 +53,51 @@ def sificcnn_dense_sxax(Root,
         for j, idx in enumerate(np.flip(idx_scatterer)):
             if j >= sx:
                 break
-            features[i, j * 10: (j * 10) + 10] = [
-                event.RecoClusterEntries[idx],
-                event.RecoClusterTimestamps_relative[idx],
-                event.RecoClusterEnergies_values[idx],
-                event.RecoClusterPosition[idx].x,
-                event.RecoClusterPosition[idx].y,
-                event.RecoClusterPosition[idx].z,
-                event.RecoClusterEnergies_uncertainty[idx],
-                event.RecoClusterPosition_uncertainty[idx].x,
-                event.RecoClusterPosition_uncertainty[idx].y,
-                event.RecoClusterPosition_uncertainty[idx].z]
+            features[i, j, :] = [event.RecoClusterEntries[idx],
+                                 event.RecoClusterTimestamps_relative[idx],
+                                 event.RecoClusterEnergies_values[idx],
+                                 event.RecoClusterPosition[idx].x,
+                                 event.RecoClusterPosition[idx].y,
+                                 event.RecoClusterPosition[idx].z,
+                                 event.RecoClusterEnergies_uncertainty[idx],
+                                 event.RecoClusterPosition_uncertainty[idx].x,
+                                 event.RecoClusterPosition_uncertainty[idx].y,
+                                 event.RecoClusterPosition_uncertainty[idx].z]
 
         for j, idx in enumerate(np.flip(idx_absorber)):
             if j >= ax:
                 break
-            features[i, (j + sx) * 10: ((j + sx) * 10) + 10] = [
-                event.RecoClusterEntries[idx],
-                event.RecoClusterTimestamps_relative[idx],
-                event.RecoClusterEnergies_values[idx],
-                event.RecoClusterPosition[idx].x,
-                event.RecoClusterPosition[idx].y,
-                event.RecoClusterPosition[idx].z,
-                event.RecoClusterEnergies_uncertainty[idx],
-                event.RecoClusterPosition_uncertainty[idx].x,
-                event.RecoClusterPosition_uncertainty[idx].y,
-                event.RecoClusterPosition_uncertainty[idx].z]
+            features[i, (j + sx), :] = [event.RecoClusterEntries[idx],
+                                        event.RecoClusterTimestamps_relative[
+                                            idx],
+                                        event.RecoClusterEnergies_values[idx],
+                                        event.RecoClusterPosition[idx].x,
+                                        event.RecoClusterPosition[idx].y,
+                                        event.RecoClusterPosition[idx].z,
+                                        event.RecoClusterEnergies_uncertainty[
+                                            idx],
+                                        event.RecoClusterPosition_uncertainty[
+                                            idx].x,
+                                        event.RecoClusterPosition_uncertainty[
+                                            idx].y,
+                                        event.RecoClusterPosition_uncertainty[
+                                            idx].z]
 
         # target: ideal compton events tag
         targets_clas[i] = event.compton_tag * 1
-        targets_energy[i, :] = np.array([event.MCEnergy_e, event.MCEnergy_p])
-        targets_position[i, :] = np.array([event.MCPosition_e_first.x,
-                                           event.MCPosition_e_first.y,
-                                           event.MCPosition_e_first.z,
-                                           event.MCPosition_p_first.x,
-                                           event.MCPosition_p_first.y,
-                                           event.MCPosition_p_first.z])
-        targets_theta[i] = event.theta_dotvec
+        targets_energy[i, :] = np.array([event.target_energy_e,
+                                         event.target_energy_p])
+        targets_position[i, :] = np.array([event.target_position_e.x,
+                                           event.target_position_e.y,
+                                           event.target_position_e.z,
+                                           event.target_position_p.x,
+                                           event.target_position_p.y,
+                                           event.target_position_p.z])
+        targets_theta[i] = event.target_angle_theta
 
         # write meta data
         meta[i, :] = [event.EventNumber,
+                      event.Identified,
                       event.MCEnergy_Primary,
                       event.MCPosition_source.x,
                       event.MCPosition_source.y,
@@ -103,7 +112,7 @@ def sificcnn_dense_sxax(Root,
                             targets_clas=targets_clas,
                             targets_energy=targets_energy,
                             targets_position=targets_position,
-                            targets_thet=targets_theta,
+                            targets_theta=targets_theta,
                             meta=meta)
 
 

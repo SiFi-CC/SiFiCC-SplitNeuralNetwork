@@ -4,16 +4,13 @@ import numpy as np
 class DatasetDense:
 
     def __init__(self,
-                 features,
-                 targets_clas,
-                 targets_energy,
-                 targets_position,
-                 targets_theta):
-        self.features = features
-        self.targets_clas = targets_clas
-        self.targets_energy = targets_energy
-        self.targets_position = targets_position
-        self.targets_theta = targets_theta
+                 npz_file):
+        npz_data = np.load(npz_file)
+        self.features = npz_data["features"]
+        self.targets_clas = npz_data["targets_clas"]
+        self.targets_energy = npz_data["targets_energy"]
+        self.targets_position = npz_data["targets_position"]
+        self.targets_theta = npz_data["targets_theta"]
 
         # set primary target, initialized with classification targets
         self.targets = self.targets_clas
@@ -28,6 +25,7 @@ class DatasetDense:
         self.ary_idx = np.arange(0, self.entries, 1.0, dtype=int)
         rng = np.random.default_rng(42)
         rng.shuffle(self.ary_idx)
+
 
     def idx_train(self):
         return self.ary_idx[0: int(len(self.ary_idx) * self.p_train)]

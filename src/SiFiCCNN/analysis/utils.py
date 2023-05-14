@@ -83,7 +83,7 @@ def write_metrics_classifier(y_scores, y_true):
     print("TP: {} | FP: {} | TN: {} | FN: {}".format(*conf_base))
 
     # run ROC curve and AUC score analysis
-    auc, theta = fastROCAUC(y_scores, y_true, return_score=True)
+    auc, theta, (list_fpr, list_tpr) = fastROCAUC(y_scores, y_true, return_score=True)
     acc_opt, eff_opt, pur_opt, conf_opt = get_classifier_metrics(y_scores,
                                                                  y_true,
                                                                  theta=theta)
