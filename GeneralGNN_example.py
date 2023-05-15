@@ -74,11 +74,10 @@ for file in [DATASET_TRAIN]:
 ################################################################################
 # Load dataset, generate Datasets if needed
 ################################################################################
-# Create a disjoint loader
 
 if generate_datasets:
-    from src.SiFiCCNN.Root import RootFiles
-    from src.SiFiCCNN.Root import Root
+    from src.SiFiCCNN.root import RootFiles
+    from src.SiFiCCNN.root import Root
 
     rootparser_cont = Root.Root(
         dir_main + RootFiles.OptimisedGeometry_Continuous_2e10protons_withTimestamps_local)
