@@ -8,42 +8,24 @@ def setupModel(nCluster,
                nOutput,
                dropout,
                nNodes,
-               loss,
                activation="relu",
                output_activation="sigmoid"):
-    xIn = tf.keras.layers.Input(shape=(nCluster, 10))
-
-    x = tf.keras.layers.Flatten()(xIn)
-    x = tf.keras.layers.Dense(nNodes, activation=activation)(x)
-    x = tf.keras.layers.Dense(nNodes, activation=activation)(x)
+    model = tf.keras.models.Sequential()
+    model.add(tf.keras.layers.Flatten(input_shape=(nCluster, 10)))
+    model.add(tf.keras.layers.Dense(nNodes, activation=activation))
+    model.add(tf.keras.layers.Dense(nNodes, activation=activation))
     """
     if dropout > 0:
-        x = tf.keras.layers.Dropout(dropout)(x)
+       model.add(tf.keras.layers.Dropout(dropout))
 
-    x = tf.keras.layers.Dense(int(nNodes / 2), activation=activation)(x)
-    x = tf.keras.layers.Dense(int(nNodes / 2), activation=activation)(x)
+    model.add(tf.keras.layers.Dense(nNodes, activation=activation))
+    model.add(tf.keras.layers.Dense(nNodes, activation=activation))
     """
+
     if dropout > 0:
-        x = tf.keras.layers.Dropout(dropout / 2)(x)
+        model.add(tf.keras.layers.Dropout(dropout))
 
-    output = tf.keras.layers.Dense(nOutput, activation=output_activation)(x)
-
-    model = tf.keras.models.Model(inputs=xIn, outputs=output)
-    optimizer = tf.keras.optimizers.Adam(learning_rate=1e-3)
-
-    if loss == "binary_clas":
-        loss = "binary_crossentropy"
-        metrics = ["Precision", "Recall"]
-    if loss == "regression":
-        loss = "mean_absolute_error"
-        metrics = ["mean_absolute_error"]
-    else:
-        loss = "mean_absolute_error"
-        metrics = ["mean_absolute_error"]
-
-    model.compile(optimizer=optimizer,
-                  loss=loss,
-                  metrics=metrics)
+    model.add(tf.keras.layers.Dense(nOutput, activation=output_activation))
 
     return model
 

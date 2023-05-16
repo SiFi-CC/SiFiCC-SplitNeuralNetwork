@@ -1,16 +1,24 @@
 import numpy as np
+import os
 
-
-class DatasetDense:
+class DenseCluster:
 
     def __init__(self,
-                 npz_file):
-        npz_data = np.load(npz_file)
-        self.features = npz_data["features"]
-        self.targets_clas = npz_data["targets_clas"]
-        self.targets_energy = npz_data["targets_energy"]
-        self.targets_position = npz_data["targets_position"]
-        self.targets_theta = npz_data["targets_theta"]
+                 name):
+
+        # get current path, go two subdirectories higher
+        path = os.path.dirname(os.path.abspath(__file__))
+        for i in range(3):
+            path = os.path.dirname(path)
+        path = os.path.join(path, "datasets", "SiFiCCNN", name)
+
+        self.features = np.load(path + "/features.npz")["arr_0"]
+        self.targets_clas = np.load(path + "/targets_clas.npz")["arr_0"]
+        self.targets_energy = np.load(path + "/targets_energy.npz")["arr_0"]
+        self.targets_position = np.load(path + "/targets_position.npz")["arr_0"]
+        self.targets_theta = np.load(path + "/targets_theta.npz")["arr_0"]
+        self.pe = np.load(path + "/primary_energy.npz")["arr_0"]
+        self.sp = np.load(path + "/source_position_z.npz")["arr_0"]
 
         # set primary target, initialized with classification targets
         self.targets = self.targets_clas
@@ -25,7 +33,6 @@ class DatasetDense:
         self.ary_idx = np.arange(0, self.entries, 1.0, dtype=int)
         rng = np.random.default_rng(42)
         rng.shuffle(self.ary_idx)
-
 
     def idx_train(self):
         return self.ary_idx[0: int(len(self.ary_idx) * self.p_train)]
@@ -94,10 +101,9 @@ class DatasetDense:
 
         return class_weights
 
-
-class DatasetCluster(DatasetDense):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+    def update_targets_regression(self):
+        self.targets = np.concatenate(
+            [self.targets_energy, self.targets_position], axis=1)
 
     def num_features(self):
         return self.features.shape[1]
@@ -125,24 +131,3 @@ class DatasetCluster(DatasetDense):
         for i in range(n_features):
             self.features[:, :, i] = (self.features[:, :, i] - list_mean[
                 i]) / list_std[i]
-
-    """
-    def de_standardize(self, list_mean, list_std):
-        for i in range(self.features.shape[1]):
-            self.features[:, i] *= list_std[i]
-            self.features[:, i] += list_mean[i]
-    """
-
-
-class DatasetSiPM(DatasetDense):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-
-    def get_standardization(self, perc=0.9):
-        # has to be hard coded?
-        list_perc = []
-        return list_perc
-
-    def standardize(self, list_mean, list_perc):
-        self.features[:, :, :, :  0] /= list_perc[0]
-        self.features[:, :, :, :  1] /= list_perc[1]

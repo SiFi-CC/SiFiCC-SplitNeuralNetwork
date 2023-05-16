@@ -17,7 +17,6 @@ from src.SiFiCCNN.models import GCN
 from src.SiFiCCNN.analysis import evaluation
 from src.SiFiCCNN.plotting import plt_history
 
-
 from spektral.data.loaders import DisjointLoader
 import tensorflow as tf
 
@@ -94,7 +93,7 @@ activation = "relu"
 
 trainsplit = 0.7
 valsplit = 0.2
-nEpochs = 50
+nEpochs = 20
 
 # model version 1
 modelParameters = {"dropout": dropout,
@@ -109,7 +108,7 @@ if train_classifier:
     dataset = SiFiCCdatasets.SiFiCCdatasets(
         name="OptimisedGeometry_Continuous_2e10protons_SiFiCCCluster",
         edge_atr=False,
-        adj_arg="binary",
+        adj_arg="gcn_binary",
         dataset_path=dir_datasets)
 
     # Train/test split
@@ -161,7 +160,6 @@ if train_classifier:
     evaluation.eval_classifier(y_scores=y_scores,
                                y_true=y_true,
                                theta=0.5)
-
 
 ################################################################################
 # Evaluate model

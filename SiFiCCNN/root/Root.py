@@ -4,9 +4,9 @@ import tqdm
 import sys
 import os
 
-from src.SiFiCCNN.Root.Event import Event
-from src.SiFiCCNN.Root.Detector import Detector
-from src.SiFiCCNN.utils.physics import compton_scattering_angle
+from SiFiCCNN.root.Event import Event
+from SiFiCCNN.root.Detector import Detector
+from SiFiCCNN.utils.physics import compton_scattering_angle
 
 
 class Root:
