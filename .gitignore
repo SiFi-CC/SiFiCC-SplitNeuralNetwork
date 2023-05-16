@@ -1,33 +1,25 @@
-# pycharm specific gitignore
+# dev related (pycharm specific gitignore)
 .idea
 *.pyc
+example_code.py
 
 # ignore folder to temporarely store files not needing to be pushed
 ignore/
 test/
 
-# ignore png's and root files in the results subdirectory
+# ignore .png, .root and .npz in results subdirectory
+# files are too large and too many to properly comit
 results/**/*.png
 results/**/*.root
+results/**/*.npz
 
-# root_files directory since the datafiles are too large
-root_files/
-root_files/*.root
+# data storage directories, as files are too large
+/root_files/*.root
+/npz_files/*.npz
+/datasets/*
 
-# npz_files in the directory are ignored due to their size
-npz_files/*.npz
-
-datasets/
-
-# ignore the toy subdirectoy
-toy/
-
-# ignore example_code.py
-# it is a redundant file just to test code
-test/example_code.py
+# ignore the toy subdirectoy (temporary)
+/toy/
 
 # ignore pngs in main folder
 *.png
-
-# 2023 Beamtime HIT
-Jan2023HIT/
