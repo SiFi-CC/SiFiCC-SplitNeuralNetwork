@@ -62,8 +62,8 @@ dir_results = dir_main + "/results/"
 if not os.path.isdir(dir_results + RUN_NAME + "/"):
     os.mkdir(dir_results + RUN_NAME + "/")
 for file in [DATASET_CONT, DATASET_0MM, DATASET_5MM]:
-    if not os.path.isdir(dir_results + RUN_NAME + "/" + file[:-4] + "/"):
-        os.mkdir(dir_results + RUN_NAME + "/" + file[:-4] + "/")
+    if not os.path.isdir(dir_results + RUN_NAME + "/" + file + "/"):
+        os.mkdir(dir_results + RUN_NAME + "/" + file + "/")
 
 ################################################################################
 # Load dataset , custom setting possible
@@ -134,7 +134,7 @@ if eval_clas:
 
     for file in [DATASET_CONT, DATASET_0MM, DATASET_5MM]:
         # predict test dataset
-        os.chdir(dir_results + RUN_NAME + "/" + file[:-4] + "/")
+        os.chdir(dir_results + RUN_NAME + "/" + file + "/")
 
         # load dataset
         data = dataset.DenseCluster(DATASET_CONT)
@@ -162,3 +162,164 @@ if eval_clas:
         plt_models.roc_curve(list_fpr, list_tpr, "rocauc_curve")
         plt_models.score_distribution(y_scores, y_true, "score_dist")
         metrics.write_metrics_classifier(y_scores, y_true)
+
+################################################################################
+# Training/Evaluation Regression Energy model
+################################################################################
+
+if train_clas:
+    data = dataset.DenseCluster(DATASET_CONT)
+
+    os.chdir(dir_results + RUN_NAME + "/")
+    # classifier model
+    model_regE = model.setupModel(nCluster=10,
+                                  nOutput=2,
+                                  dropout=dropout,
+                                  nNodes=nConnectedNodes,
+                                  activation="relu",
+                                  output_activation="relu")
+    # compile model
+    optimizer = tf.keras.optimizers.Adam(learning_rate=1e-3)
+    loss = "mean_absolute_error"
+    metrics = ["mean_absolute_error"]
+    model_regE.compile(optimizer=optimizer,
+                       loss=loss,
+                       metrics=metrics)
+
+    # set normalization from training dataset
+    norm_mean, norm_std = data.get_standardization(10, 10)
+    data.standardize(norm_mean, norm_std, 10)
+    data.update_targets_energy()
+    data.update_indexing_positives()
+
+    history = model_regE.fit(data.x_train(),
+                             data.y_train(),
+                             validation_data=(data.x_valid(), data.y_valid()),
+                             epochs=nEpochs,
+                             batch_size=batch_size,
+                             verbose=1,
+                             callbacks=[l_callbacks])
+
+    plt_models.plot_history_regression(history.history,
+                                       RUN_NAME + "_history_regressionEnergy")
+
+    # save model
+    model.save_model(model_regE, RUN_NAME + "_regressionEnergy")
+    model.save_history(RUN_NAME + "_regressionEnergy", history.history)
+    model.save_norm(RUN_NAME + "_regressionEnergy", norm_mean, norm_std)
+
+if eval_clas:
+    os.chdir(dir_results + RUN_NAME + "/")
+    model_regE = model.setupModel(nCluster=10,
+                                  nOutput=2,
+                                  dropout=dropout,
+                                  nNodes=nConnectedNodes,
+                                  activation="relu",
+                                  output_activation="relu")
+
+    model_clas = model.load_model(model_regE, RUN_NAME + "_regressionEnergy")
+    norm_mean, norm_std = model.load_norm(RUN_NAME + "_regressionEnergy")
+
+    for file in [DATASET_CONT, DATASET_0MM, DATASET_5MM]:
+        # predict test dataset
+        os.chdir(dir_results + RUN_NAME + "/" + file + "/")
+
+        # load dataset
+        data = dataset.DenseCluster(DATASET_CONT)
+
+        if file in [DATASET_0MM, DATASET_5MM]:
+            data.p_train = 0.0
+            data.p_valid = 0.0
+            data.p_test = 1.0
+
+        # set normalization from training dataset
+        data.standardize(norm_mean, norm_std, 10)
+        data.update_targets_energy()
+        data.update_indexing_positives()
+
+        y_pred = model_clas.predict(data.x_test())
+        y_true = data.y_test()
+
+        # evaluate energy prediction
+        plt_models.plot_energy_error(y_pred, y_true, "error_regression_energy")
+
+################################################################################
+# Training/Evaluation Regression Position model
+################################################################################
+
+if train_clas:
+    data = dataset.DenseCluster(DATASET_CONT)
+
+    os.chdir(dir_results + RUN_NAME + "/")
+    # classifier model
+    model_regP = model.setupModel(nCluster=10,
+                                  nOutput=6,
+                                  dropout=dropout,
+                                  nNodes=nConnectedNodes,
+                                  activation="relu",
+                                  output_activation="linear")
+    # compile model
+    optimizer = tf.keras.optimizers.Adam(learning_rate=1e-3)
+    loss = "mean_absolute_error"
+    metrics = ["mean_absolute_error"]
+    model_regP.compile(optimizer=optimizer,
+                       loss=loss,
+                       metrics=metrics)
+
+    # set normalization from training dataset
+    norm_mean, norm_std = data.get_standardization(10, 10)
+    data.standardize(norm_mean, norm_std, 10)
+    data.update_targets_position()
+    data.update_indexing_positives()
+
+    history = model_regP.fit(data.x_train(),
+                             data.y_train(),
+                             validation_data=(data.x_valid(), data.y_valid()),
+                             epochs=nEpochs,
+                             batch_size=batch_size,
+                             verbose=1,
+                             callbacks=[l_callbacks])
+
+    plt_models.plot_history_regression(history.history,
+                                       RUN_NAME + "_history_regressionPosition")
+
+    # save model
+    model.save_model(model_regP, RUN_NAME + "_regressionPosition")
+    model.save_history(RUN_NAME + "_regressionPosition", history.history)
+    model.save_norm(RUN_NAME + "_regressionPosition", norm_mean, norm_std)
+
+if eval_clas:
+    os.chdir(dir_results + RUN_NAME + "/")
+    model_regE = model.setupModel(nCluster=10,
+                                  nOutput=6,
+                                  dropout=dropout,
+                                  nNodes=nConnectedNodes,
+                                  activation="relu",
+                                  output_activation="linear")
+
+    model_clas = model.load_model(model_regE, RUN_NAME + "_regressionPosition")
+    norm_mean, norm_std = model.load_norm(RUN_NAME + "_regressionPosition")
+
+    for file in [DATASET_CONT, DATASET_0MM, DATASET_5MM]:
+        # predict test dataset
+        os.chdir(dir_results + RUN_NAME + "/" + file + "/")
+
+        # load dataset
+        data = dataset.DenseCluster(DATASET_CONT)
+
+        if file in [DATASET_0MM, DATASET_5MM]:
+            data.p_train = 0.0
+            data.p_valid = 0.0
+            data.p_test = 1.0
+
+        # set normalization from training dataset
+        data.standardize(norm_mean, norm_std, 10)
+        data.update_targets_position()
+        data.update_indexing_positives()
+
+        y_pred = model_clas.predict(data.x_test())
+        y_true = data.y_test()
+
+        # evaluate energy prediction
+        plt_models.plot_position_error(y_pred, y_true,
+                                       "error_regression_position")
