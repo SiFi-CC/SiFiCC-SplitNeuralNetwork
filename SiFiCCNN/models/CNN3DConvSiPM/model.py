@@ -10,30 +10,30 @@ def setupModel(nOutput,
                output_activation):
     model = keras.models.Sequential()
 
-    model.add(keras.layers.InputLayer(input_shape=(16, 32, 2, 2)))
+    model.add(keras.layers.InputLayer(input_shape=(20, 6, 36, 2)))
     model.add(keras.layers.Conv3D(filters=8,
-                                  kernel_size=(3, 3, 2),
+                                  kernel_size=(3, 2, 3),
                                   padding="same",
                                   activation="relu"))
     model.add(keras.layers.Conv3D(filters=16,
-                                  kernel_size=(3, 3, 2),
+                                  kernel_size=(3, 2, 3),
                                   padding="same",
                                   activation="relu"))
     model.add(keras.layers.Conv3D(filters=32,
-                                  kernel_size=(3, 3, 2),
+                                  kernel_size=(3, 2, 3),
                                   padding="same",
                                   activation="relu"))
-    model.add(keras.layers.MaxPool3D(pool_size=(2, 2, 1), padding="same"))
+    model.add(keras.layers.MaxPool3D(pool_size=(2, 1, 2), padding="same"))
     model.add(keras.layers.Conv3D(filters=64,
-                                  kernel_size=(3, 3, 2),
+                                  kernel_size=(3, 2, 3),
                                   padding="same",
                                   activation="relu"))
-    model.add(keras.layers.MaxPool3D(pool_size=(2, 2, 1), padding="same"))
+    model.add(keras.layers.MaxPool3D(pool_size=(2, 1, 2), padding="same"))
     model.add(keras.layers.Conv3D(filters=128,
-                                  kernel_size=(3, 3, 2),
+                                  kernel_size=(3, 2, 3),
                                   padding="same",
                                   activation="relu"))
-    model.add(keras.layers.MaxPool3D(pool_size=(2, 2, 1), padding="same"))
+    model.add(keras.layers.MaxPool3D(pool_size=(2, 1, 2), padding="same"))
     model.add(keras.layers.Flatten())
     model.add(keras.layers.Dense(128, activation="relu"))
     model.add(keras.layers.Dense(64, activation="relu"))

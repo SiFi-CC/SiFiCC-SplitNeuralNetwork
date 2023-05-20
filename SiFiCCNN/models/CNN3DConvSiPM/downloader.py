@@ -3,8 +3,6 @@ import os
 
 
 def load(Root,
-         padding=2,
-         gap_padding=4,
          n=None):
     # define dataset name
     dataset_name = "DenseSiPM"
@@ -29,59 +27,46 @@ def load(Root,
     else:
         n_samples = n
 
-    # create empty arrays for storage
-    dimx = 12
-    dimy = 2
-    dimz = 32
-    features = np.zeros(shape=(n_samples,
-                               dimx + 2 * padding + gap_padding,
-                               dimy + 2 * padding,
-                               dimz + 2 * padding,
-                               2))
-
-    targets_clas = np.zeros(shape=(n_samples,), dtype=np.float32)
-    targets_energy = np.zeros(shape=(n_samples, 2), dtype=np.float32)
-    targets_position = np.zeros(shape=(n_samples, 6), dtype=np.float32)
-    targets_theta = np.zeros(shape=(n_samples,), dtype=np.float32)
-    pe = np.zeros(shape=(n_samples,), dtype=np.float32)
-    sp = np.zeros(shape=(n_samples,), dtype=np.float32)
+    # write files for storage
+    file_A = open(path + "/" + dataset_name + "_A.txt", "w")
+    file_graph_indicator = open(
+        path + "/" + dataset_name + "_graph_indicator.txt", "w")
+    file_graph_labels = open(path + "/" + dataset_name + "_graph_labels.txt",
+                             "w")
+    file_node_attributes = open(
+        path + "/" + dataset_name + "_node_attributes.txt", "w")
+    file_graph_attributes = open(
+        path + "/" + dataset_name + "_graph_attributes.txt", "w")
 
     # main iteration over root file
     for i, event in enumerate(Root.iterate_events(n=n)):
-        features[i, :, :, :, :] = event.get_sipm_feature_map(padding,
-                                                          gap_padding)
+        # get the number of triggered sipms
+        n_sipm = len(event.SiPM_id)
+        for j in range(n_sipm):
+            x, y, z = event.sipm_id_to_position(event.SiPM_id[j])
+            file_A.write(str(x) + "," + str(y) + "," + str(z) + "\n")
 
-        # target: ideal compton events tag
-        targets_clas[i] = event.compton_tag * 1
-        targets_energy[i, :] = np.array([event.target_energy_e,
-                                         event.target_energy_p])
-        targets_position[i, :] = np.array([event.target_position_e.x,
-                                           event.target_position_e.y,
-                                           event.target_position_e.z,
-                                           event.target_position_p.x,
-                                           event.target_position_p.y,
-                                           event.target_position_p.z])
-        targets_theta[i] = event.target_angle_theta
+            file_graph_indicator.write(str(i) + "\n")
+            file_node_attributes.write(str(int(event.SiPM_qdc[j])) + "," +
+                                       str(event.SiPM_triggertime[j]) + "\n")
 
-        # write meta data
-        sp[i] = event.MCPosition_source.z
-        pe[i] = event.MCEnergy_Primary
+        file_graph_labels.write(str(event.compton_tag * 1) + "\n")
+        file_graph_attributes.write(str(event.target_energy_e) + "," +
+                                    str(event.target_energy_p) + "," +
+                                    str(event.target_position_e.x) + "," +
+                                    str(event.target_position_e.y) + "," +
+                                    str(event.target_position_e.z) + "," +
+                                    str(event.target_position_p.x) + "," +
+                                    str(event.target_position_p.y) + "," +
+                                    str(event.target_position_p.z) + "\n")
 
-    # save data to compressed numpy archives
-    np.savez_compressed(path + "/features", features)
-    np.savez_compressed(path + "/targets_clas", targets_clas)
-    np.savez_compressed(path + "/targets_energy", targets_energy)
-    np.savez_compressed(path + "/targets_position", targets_position)
-    np.savez_compressed(path + "/targets_theta", targets_theta)
-    np.savez_compressed(path + "/primary_energy", pe)
-    np.savez_compressed(path + "/source_position_z", sp)
+    file_A.close()
+    file_graph_labels.close()
+    file_graph_indicator.close()
+    file_node_attributes.close()
+    file_graph_attributes.close()
 
     # verbose
     print("Dataset generated at: " + path)
     print("Name: ", dataset_name)
     print("Events: ", n_samples)
-    print("Feature dimension: (None, {},{}, {}, 2)".format(features.shape[1],
-                                                           features.shape[2],
-                                                           features.shape[3]))
-
-

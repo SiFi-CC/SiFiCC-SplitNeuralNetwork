@@ -14,7 +14,7 @@ from SiFiCCNN.plotting import plt_models
 
 RUN_NAME = "CNN3DConvSiPM"
 
-train_clas = False
+train_clas = True
 train_regE = False
 train_regP = False
 train_regT = False
@@ -27,7 +27,7 @@ eval_regT = False
 generate_datasets = False
 
 # Neural Network settings
-dropout = 0.2
+dropout = 0.0
 learning_rate = 1e-3
 nConnectedNodes = 64
 batch_size = 64
@@ -40,13 +40,13 @@ l_callbacks = [tf.keras.callbacks.LearningRateScheduler(model.lr_scheduler)]
 ################################################################################
 
 # root files are purely optimal and are left as legacy settings
-ROOT_FILE_BP0mm = "FinalDetectorVersion_RasterCoupling_OPM_23e8protons.root"
+ROOT_FILE_BP0mm = "FinalDetectorVersion_RasterCoupling_OPM_38e8protons.root"
 ROOT_FILE_BP5mm = "FinalDetectorVersion_RasterCoupling_OPM_BP5mm_4e9protons.root"
 ROOT_FILE_CONT = "FinalDetectorVersion_RasterCoupling_OPM_Continuous_2e10protons.root"
 # Training file used for classification and regression training
 # Generated via an input generator, contain one Bragg-peak position
 DATASET_CONT = "DenseSiPM_FinalDetectorVersion_RasterCoupling_OPM_Continuous_2e10protons"
-DATASET_0MM = "DenseSiPM_FinalDetectorVersion_RasterCoupling_OPM_23e8protons"
+DATASET_0MM = "DenseSiPM_FinalDetectorVersion_RasterCoupling_OPM_38e8protons"
 DATASET_5MM = "DenseSiPM_FinalDetectorVersion_RasterCoupling_OPM_BP5mm_4e9protons"
 
 ################################################################################
@@ -72,7 +72,7 @@ for file in [DATASET_CONT, DATASET_0MM, DATASET_5MM]:
 if generate_datasets:
     for file in [ROOT_FILE_CONT, ROOT_FILE_BP0mm, ROOT_FILE_BP5mm]:
         root = Root.Root(dir_root + file)
-        downloader.load(root, n=None)
+        downloader.load(root, n=1000000)
     sys.exit()
 
 ################################################################################
@@ -80,7 +80,16 @@ if generate_datasets:
 ################################################################################
 
 if train_clas:
-    data = dataset.DenseSiPM(DATASET_CONT)
+    # setup generator for training
+    loader_train = dataset.DenseSiPM(name=DATASET_CONT,
+                                     batch_size=batch_size,
+                                     slicing="train",
+                                     shuffle=True)
+
+    loader_valid = dataset.DenseSiPM(name=DATASET_CONT,
+                                     batch_size=batch_size,
+                                     slicing="valid",
+                                     shuffle=True)
 
     os.chdir(dir_results + RUN_NAME + "/")
     # classifier model
@@ -95,17 +104,11 @@ if train_clas:
                        loss=loss,
                        metrics=metrics)
 
-    # set normalization from training dataset
-    norm_mean, norm_std = data.get_standardization(10, 10)
-    data.standardize(norm_mean, norm_std, 10)
-    class_weights = data.get_classweights()
-
-    history = model_clas.fit(data.x_train(),
-                             data.y_train(),
-                             validation_data=(data.x_valid(), data.y_valid()),
+    history = model_clas.fit(loader_train,
                              epochs=nEpochs,
-                             batch_size=batch_size,
-                             class_weight=class_weights,
+                             steps_per_epoch=loader_train.steps_per_epoch,
+                             validation_data=loader_valid,
+                             validation_steps=loader_valid.steps_per_epoch,
                              verbose=1,
                              callbacks=[l_callbacks])
 
@@ -115,34 +118,25 @@ if train_clas:
     # save model
     model.save_model(model_clas, RUN_NAME + "_classifier")
     model.save_history(RUN_NAME + "_classifier", history.history)
-    model.save_norm(RUN_NAME + "_classifier", norm_mean, norm_std)
 
 if eval_clas:
     os.chdir(dir_results + RUN_NAME + "/")
     model_clas = model.setupModel(nOutput=1,
                                   dropout=dropout,
                                   output_activation="sigmoid")
-
     model_clas = model.load_model(model_clas, RUN_NAME + "_classifier")
-    norm_mean, norm_std = model.load_norm(RUN_NAME + "_classifier")
 
     for file in [DATASET_CONT, DATASET_0MM, DATASET_5MM]:
         # predict test dataset
         os.chdir(dir_results + RUN_NAME + "/" + file + "/")
 
-        # load dataset
-        data = dataset.DenseSiPM(DATASET_CONT)
+        loader_eval = dataset.DenseSiPM(name=DATASET_CONT,
+                                        batch_size=batch_size,
+                                        slicing="",
+                                        shuffle=True)
 
-        if file in [DATASET_0MM, DATASET_5MM]:
-            data.p_train = 0.0
-            data.p_valid = 0.0
-            data.p_test = 1.0
-
-        # set normalization from training dataset
-        data.standardize(norm_mean, norm_std, 10)
-
-        y_scores = model_clas.predict(data.x_test())
-        y_true = data.y_test()
+        y_scores = model_clas.predict(loader_eval)
+        y_true = loader_eval.y()
         y_scores = np.reshape(y_scores, newshape=(y_scores.shape[0],))
 
         # evaluate model:
