@@ -3,8 +3,8 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d.axes3d import Axes3D
 from mpl_toolkits.mplot3d import proj3d
 
-from src.SiFiCCNN.EventDisplay import EDBuilder
-from src.SiFiCCNN.root import RootLogger
+from SiFiCCNN.EventDisplay import EDBuilder
+from SiFiCCNN.root import RootLogger
 
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -55,6 +55,7 @@ def display(event):
               [event.MCPosition_source.y, event.MCComptonPosition.y],
               [event.MCPosition_source.z, event.MCComptonPosition.z],
               color="red")
+    """    
     ax.plot3D([event.MCPosition_source.x,
                event.MCPosition_source.x + a * event.MCDirection_source.x],
               [event.MCPosition_source.y,
@@ -62,6 +63,7 @@ def display(event):
               [event.MCPosition_source.z,
                event.MCPosition_source.z + a * event.MCDirection_source.z],
               color="purple")
+    """
     ax.plot3D([event.MCComptonPosition.x,
                event.MCComptonPosition.x + a * event.MCDirection_scatter.x],
               [event.MCComptonPosition.y,
