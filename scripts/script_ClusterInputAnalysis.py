@@ -2,8 +2,8 @@ import numpy as np
 import os
 import matplotlib.pyplot as plt
 
-from src.SiFiCCNN.Root.RootCluster import RootCluster
-from src.SiFiCCNN.Root import RootFiles
+from src.SiFiCCNN.root.RootCluster import RootCluster
+from src.SiFiCCNN.root import RootFiles
 
 dir_main = os.getcwd() + "/.."
 dir_root = dir_main + "/root_files/"
