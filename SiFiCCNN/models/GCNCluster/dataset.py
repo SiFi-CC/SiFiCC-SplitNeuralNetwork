@@ -12,20 +12,24 @@ from sklearn.preprocessing import OneHotEncoder, StandardScaler
 #
 ################################################################################
 
-class SiFiCCdatasets(Dataset):
-    def __init__(self, name, dataset_path, edge_atr=False, adj_arg="Binary",
+class GraphCluster(Dataset):
+    def __init__(self, name, edge_atr=False, adj_arg="Binary",
                  **kwargs):
-        self.name = name
-        self.dataset_path = dataset_path
 
+        self.name = name
         self.edge_atr = edge_atr
         self.adj_arg = adj_arg
         super().__init__(**kwargs)
 
     @property
     def path(self):
-        return os.path.join(self.dataset_path, self.__class__.__name__,
-                            self.name)
+        # get current path, go two subdirectories higher
+        path = os.path.dirname(os.path.abspath(__file__))
+        for i in range(3):
+            path = os.path.dirname(path)
+        path = os.path.join(path, "datasets", "SiFiCCNN", self.name)
+
+        return path
 
     def download(self):
         print("Dunno some download function")

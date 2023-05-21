@@ -4,7 +4,7 @@ import os
 
 # ----------------------------------------------------------------------------------------------------------------------
 
-def gen_SiFiCCCluster(RootParser, n=None):
+def load(Root, n=None):
     """
     Script to generate a dataset for spektral package usage.
 
@@ -16,42 +16,53 @@ def gen_SiFiCCCluster(RootParser, n=None):
          None
     """
 
-    dataset_name = RootParser.file_name + "_SiFiCCCluster"
+    # define dataset name
+    dataset_name = "GraphCluster"
+    dataset_name += "_" + Root.file_name
 
     # grab correct filepath, generate dataset in target directory.
     # If directory doesn't exist, it will be created.
     # "MAIN/dataset/$dataset_name$/"
-    dir_main = os.getcwd()
-    dir_datasets = dir_main + "/dataset/"
-    dir_final = dir_datasets + "/SiFiCCdatasets/" + dataset_name + "/"
 
-    if not os.path.isdir(dir_final):
-        os.makedirs(dir_final, exist_ok=True)
+    # get current path, go two subdirectories higher
+    path = os.path.dirname(os.path.abspath(__file__))
+    for i in range(3):
+        path = os.path.dirname(path)
+    path = os.path.join(path, "datasets", "SiFiCCNN", dataset_name)
+
+    if not os.path.isdir(path):
+        os.makedirs(path, exist_ok=True)
+
+    # Input feature shape
+    if n is None:
+        n_samples = Root.events_entries
+    else:
+        n_samples = n
 
     # grab dimensions from root file for debugging
     n_graph_features = 10
-    n_edge_features = 0
-    n_samples = RootParser.events_entries
+    n_edge_features = 3
+    n_samples = Root.events_entries
     print("\n# Input feature shape: ")
     print("Samples: ", n_samples)
     print("Graph features: ", n_graph_features)
     print("Graph features: ", n_edge_features)
 
-    file_A = open(dir_final + dataset_name + "_A.txt", "w")
+    file_A = open(path + "/" + dataset_name + "_A.txt", "w")
     file_graph_indicator = open(
-        dir_final + dataset_name + "_graph_indicator.txt", "w")
-    file_graph_labels = open(dir_final + dataset_name + "_graph_labels.txt",
+        path + "/" + dataset_name + "_graph_indicator.txt", "w")
+    file_graph_labels = open(path + "/" + dataset_name + "_graph_labels.txt",
                              "w")
     file_node_attributes = open(
-        dir_final + dataset_name + "_node_attributes.txt", "w")
+        path + "/" + dataset_name + "_node_attributes.txt", "w")
     file_graph_attributes = open(
-        dir_final + dataset_name + "_graph_attributes.txt", "w")
+        path + "/" + dataset_name + "_graph_attributes.txt", "w")
     file_edge_attributes = open(
-        dir_final + dataset_name + "_edge_attributes.txt", "w")
+        path + "/" + dataset_name + "_edge_attributes.txt", "w")
 
     node_id = 0
     edge_id = 0
-    for i, event in enumerate(RootParser.iterate_events(n=n)):
+    for i, event in enumerate(Root.iterate_events(n=n)):
         # get number of cluster
         n_cluster = int(len(event.RecoClusterEntries))
         idx_scat, idx_abs = event.sort_clusters_by_module()

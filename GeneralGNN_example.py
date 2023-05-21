@@ -13,47 +13,57 @@ with an 80/20 split.
 import os
 import numpy as np
 import sys
-import spektral.utils
+import tensorflow as tf
 
-from src.SiFiCCNN.GCN import SiFiCCdatasets, IGSiFICCCluster
-from src.SiFiCCNN.models import DNN_SXAX, GNN_SXAX
-from src.SiFiCCNN.analysis import evaluation
-from src.SiFiCCNN.plotting import plt_history
-
-from spektral.data import DisjointLoader
-from spektral.datasets import TUDataset
+from spektral.data.loaders import DisjointLoader
 from spektral.models import GeneralGNN
 
-import tensorflow as tf
-from tensorflow import keras
-from keras.losses import BinaryCrossentropy
-from keras.optimizers import Adam
-from keras.metrics import binary_accuracy
+from SiFiCCNN.root import Root
+from SiFiCCNN.models.GCNCluster import dataset, downloader, model
+from SiFiCCNN.analysis import fastROCAUC, metrics
+from SiFiCCNN.plotting import plt_models
 
 ################################################################################
 # Global settings
 ################################################################################
 
-RUN_NAME = "GeneralGNN_master"
+RUN_NAME = "GeneralGNNCluster"
 
-train_classifier = True
-train_regression_energy = False
-train_regression_position = False
-train_regression_theta = False
+train_clas = False
+train_regE = False
+train_regP = False
+train_regT = False
 
-eval_classifier = False
-eval_regression_energy = False
-eval_regression_position = False
-eval_regression_theta = False
+eval_clas = True
+eval_regE = False
+eval_regP = False
+eval_regT = False
 
 generate_datasets = False
+
+# Neural Network settings
+dropout = 0.1
+learning_rate = 1e-3
+nConnectedNodes = 64
+batch_size = 64
+nEpochs = 1
+trainsplit = 0.7
+valsplit = 0.1
+
+l_callbacks = [tf.keras.callbacks.LearningRateScheduler(model.lr_scheduler)]
 
 ################################################################################
 # Datasets
 ################################################################################
 
-DATASET = "SiFiCCCluster"
-DATASET_TRAIN = "OptimisedGeometry_Continuous_2e10protons_SiFiCCCluster"
+# root files are purely optimal and are left as legacy settings
+ROOT_FILE_BP0mm = "OptimisedGeometry_BP0mm_2e10protons_withTimestamps.root"
+ROOT_FILE_BP5mm = "OptimisedGeometry_BP5mm_4e9protons_withTimestamps.root"
+ROOT_FILE_CONT = "OptimisedGeometry_Continuous_2e10protons.root"
+
+DATASET_CONT = "GraphCluster_OptimisedGeometry_Continuous_2e10protons"
+DATASET_0MM = "GraphCluster_S4A6_OptimisedGeometry_BP0mm_2e10protons_withTimestamps"
+DATASET_5MM = "GraphCluster_S4A6_OptimisedGeometry_BP5mm_4e9protons_withTimestamps"
 
 ################################################################################
 # Set paths, check for datasets
@@ -67,44 +77,32 @@ dir_results = dir_main + "/results/"
 # create subdirectory for run output
 if not os.path.isdir(dir_results + RUN_NAME + "/"):
     os.mkdir(dir_results + RUN_NAME + "/")
-for file in [DATASET_TRAIN]:
-    if not os.path.isdir(dir_results + RUN_NAME + "/" + file[:-4] + "/"):
-        os.mkdir(dir_results + RUN_NAME + "/" + file[:-4] + "/")
+for file in [DATASET_CONT, DATASET_0MM, DATASET_5MM]:
+    if not os.path.isdir(dir_results + RUN_NAME + "/" + file + "/"):
+        os.mkdir(dir_results + RUN_NAME + "/" + file + "/")
 
 ################################################################################
-# Load dataset, generate Datasets if needed
+# Load dataset , custom setting possible
 ################################################################################
 
 if generate_datasets:
-    from src.SiFiCCNN.root import RootFiles
-    from src.SiFiCCNN.root import Root
-
-    rootparser_cont = Root.Root(
-        dir_main + RootFiles.OptimisedGeometry_Continuous_2e10protons_withTimestamps_local)
-    IGSiFICCCluster.gen_SiFiCCCluster(rootparser_cont, n=None)
-
+    for file in [ROOT_FILE_CONT, ROOT_FILE_BP0mm, ROOT_FILE_BP5mm]:
+        root = Root.Root(dir_root + file)
+        downloader.load(root, n=1000000)
     sys.exit()
 
 ################################################################################
 # Training
 ################################################################################
 
-batch_size = 32
-learning_rate = 0.01
-nEpochs = 50
 
-trainsplit = 0.6
-valsplit = 0.2
-
-l_callbacks = [
-    tf.keras.callbacks.LearningRateScheduler(DNN_SXAX.lr_scheduler)]
-
-if train_classifier:
-    dataset = SiFiCCdatasets.SiFiCCdatasets(
-        name="OptimisedGeometry_Continuous_2e10protons_SiFiCCCluster",
+if train_clas:
+    dataset = dataset.GraphCluster(
+        name=DATASET_CONT,
         edge_atr=False,
-        adj_arg="binary",
-        dataset_path=dir_datasets)
+        adj_arg="binary")
+
+    os.chdir(dir_results + RUN_NAME + "/")
 
     # Train/test split
     idx1 = int(trainsplit * len(dataset))
@@ -121,40 +119,44 @@ if train_classifier:
 
     # create class weight dictionary
     class_weights = dataset.get_classweight_dict()
-    class_wts = tf.constant([class_weights[0], class_weights[1]])
 
-    m_clas = GeneralGNN(dataset.n_labels, activation="sigmoid")
-    optimizer = Adam(learning_rate)
-    loss_fn = BinaryCrossentropy()
+    model_clas = GeneralGNN(dataset.n_labels, activation="sigmoid")
+    optimizer = tf.keras.optimizers.Adam(learning_rate=1e-3)
+    loss = "binary_crossentropy"
+    metrics = ["Precision", "Recall"]
+    model_clas.compile(optimizer=optimizer,
+                       loss=loss,
+                       metrics=metrics)
 
-    m_clas.compile(optimizer=optimizer,
-                   loss=loss_fn,
-                   metrics=["Precision", "Recall"])
+    history = model_clas.fit(loader_train,
+                             epochs=nEpochs,
+                             steps_per_epoch=loader_train.steps_per_epoch,
+                             validation_data=loader_valid,
+                             validation_steps=loader_valid.steps_per_epoch,
+                             class_weight=class_weights,
+                             verbose=1,
+                             callbacks=[l_callbacks])
 
-    history = m_clas.fit(loader_train,
-                         epochs=nEpochs,
-                         steps_per_epoch=loader_train.steps_per_epoch,
-                         validation_data=loader_valid,
-                         validation_steps=loader_valid.steps_per_epoch,
-                         class_weight=class_weights,
-                         verbose=1,
-                         callbacks=[l_callbacks])
-
-    plt_history.plot_history_classifier(history.history,
-                                        RUN_NAME + "_history_classifier")
+    plt_models.plot_history_classifier(history.history,
+                                       RUN_NAME + "_history_classifier")
 
     loader_test = DisjointLoader(dataset_te,
                                  batch_size=batch_size,
                                  epochs=1)
 
+    # save model
+    model.save_model(model_clas, RUN_NAME + "_classifier")
+    model.save_history(RUN_NAME + "_classifier", history.history)
+
+    """
     # predict test dataset
-    os.chdir(dir_results + RUN_NAME + "/" + file[:-4] + "/")
+    os.chdir(dir_results + RUN_NAME + "/" + file + "/")
 
     y_true = []
     y_scores = []
     for batch in loader_test:
         inputs, target = batch
-        p = m_clas(inputs, training=False)
+        p = model_clas(inputs, training=False)
         y_true.append(target)
         y_scores.append(p.numpy())
 
@@ -163,13 +165,31 @@ if train_classifier:
     y_true = np.reshape(y_true, newshape=(y_true.shape[0],))
     y_scores = np.reshape(y_scores, newshape=(y_scores.shape[0],))
 
-    evaluation.eval_classifier(y_scores=y_scores,
-                               y_true=y_true,
-                               theta=0.5)
+    # evaluate model:
+    #   - ROC analysis
+    #   - Score distribution#
+    #   - Binary classifier metrics
 
-    # save model
-    GNN_SXAX.save_model(m_clas, RUN_NAME + "_classifier")
-    GNN_SXAX.save_history(RUN_NAME + "_classifier", history.history)
+    _, theta_opt, (list_fpr, list_tpr) = fastROCAUC.fastROCAUC(y_scores,
+                                                               y_true,
+                                                               return_score=True)
+    plt_models.roc_curve(list_fpr, list_tpr, "rocauc_curve")
+    plt_models.score_distribution(y_scores, y_true, "score_dist")
+    metrics.write_metrics_classifier(y_scores, y_true)
+    """
+
+if eval_clas:
+    os.chdir(dir_results + RUN_NAME + "/")
+    model_clas = GeneralGNN(1, activation="sigmoid")
+    optimizer = tf.keras.optimizers.Adam(learning_rate=1e-3)
+    loss = "binary_crossentropy"
+    metrics = ["Precision", "Recall"]
+    model_clas.compile(optimizer=optimizer,
+                       loss=loss,
+                       metrics=metrics)
+    model_clas.build()
+    model_clas.load_weights(RUN_NAME + "_classifier" + ".h5")
+
 
 ################################################################################
 # Fit model
@@ -270,7 +290,7 @@ for file in [DATASET_TRAIN]:
     # write general binary classifier metrics into console and .txt file
     NNAnalysis.write_metrics_classifier(y_pred, y_true)
 """
-
+"""
 if eval_classifier:
 
     os.chdir(dir_results + RUN_NAME + "/")
@@ -314,3 +334,4 @@ if eval_classifier:
         evaluation.eval_classifier(y_scores=y_scores,
                                    y_true=y_true,
                                    theta=0.5)
+"""
