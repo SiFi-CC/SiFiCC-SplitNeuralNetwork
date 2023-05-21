@@ -24,19 +24,12 @@ def setupModel(nOutput,
                                   padding="same",
                                   activation="relu"))
     model.add(keras.layers.MaxPool3D(pool_size=(2, 1, 2), padding="same"))
-    model.add(keras.layers.Conv3D(filters=64,
-                                  kernel_size=(3, 2, 3),
-                                  padding="same",
-                                  activation="relu"))
-    model.add(keras.layers.MaxPool3D(pool_size=(2, 1, 2), padding="same"))
-    model.add(keras.layers.Conv3D(filters=128,
-                                  kernel_size=(3, 2, 3),
-                                  padding="same",
-                                  activation="relu"))
-    model.add(keras.layers.MaxPool3D(pool_size=(2, 1, 2), padding="same"))
     model.add(keras.layers.Flatten())
-    model.add(keras.layers.Dense(128, activation="relu"))
     model.add(keras.layers.Dense(64, activation="relu"))
+
+    if dropout > 0:
+        model.add(tf.keras.layers.Dropout(dropout))
+
     model.add(keras.layers.Dense(nOutput, activation=output_activation))
 
     return model

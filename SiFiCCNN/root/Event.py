@@ -116,8 +116,9 @@ class Event:
 
         # SiPM and Fibre information
         self.SiPM_triggertime = SiPM_triggertime
-        if len(self.SiPM_triggertime) > 0:
-            self.SiPM_triggertime -= min(SiPM_triggertime)
+        if bsipm:
+            if len(self.SiPM_triggertime) > 0:
+                self.SiPM_triggertime -= min(SiPM_triggertime)
         self.SiPM_qdc = SiPM_qdc
         self.SiPM_position = SiPM_position
         self.SiPM_id = SiPM_id

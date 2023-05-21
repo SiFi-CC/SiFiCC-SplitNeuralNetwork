@@ -25,7 +25,6 @@ eval_regP = False
 eval_regT = False
 
 generate_datasets = False
-
 # Neural Network settings
 dropout = 0.0
 learning_rate = 1e-3
@@ -72,7 +71,7 @@ for file in [DATASET_CONT, DATASET_0MM, DATASET_5MM]:
 if generate_datasets:
     for file in [ROOT_FILE_CONT, ROOT_FILE_BP0mm, ROOT_FILE_BP5mm]:
         root = Root.Root(dir_root + file)
-        downloader.load(root, n=1000000)
+        downloader.load(root, n=500000)
     sys.exit()
 
 ################################################################################
@@ -81,12 +80,12 @@ if generate_datasets:
 
 if train_clas:
     # setup generator for training
-    loader_train = dataset.DenseSiPM(name=DATASET_CONT,
+    loader_train = dataset.DenseSiPM(name=DATASET_0MM,
                                      batch_size=batch_size,
                                      slicing="train",
                                      shuffle=True)
 
-    loader_valid = dataset.DenseSiPM(name=DATASET_CONT,
+    loader_valid = dataset.DenseSiPM(name=DATASET_0MM,
                                      batch_size=batch_size,
                                      slicing="valid",
                                      shuffle=True)
