@@ -29,12 +29,12 @@ from SiFiCCNN.plotting import plt_models
 
 RUN_NAME = "GeneralGNNCluster"
 
-train_clas = False
+train_clas = True
 train_regE = False
 train_regP = False
 train_regT = False
 
-eval_clas = True
+eval_clas = False
 eval_regE = False
 eval_regP = False
 eval_regT = False
@@ -62,8 +62,8 @@ ROOT_FILE_BP5mm = "OptimisedGeometry_BP5mm_4e9protons_withTimestamps.root"
 ROOT_FILE_CONT = "OptimisedGeometry_Continuous_2e10protons.root"
 
 DATASET_CONT = "GraphCluster_OptimisedGeometry_Continuous_2e10protons"
-DATASET_0MM = "GraphCluster_S4A6_OptimisedGeometry_BP0mm_2e10protons_withTimestamps"
-DATASET_5MM = "GraphCluster_S4A6_OptimisedGeometry_BP5mm_4e9protons_withTimestamps"
+DATASET_0MM = "GraphCluster_OptimisedGeometry_BP0mm_2e10protons_withTimestamps"
+DATASET_5MM = "GraphCluster_OptimisedGeometry_BP5mm_4e9protons_withTimestamps"
 
 ################################################################################
 # Set paths, check for datasets
@@ -97,7 +97,7 @@ if generate_datasets:
 
 
 if train_clas:
-    dataset = dataset.GraphCluster(
+    data = dataset.GraphCluster(
         name=DATASET_CONT,
         edge_atr=False,
         adj_arg="binary")
@@ -105,11 +105,11 @@ if train_clas:
     os.chdir(dir_results + RUN_NAME + "/")
 
     # Train/test split
-    idx1 = int(trainsplit * len(dataset))
-    idx2 = int((trainsplit + valsplit) * len(dataset))
-    dataset_tr = dataset[:idx1]
-    dataset_va = dataset[idx1:idx2]
-    dataset_te = dataset[idx2:]
+    idx1 = int(trainsplit * len(data))
+    idx2 = int((trainsplit + valsplit) * len(data))
+    dataset_tr = data[:idx1]
+    dataset_va = data[idx1:idx2]
+    dataset_te = data[idx2:]
 
     loader_train = DisjointLoader(dataset_tr,
                                   batch_size=batch_size,
@@ -118,15 +118,15 @@ if train_clas:
                                   batch_size=batch_size)
 
     # create class weight dictionary
-    class_weights = dataset.get_classweight_dict()
+    class_weights = data.get_classweight_dict()
 
-    model_clas = GeneralGNN(dataset.n_labels, activation="sigmoid")
+    model_clas = GeneralGNN(data.n_labels, activation="sigmoid")
     optimizer = tf.keras.optimizers.Adam(learning_rate=1e-3)
     loss = "binary_crossentropy"
-    metrics = ["Precision", "Recall"]
+    list_metrics = ["Precision", "Recall"]
     model_clas.compile(optimizer=optimizer,
                        loss=loss,
-                       metrics=metrics)
+                       metrics=list_metrics)
 
     history = model_clas.fit(loader_train,
                              epochs=nEpochs,
@@ -140,43 +140,45 @@ if train_clas:
     plt_models.plot_history_classifier(history.history,
                                        RUN_NAME + "_history_classifier")
 
-    loader_test = DisjointLoader(dataset_te,
-                                 batch_size=batch_size,
-                                 epochs=1)
+    for file in [DATASET_CONT, DATASET_0MM, DATASET_5MM]:
+        data = dataset.GraphCluster(
+            name=file,
+            edge_atr=False,
+            adj_arg="binary")
 
-    # save model
-    model.save_model(model_clas, RUN_NAME + "_classifier")
-    model.save_history(RUN_NAME + "_classifier", history.history)
+        os.chdir(dir_results + RUN_NAME + "/")
+        loader_test = DisjointLoader(data,
+                                     batch_size=batch_size,
+                                     epochs=1)
 
-    """
-    # predict test dataset
-    os.chdir(dir_results + RUN_NAME + "/" + file + "/")
+        # predict test dataset
+        os.chdir(dir_results + RUN_NAME + "/" + file + "/")
 
-    y_true = []
-    y_scores = []
-    for batch in loader_test:
-        inputs, target = batch
-        p = model_clas(inputs, training=False)
-        y_true.append(target)
-        y_scores.append(p.numpy())
+        y_true = []
+        y_scores = []
+        for batch in loader_test:
+            inputs, target = batch
+            p = model_clas(inputs, training=False)
+            y_true.append(target)
+            y_scores.append(p.numpy())
 
-    y_true = np.vstack(y_true)
-    y_scores = np.vstack(y_scores)
-    y_true = np.reshape(y_true, newshape=(y_true.shape[0],))
-    y_scores = np.reshape(y_scores, newshape=(y_scores.shape[0],))
+        y_true = np.vstack(y_true)
+        y_scores = np.vstack(y_scores)
+        y_true = np.reshape(y_true, newshape=(y_true.shape[0],))
+        y_scores = np.reshape(y_scores, newshape=(y_scores.shape[0],))
 
-    # evaluate model:
-    #   - ROC analysis
-    #   - Score distribution#
-    #   - Binary classifier metrics
+        # evaluate model:
+        #   - ROC analysis
+        #   - Score distribution#
+        #   - Binary classifier metrics
 
-    _, theta_opt, (list_fpr, list_tpr) = fastROCAUC.fastROCAUC(y_scores,
-                                                               y_true,
-                                                               return_score=True)
-    plt_models.roc_curve(list_fpr, list_tpr, "rocauc_curve")
-    plt_models.score_distribution(y_scores, y_true, "score_dist")
-    metrics.write_metrics_classifier(y_scores, y_true)
-    """
+        _, theta_opt, (list_fpr, list_tpr) = fastROCAUC.fastROCAUC(y_scores,
+                                                                   y_true,
+                                                                   return_score=True)
+        plt_models.roc_curve(list_fpr, list_tpr, "rocauc_curve")
+        plt_models.score_distribution(y_scores, y_true, "score_dist")
+        metrics.write_metrics_classifier(y_scores, y_true)
+
 
 if eval_clas:
     os.chdir(dir_results + RUN_NAME + "/")
@@ -289,49 +291,4 @@ for file in [DATASET_TRAIN]:
 
     # write general binary classifier metrics into console and .txt file
     NNAnalysis.write_metrics_classifier(y_pred, y_true)
-"""
-"""
-if eval_classifier:
-
-    os.chdir(dir_results + RUN_NAME + "/")
-    m_clas = GeneralGNN(1, activation="sigmoid")
-    m_clas = DNN_SXAX.load_model(m_clas, RUN_NAME + "_classifier")
-
-    for file in [DATASET_TRAIN]:
-        dataset = SiFiCCdatasets.SiFiCCdatasets(
-            name="OptimisedGeometry_Continuous_2e10protons_SiFiCCCluster",
-            edge_atr=False,
-            adj_arg="binary",
-            dataset_path=dir_datasets)
-
-        # Train/test split
-        idx1 = int(trainsplit * len(dataset))
-        idx2 = int((trainsplit + valsplit) * len(dataset))
-        dataset_tr = dataset[:idx1]
-        dataset_va = dataset[idx1:idx2]
-        dataset_te = dataset[idx2:]
-
-        loader_test = DisjointLoader(dataset_te,
-                                     batch_size=batch_size,
-                                     epochs=1)
-
-        # predict test dataset
-        os.chdir(dir_results + RUN_NAME + "/" + file[:-4] + "/")
-
-        y_true = []
-        y_scores = []
-        for batch in loader_test:
-            inputs, target = batch
-            p = m_clas(inputs, training=False)
-            y_true.append(target)
-            y_scores.append(p.numpy())
-
-        y_true = np.vstack(y_true)
-        y_scores = np.vstack(y_scores)
-        y_true = np.reshape(y_true, newshape=(y_true.shape[0],))
-        y_scores = np.reshape(y_scores, newshape=(y_scores.shape[0],))
-
-        evaluation.eval_classifier(y_scores=y_scores,
-                                   y_true=y_true,
-                                   theta=0.5)
 """
