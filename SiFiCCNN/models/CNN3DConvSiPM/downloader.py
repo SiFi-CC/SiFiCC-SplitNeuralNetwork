@@ -40,6 +40,18 @@ def load(Root,
 
     # main iteration over root file
     for i, event in enumerate(Root.iterate_events(n=n)):
+        # coincidence check
+        n_scatterer = 0
+        n_absorber = 0
+        for j in range(len(event.SiPM_id)):
+            if 150.0 - 14.0 / 2.0 < event.SiPM_position[j].x < 150.0 + 14.0 / 2.0:
+                n_scatterer += 1
+            if 270.0 - 30.0 / 2.0 < event.SiPM_position[j].x < 270.0 + 30.0 / 2.0:
+                n_absorber += 1
+
+        if n_scatterer == 0 or n_absorber == 0:
+            continue
+
         # get the number of triggered sipms
         n_sipm = len(event.SiPM_id)
         for j in range(n_sipm):
