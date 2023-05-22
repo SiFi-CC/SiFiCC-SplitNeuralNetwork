@@ -39,14 +39,27 @@ def load(Root,
         path + "/" + dataset_name + "_graph_attributes.txt", "w")
 
     # main iteration over root file
+    idx = 0
     for i, event in enumerate(Root.iterate_events(n=n)):
+        # coincidence check
+        n_scatterer = 0
+        n_absorber = 0
+        for j in range(len(event.SiPM_id)):
+            if 150.0 - 14.0 / 2.0 < event.SiPM_position[j].x < 150.0 + 14.0 / 2.0:
+                n_scatterer += 1
+            if 270.0 - 30.0 / 2.0 < event.SiPM_position[j].x < 270.0 + 30.0 / 2.0:
+                n_absorber += 1
+
+        if n_scatterer == 0 or n_absorber == 0:
+            continue
+
         # get the number of triggered sipms
         n_sipm = len(event.SiPM_id)
         for j in range(n_sipm):
             x, y, z = event.sipm_id_to_position(event.SiPM_id[j])
             file_A.write(str(x) + "," + str(y) + "," + str(z) + "\n")
 
-            file_graph_indicator.write(str(i) + "\n")
+            file_graph_indicator.write(str(idx) + "\n")
             file_node_attributes.write(str(int(event.SiPM_qdc[j])) + "," +
                                        str(event.SiPM_triggertime[j]) + "\n")
 
@@ -59,7 +72,7 @@ def load(Root,
                                     str(event.target_position_p.x) + "," +
                                     str(event.target_position_p.y) + "," +
                                     str(event.target_position_p.z) + "\n")
-
+        idx += 1
     file_A.close()
     file_graph_labels.close()
     file_graph_indicator.close()

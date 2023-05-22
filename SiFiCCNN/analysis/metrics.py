@@ -53,9 +53,9 @@ def get_classifier_metrics(y_scores, y_true, theta=0.5, weighted=False):
 
     if weighted:
         # set sample weights to class weights
-        _, counts = np.unique(y_pred, return_counts=True)
-        class_weights = [len(y_pred) / (2 * counts[0]),
-                         len(y_pred) / (2 * counts[1])]
+        _, counts = np.unique(y_true, return_counts=True)
+        class_weights = [len(y_true) / (2 * counts[0]),
+                         len(y_true) / (2 * counts[1])]
 
         accuracy = ((tp * class_weights[1]) + (tn * class_weights[0])) / (
                 ((tp + fp) * class_weights[1]) + ((tn + fn) * class_weights[0]))
