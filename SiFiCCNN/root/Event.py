@@ -123,6 +123,9 @@ class Event:
         self.SiPM_position = SiPM_position
         self.SiPM_id = SiPM_id
         self.fibre_time = fibre_time
+        if bsipm:
+            if len(self.fibre_time) > 0:
+                self.fibre_time -= min(fibre_time)
         self.fibre_energy = fibre_energy
         self.fibre_position = fibre_position
         self.fibre_id = fibre_id
@@ -241,6 +244,85 @@ class Event:
                         self.target_position_e) and self.absorber.is_vec_in_module(
                     self.target_position_p):
                     self.compton_tag = True
+
+    def set_tags_awal(self):
+        """
+        # NOT USED ANYMORE AS DATASETS DO NOT CONTAIN NON COINCIDENCE EVENTS
+        # ANYMORE
+        # check if the event is a valid event by considering the clusters
+        # associated with it, the event is considered valid if there are at
+        # least one cluster within each module of the SiFiCC
+        if self.clusters_count >= 2 \
+                and scatterer.is_any_point_inside_x(self.clusters_position) \
+                and absorber.is_any_point_inside_x(self.clusters_position):
+            self.is_distributed_clusters = True
+        else:
+            self.is_distributed_clusters = False
+        """
+        # check if the event is a Compton event
+        is_compton = True if self.MCEnergy_e != 0 else False
+
+        # check if the event is a complete Compton event
+        # complete Compton event= Compton event + both e and p go through a
+        # second interation in which
+        # 0 < p interaction < 10
+        # 10 <= e interaction < 20
+        # Note: first interaction of p is the compton event
+        if is_compton \
+                and len(self.MCPosition_p) >= 2 \
+                and len(self.MCPosition_e) >= 1 \
+                and ((self.MCInteractions_p[1:] > 0) & (
+                self.MCInteractions_p[1:] < 10)).any() \
+                and ((self.MCInteractions_e[0] >= 10) & (
+                self.MCInteractions_e[0] < 20)):
+            is_complete_compton = True
+        else:
+            is_complete_compton = False
+
+        # initialize e & p first interaction position
+        if is_complete_compton:
+            for idx in range(1, len(self.MCInteractions_p)):
+                if 0 < self.MCInteractions_p[idx] < 10:
+                    self.target_position_p = self.MCPosition_p[idx]
+                    break
+            for idx in range(0, len(self.MCInteractions_e)):
+                if 10 <= self.MCInteractions_e[idx] < 20:
+                    self.target_position_e = self.MCPosition_e[idx]
+                    break
+        else:
+            self.target_position_p = TVector3(0, 0, 0)
+            self.target_position_e = TVector3(0, 0, 0)
+
+        # check if the event is a complete distributed Compton event
+        # complete distributed Compton event= complete Compton event +
+        # each e and p go through a secondary
+        # interaction in a different module of the SiFiCC
+        if is_complete_compton \
+                and self.scatterer.is_vec_in_module(self.MCPosition_p) \
+                and self.absorber.is_vec_in_module(self.MCPosition_e):
+            is_complete_distributed_compton = True
+        else:
+            is_complete_distributed_compton = False
+
+        # check if the event is an ideal Compton event and what type is it
+        # (EP or PE)
+        # ideal Compton event = complete distributed Compton event where the
+        # next interaction of both
+        # e and p is in the different modules of SiFiCC
+        if is_complete_compton \
+                and self.scatterer.is_vec_in_module(self.target_position_e) \
+                and self.absorber.is_vec_in_module(self.target_position_p) \
+                and self.MCSimulatedEventType == 2:
+            self.compton_tag = True
+        elif is_complete_compton \
+                and self.scatterer.is_vec_in_module(self.target_position_p) \
+                and self.absorber.is_vec_in_module(self.target_position_e) \
+                and self.MCSimulatedEventType == 2:
+            self.compton_tag = True
+
+        # unchanged
+        self.target_energy_e = self.MCEnergy_e
+        self.target_energy_p = self.MCEnergy_p
 
     # --------------------------------------------------------------------------
     # SiPM and fibre feature map generation
