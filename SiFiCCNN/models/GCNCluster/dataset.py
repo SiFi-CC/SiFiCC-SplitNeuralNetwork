@@ -101,12 +101,11 @@ class GraphCluster(Dataset):
 
             ary_mean, ary_std = _get_standardization(e_list)
             e_list = _standardize(e_list, ary_mean, ary_std)
-
             e_list = np.split(e_list, n_edges_cum)
         else:
             e_available = False
             e_list = [None] * len(n_nodes)
-
+        """
         # Create sparse adjacency matrices and re-sort edge attributes in
         # lexicographic order
         if self.adj_arg == "binary":
@@ -151,8 +150,23 @@ class GraphCluster(Dataset):
 
             e_available = False
             e_list = [None] * len(n_nodes)
+        """
 
-        a_list = a_e_list
+        # Create sparse adjacency matrices and re-sort edge attributes in
+        # lexicographic order
+        a_e_list = [
+            sparse.edge_index_to_matrix(
+                edge_index=el,
+                edge_weight=np.ones(el.shape[0]),
+                edge_features=e,
+                shape=(n, n),
+            )
+            for el, e, n in zip(el_list, e_list, n_nodes)
+        ]
+        if e_available:
+            a_list, e_list = list(zip(*a_e_list))
+        else:
+            a_list = a_e_list
 
         # Labels
         labels = io.load_txt(

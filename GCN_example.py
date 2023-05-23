@@ -36,7 +36,7 @@ eval_regE = False
 eval_regP = False
 eval_regT = False
 
-generate_datasets = False
+generate_datasets = True
 
 # Neural Network settings
 dropout = 0.1
@@ -86,7 +86,7 @@ if generate_datasets:
 
     for file in [ROOT_FILE_CONT, ROOT_FILE_BP0mm, ROOT_FILE_BP5mm]:
         root = Root.Root(dir_root + file)
-        downloader.load(root, n=1000000)
+        downloader.load(root, n=10000)
     sys.exit()
 
 ################################################################################
