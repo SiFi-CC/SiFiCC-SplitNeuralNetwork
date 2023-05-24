@@ -36,14 +36,14 @@ eval_regE = False
 eval_regP = False
 eval_regT = False
 
-generate_datasets = True
+generate_datasets = False
 
 # Neural Network settings
 dropout = 0.1
 learning_rate = 1e-3
 nConnectedNodes = 64
 batch_size = 64
-nEpochs = 5
+nEpochs = 20
 trainsplit = 0.7
 valsplit = 0.1
 
@@ -86,7 +86,7 @@ if generate_datasets:
 
     for file in [ROOT_FILE_CONT, ROOT_FILE_BP0mm, ROOT_FILE_BP5mm]:
         root = Root.Root(dir_root + file)
-        downloader.load(root, n=10000)
+        downloader.load(root, n=100000)
     sys.exit()
 
 ################################################################################
@@ -94,8 +94,8 @@ if generate_datasets:
 ################################################################################
 
 from tensorflow.keras.models import Model
-from tensorflow.keras.layers import Dense, Dropout
-from spektral.layers import GCNConv, GlobalSumPool
+from tensorflow.keras.layers import Dense, Dropout, Concatenate
+from spektral.layers import GCNConv, ECCConv, GlobalSumPool
 
 
 class GCNmodel(Model):
@@ -105,18 +105,31 @@ class GCNmodel(Model):
                  output_activation,
                  dropout=0.0):
         super().__init__()
-        self.graph_conv = GCNConv(32)
+        self.graph_gcnconv1 = GCNConv(32, activation="relu")
+        self.graph_gcnconv2 = GCNConv(64, activation="relu")
+        self.graph_eccconv1 = ECCConv(32, activation="relu")
+        self.graph_eccconv2 = ECCConv(64, activation="relu")
         self.pool = GlobalSumPool()
         self.dropout = Dropout(dropout)
-        self.dense = Dense(n_labels, output_activation)
+        self.dense1 = Dense(64, activation="relu")
+        self.dense_out = Dense(n_labels, output_activation)
+        self.concatenate = Concatenate()
 
     def call(self, inputs):
-        out = self.graph_conv(inputs)
-        out = self.dropout(out)
-        out = self.pool(out)
-        out = self.dense(out)
+        xIn, aIn, eIn, iIn = inputs
+        out1 = self.graph_gcnconv1([xIn, aIn])
+        out2 = self.graph_gcnconv2([out1, aIn])
+        out3 = self.graph_eccconv1([xIn, aIn, eIn])
+        out4 = self.graph_eccconv2([out3, aIn, eIn])
+        out5 = self.pool([out2, iIn])
+        out6 = self.pool([out4, iIn])
 
-        return out
+        out7 = self.concatenate([out5, out6])
+        out8 = self.dense1(out7)
+        out9 = self.dropout(out8)
+        out_final = self.dense_out(out9)
+
+        return out_final
 
 
 ################################################################################
@@ -126,7 +139,7 @@ class GCNmodel(Model):
 if train_clas:
     data = dataset.GraphCluster(
         name=DATASET_CONT,
-        edge_atr=False,
+        edge_atr=True,
         adj_arg="binary")
     data.apply(GCNFilter())
 
@@ -174,7 +187,7 @@ if train_clas:
     for file in [DATASET_CONT, DATASET_0MM, DATASET_5MM]:
         data = dataset.GraphCluster(
             name=file,
-            edge_atr=False,
+            edge_atr=True,
             adj_arg="binary")
         data.apply(GCNFilter())
 
@@ -210,7 +223,6 @@ if train_clas:
         plt_models.roc_curve(list_fpr, list_tpr, "rocauc_curve")
         plt_models.score_distribution(y_scores, y_true, "score_dist")
         metrics.write_metrics_classifier(y_scores, y_true)
-
 
 ################################################################################
 # Evaluate model
