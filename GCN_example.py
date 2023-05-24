@@ -26,7 +26,7 @@ from SiFiCCNN.plotting import plt_models
 
 RUN_NAME = "GCNCluster"
 
-train_clas = True
+train_clas = False
 train_regE = False
 train_regP = False
 train_regT = False
@@ -86,7 +86,9 @@ if generate_datasets:
 
     for file in [ROOT_FILE_CONT, ROOT_FILE_BP0mm, ROOT_FILE_BP5mm]:
         root = Root.Root(dir_root + file)
-        downloader.load(root, n=100000)
+        downloader.load(root,
+                        path=dir_datasets,
+                        n=100000)
     sys.exit()
 
 ################################################################################
@@ -105,6 +107,11 @@ class GCNmodel(Model):
                  output_activation,
                  dropout=0.0):
         super().__init__()
+
+        self.n_labels = n_labels
+        self.output_activation = output_activation
+        self.dropout_val = dropout
+
         self.graph_gcnconv1 = GCNConv(32, activation="relu")
         self.graph_gcnconv2 = GCNConv(64, activation="relu")
         self.graph_eccconv1 = ECCConv(32, activation="relu")
@@ -131,6 +138,15 @@ class GCNmodel(Model):
 
         return out_final
 
+    def get_config(self):
+        return {"n_labels": self.n_labels,
+                "output_activation": self.output_activation,
+                "dropout": self.dropout_val}
+
+    @classmethod
+    def from_config(cls, config):
+        return cls(**config)
+
 
 ################################################################################
 # Training
@@ -142,6 +158,7 @@ if train_clas:
         edge_atr=True,
         adj_arg="binary")
     data.apply(GCNFilter())
+    print(len(data))
 
     os.chdir(dir_results + RUN_NAME + "/")
 
@@ -179,18 +196,22 @@ if train_clas:
                              validation_data=loader_valid,
                              validation_steps=loader_valid.steps_per_epoch,
                              class_weight=class_weights,
-                             callbacks=[tf.keras.ModelCheckpoint(
-                                 RUN_NAME + "_classifier.h5",
-                                 monitor="val_loss",
-                                 verbose=1,
-                                 save_weights_only=False,
-                                 save_best_only=True,
-                                 mode="min",
-                                 period=1)],
                              verbose=1)
 
     plt_models.plot_history_classifier(history.history,
                                        RUN_NAME + "_history_classifier")
+    model_clas.save(RUN_NAME + "_classifier")
+
+if eval_clas:
+    os.chdir(dir_results + RUN_NAME + "/")
+    model_clas = tf.keras.models.load_model(RUN_NAME + "_classifier")
+
+    optimizer = tf.keras.optimizers.Adam(learning_rate=1e-3)
+    loss = "binary_crossentropy"
+    list_metrics = ["Precision", "Recall"]
+    model_clas.compile(optimizer=optimizer,
+                       loss=loss,
+                       metrics=list_metrics)
 
     for file in [DATASET_CONT, DATASET_0MM, DATASET_5MM]:
         data = dataset.GraphCluster(

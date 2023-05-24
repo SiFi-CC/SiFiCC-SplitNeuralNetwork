@@ -27,7 +27,7 @@ class GraphCluster(Dataset):
         path = os.path.dirname(os.path.abspath(__file__))
         for i in range(3):
             path = os.path.dirname(path)
-        path = os.path.join(path, "datasets", "SiFiCCNN", self.name)
+        path = os.path.join(path, "datasets", "SiFiCCNN_GraphCluster", self.name)
 
         return path
 
@@ -36,19 +36,13 @@ class GraphCluster(Dataset):
 
     def read(self):
         # Batch index
-        node_batch_index = (
-            io.load_txt(
-                self.path + "/" + self.name + "_graph_indicator" + ".txt").astype(
-                int)
-        )
-
+        node_batch_index = np.load(
+            self.path + "/" + self.name + "_graph_indicator.npy")  # ["arr_0"]
         n_nodes = np.bincount(node_batch_index)
         n_nodes_cum = np.concatenate(([0], np.cumsum(n_nodes)[:-1]))
 
         # Read edge lists
-        edges = io.load_txt(self.path + "/" + self.name + "_A" + ".txt",
-                            delimiter=",").astype(int)
-
+        edges = np.load(self.path + "/" + self.name + "_A.npy")  # ["arr_0"]
         # Remove duplicates and self-loops from edges
         _, mask = np.unique(edges, axis=0, return_index=True)
         # mask = mask[edges[mask, 0] != edges[mask, 1]]
@@ -63,9 +57,7 @@ class GraphCluster(Dataset):
 
         # Node features
         x_list = []
-        x_attr = io.load_txt(
-            self.path + "/" + self.name + "_node_attributes" + ".txt",
-            delimiter=",")
+        x_attr = np.load(self.path + "/" + self.name + "_node_attributes.npy")  # ["arr_0"]
         if x_attr.ndim == 1:
             x_attr = x_attr[:, None]
         x_list.append(x_attr)
@@ -87,9 +79,7 @@ class GraphCluster(Dataset):
         e_list = []
 
         if self.edge_atr:
-            e_attr = io.load_txt(
-                self.path + "/" + self.name + "_edge_attributes" + ".txt",
-                delimiter=",")
+            e_attr = np.load(self.path + "/" + self.name + "_edge_attributes.npy")  # ["arr_0"]
             if e_attr.ndim == 1:
                 e_attr = e_attr[:, None]
             e_attr = e_attr[mask]
@@ -105,6 +95,7 @@ class GraphCluster(Dataset):
         else:
             e_available = False
             e_list = [None] * len(n_nodes)
+
         """
         # Create sparse adjacency matrices and re-sort edge attributes in
         # lexicographic order
@@ -169,9 +160,7 @@ class GraphCluster(Dataset):
             a_list = a_e_list
 
         # Labels
-        labels = io.load_txt(
-            self.path + "/" + self.name + "_graph_labels" + ".txt").astype(
-            np.float32)
+        labels = np.load(self.path + "/" + self.name + "_graph_labels.npy")  # ["arr_0"]
         # labels = _normalize(labels[:, None], "ohe")
 
         # Convert to Graph
@@ -182,8 +171,7 @@ class GraphCluster(Dataset):
         ]
 
     def get_classweight_dict(self):
-        labels = io.load_txt(
-            self.path + "/" + self.name + "_graph_labels" + ".txt")
+        labels = np.load(self.path + "/" + self.name + "_graph_labels.npy")  # ["arr_0"]
 
         _, counts = np.unique(labels, return_counts=True)
         class_weights = {0: len(labels) / (2 * counts[0]),

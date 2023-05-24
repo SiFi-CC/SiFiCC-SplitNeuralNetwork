@@ -145,16 +145,6 @@ class Event:
             self.MCDirection_source = self.MCComptonPosition - self.MCPosition_source
             self.MCDirection_source /= self.MCDirection_source.mag
 
-        # scattering angle
-        # calculated from energy and vector dot product of direction vectors
-        # given by simulation output
-        self.theta_energy = self.calc_theta_energy(self.MCEnergy_e,
-                                                   self.MCEnergy_p)
-        self.theta_dotvec = self.calc_theta_dotvec(self.MCDirection_source,
-                                                   self.MCDirection_scatter)
-
-        # correction of photon absorber position
-
         # ----------------------------------------------------------------------
         # Event tagging and deep learning targets
 
@@ -374,6 +364,19 @@ class Event:
         theta = vec.theta
 
         return r, phi, theta
+
+    # --------------------------------------------------------------------------
+
+    # scattering angle
+    # calculated from energy and vector dot product of direction vectors given by simulation output
+
+    @property
+    def theta_energy(self):
+        return self.calc_theta_energy(self.MCEnergy_e, self.MCEnergy_p)
+
+    @property
+    def theta_dotvec(self):
+        return self.calc_theta_dotvec(self.MCDirection_source, self.MCDirection_scatter)
 
     # --------------------------------------------------------------------------
 

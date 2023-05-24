@@ -10,9 +10,8 @@ def load(RootParser,
 
     Inspired by the TUdataset "PROTEIN"
 
-    Two iterations over the root file are needed: one to determine the array
-    size, one to read the data. Final data is stored as npy files, separated by
-    their usage.
+    Two iterations over the root file are needed: one to determine the array size, one to read the
+    data. Final data is stored as npy files, separated by their usage.
 
     Args:
         RootParser  (root Object): root object containing root file
@@ -38,46 +37,43 @@ def load(RootParser,
     # Pre-determine the final array size.
     # Total number of graphs is needed (n samples)
     # Total number of nodes (Iteration over root file needed)
+    print("Counting number 0f graphs to be created")
     if n is None:
         n_graphs = RootParser.events_entries
     else:
         n_graphs = n
     n_nodes = 0
+    m_edges = 0
+    for i, event in enumerate(RootParser.iterate_events(n=n_graphs)):
+        n_nodes += len(event.RecoClusterEntries)
+        m_edges += len(event.RecoClusterEntries) * len(event.RecoClusterEntries)
+    print("Number of Graphs to be created: ", n_graphs)
+    print("Total number of nodes to be created: ", n_nodes)
+    print("Graph features: ", 10)
+    print("Graph features: ", 3)
 
-    # grab dimensions from root file for debugging
-    n_graph_features = 10
-    n_edge_features = 3
-    n_samples = RootParser.events_entries
-    print("\n# Input feature shape: ")
-    print("Samples: ", n_samples)
-    print("Graph features: ", n_graph_features)
-    print("Graph features: ", n_edge_features)
-
-    file_A = open(path + "/" + dataset_name + "_A.txt", "w")
-    file_graph_indicator = open(
-        path + "/" + dataset_name + "_graph_indicator.txt", "w")
-    file_graph_labels = open(path + "/" + dataset_name + "_graph_labels.txt",
-                             "w")
-    file_node_attributes = open(
-        path + "/" + dataset_name + "_node_attributes.txt", "w")
-    file_graph_attributes = open(
-        path + "/" + dataset_name + "_graph_attributes.txt", "w")
-    file_edge_attributes = open(
-        path + "/" + dataset_name + "_edge_attributes.txt", "w")
+    # creating final arrays
+    # datatypes are chosen for minimal size possible (duh)
+    ary_A = np.zeros(shape=(m_edges, 2), dtype=np.int)
+    ary_graph_indicator = np.zeros(shape=(n_nodes,), dtype=np.int)
+    ary_graph_labels = np.zeros(shape=(n_graphs,), dtype=np.bool)
+    ary_node_attributes = np.zeros(shape=(n_nodes, 10), dtype=np.float32)
+    ary_graph_attributes = np.zeros(shape=(n_graphs, 8), dtype=np.float32)
+    ary_edge_attributes = np.zeros(shape=(m_edges, 3), dtype=np.float32)
 
     node_id = 0
     edge_id = 0
-    for i, event in enumerate(Root.iterate_events(n=n)):
+    for i, event in enumerate(RootParser.iterate_events(n=n_graphs)):
         # get number of cluster
         n_cluster = int(len(event.RecoClusterEntries))
         idx_scat, idx_abs = event.sort_clusters_by_module()
         for j in range(n_cluster):
             for k in range(n_cluster):
+                """
                 if j in idx_abs and k in idx_scat:
                     continue
-
-                file_A.write(
-                    str(node_id) + ", " + str(node_id - j + k) + "\n")
+                """
+                ary_A[edge_id, :] = [node_id, node_id - j + k]
 
                 # exception for self loops
                 if j != k:
@@ -85,39 +81,36 @@ def load(RootParser,
                     r, phi, theta = event.get_edge_features(j, k)
                 else:
                     r, phi, theta = 0, 0, 0
-                file_edge_attributes.write(
-                    str(r) + "," + str(phi) + "," + str(theta) + "\n"
-                )
 
-            file_graph_indicator.write(str(i) + "\n")
-            file_node_attributes.write(
-                str(float(event.RecoClusterEntries[j])) + "," +
-                str(float(event.RecoClusterTimestamps_relative[j])) + "," +
-                str(float(event.RecoClusterEnergies_values[j])) + "," +
-                str(float(event.RecoClusterEnergies_uncertainty[j])) + "," +
-                str(float(event.RecoClusterPosition.x[j])) + "," +
-                str(float(event.RecoClusterPosition.y[j])) + "," +
-                str(float(event.RecoClusterPosition.z[j])) + "," +
-                str(float(
-                    event.RecoClusterPosition_uncertainty.x[j])) + "," +
-                str(float(
-                    event.RecoClusterPosition_uncertainty.y[j])) + "," +
-                str(float(
-                    event.RecoClusterPosition_uncertainty.z[j])) + "\n")
+                ary_edge_attributes[edge_id, :] = [r, phi, theta]
+                edge_id += 1
+
+            ary_graph_indicator[node_id] = i
+            ary_node_attributes[node_id, :] = [event.RecoClusterEntries[j],
+                                               event.RecoClusterTimestamps_relative[j],
+                                               event.RecoClusterEnergies_values[j],
+                                               event.RecoClusterEnergies_uncertainty[j],
+                                               event.RecoClusterPosition.x[j],
+                                               event.RecoClusterPosition.y[j],
+                                               event.RecoClusterPosition.z[j],
+                                               event.RecoClusterPosition_uncertainty.x[j],
+                                               event.RecoClusterPosition_uncertainty.y[j],
+                                               event.RecoClusterPosition_uncertainty.z[j]]
             node_id += 1
 
-        file_graph_labels.write(str(event.compton_tag * 1) + "\n")
-        file_graph_attributes.write(str(event.target_energy_e) + "," +
-                                    str(event.target_energy_p) + "," +
-                                    str(event.target_position_e.x) + "," +
-                                    str(event.target_position_e.y) + "," +
-                                    str(event.target_position_e.z) + "," +
-                                    str(event.target_position_p.x) + "," +
-                                    str(event.target_position_p.y) + "," +
-                                    str(event.target_position_p.z) + "\n")
+        ary_graph_labels[i] = event.compton_tag
+        ary_graph_attributes[i, :] = [event.target_energy_e,
+                                      event.target_energy_p,
+                                      event.target_position_e.x,
+                                      event.target_position_e.y,
+                                      event.target_position_e.z,
+                                      event.target_position_p.x,
+                                      event.target_position_p.y,
+                                      event.target_position_p.z]
 
-    file_A.close()
-    file_graph_labels.close()
-    file_graph_indicator.close()
-    file_node_attributes.close()
-    file_graph_attributes.close()
+    np.save(path + "/" + dataset_name + "_A.npy", ary_A)
+    np.save(path + "/" + dataset_name + "_graph_indicator.npy", ary_graph_indicator)
+    np.save(path + "/" + dataset_name + "_graph_labels.npy", ary_graph_labels)
+    np.save(path + "/" + dataset_name + "_node_attributes.npy", ary_node_attributes)
+    np.save(path + "/" + dataset_name + "_graph_attributes.npy", ary_graph_attributes)
+    np.save(path + "/" + dataset_name + "_edge_attributes.npy", ary_edge_attributes)
