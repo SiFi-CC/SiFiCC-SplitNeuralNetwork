@@ -160,7 +160,7 @@ if train_clas:
 
     # create class weight dictionary
     class_weights = data.get_classweight_dict()
-    print("# CLass weights: ")
+    print("# Class weights: ")
     print(class_weights)
 
     model_clas = GCNmodel(n_labels=1,
@@ -179,6 +179,14 @@ if train_clas:
                              validation_data=loader_valid,
                              validation_steps=loader_valid.steps_per_epoch,
                              class_weight=class_weights,
+                             callbacks=[tf.keras.ModelCheckpoint(
+                                 RUN_NAME + "_classifier.h5",
+                                 monitor="val_loss",
+                                 verbose=1,
+                                 save_weights_only=False,
+                                 save_best_only=True,
+                                 mode="min",
+                                 period=1)],
                              verbose=1)
 
     plt_models.plot_history_classifier(history.history,
