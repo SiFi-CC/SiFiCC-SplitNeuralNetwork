@@ -2,15 +2,23 @@ import numpy as np
 import os
 
 
-# ----------------------------------------------------------------------------------------------------------------------
-
-def load(Root, n=None):
+def load(RootParser,
+         path="",
+         n=None):
     """
-    Script to generate a dataset for spektral package usage.
+    Script to generate a dataset in graph basis.
+
+    Inspired by the TUdataset "PROTEIN"
+
+    Two iterations over the root file are needed: one to determine the array
+    size, one to read the data. Final data is stored as npy files, separated by
+    their usage.
 
     Args:
         RootParser  (root Object): root object containing root file
-        n                   (int): Number of events sampled from root file
+        path        (str): destination path, if not given it will default to
+                           scratch_g4rt1
+        n           (int): Number of events sampled from root file
 
     Return:
          None
@@ -18,31 +26,28 @@ def load(Root, n=None):
 
     # define dataset name
     dataset_name = "GraphCluster"
-    dataset_name += "_" + Root.file_name
+    dataset_name += "_" + RootParser.file_name
 
     # grab correct filepath, generate dataset in target directory.
-    # If directory doesn't exist, it will be created.
-    # "MAIN/dataset/$dataset_name$/"
-
-    # get current path, go two subdirectories higher
-    path = os.path.dirname(os.path.abspath(__file__))
-    for i in range(3):
-        path = os.path.dirname(path)
-    path = os.path.join(path, "datasets", "SiFiCCNN", dataset_name)
-
+    if path == "":
+        path = "/net/scratch_g4rt1/fenger/datasets/"
+    path = os.path.join(path, "SiFiCCNN_GraphCluster", dataset_name)
     if not os.path.isdir(path):
         os.makedirs(path, exist_ok=True)
 
-    # Input feature shape
+    # Pre-determine the final array size.
+    # Total number of graphs is needed (n samples)
+    # Total number of nodes (Iteration over root file needed)
     if n is None:
-        n_samples = Root.events_entries
+        n_graphs = RootParser.events_entries
     else:
-        n_samples = n
+        n_graphs = n
+    n_nodes = 0
 
     # grab dimensions from root file for debugging
     n_graph_features = 10
     n_edge_features = 3
-    n_samples = Root.events_entries
+    n_samples = RootParser.events_entries
     print("\n# Input feature shape: ")
     print("Samples: ", n_samples)
     print("Graph features: ", n_graph_features)
