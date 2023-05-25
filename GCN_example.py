@@ -20,9 +20,9 @@ from SiFiCCNN.models.GCNCluster import dataset, downloader, model
 from SiFiCCNN.analysis import fastROCAUC, metrics
 from SiFiCCNN.plotting import plt_models
 
-################################################################################
+####################################################################################################
 # Global settings
-################################################################################
+####################################################################################################
 
 RUN_NAME = "GCNCluster"
 
@@ -49,9 +49,9 @@ valsplit = 0.1
 
 l_callbacks = [tf.keras.callbacks.LearningRateScheduler(model.lr_scheduler)]
 
-################################################################################
+####################################################################################################
 # Datasets
-################################################################################
+####################################################################################################
 
 # root files are purely optimal and are left as legacy settings
 ROOT_FILE_BP0mm = "OptimisedGeometry_BP0mm_2e10protons_withTimestamps.root"
@@ -62,9 +62,9 @@ DATASET_CONT = "GraphCluster_OptimisedGeometry_Continuous_2e10protons"
 DATASET_0MM = "GraphCluster_OptimisedGeometry_BP0mm_2e10protons_withTimestamps"
 DATASET_5MM = "GraphCluster_OptimisedGeometry_BP5mm_4e9protons_withTimestamps"
 
-################################################################################
+####################################################################################################
 # Set paths
-################################################################################
+####################################################################################################
 dir_main = os.getcwd()
 dir_root = dir_main + "/root_files/"
 dir_datasets = dir_main + "/datasets/"
@@ -77,9 +77,9 @@ for file in [DATASET_CONT, DATASET_0MM, DATASET_5MM]:
     if not os.path.isdir(dir_results + RUN_NAME + "/" + file + "/"):
         os.mkdir(dir_results + RUN_NAME + "/" + file + "/")
 
-################################################################################
+####################################################################################################
 # Load dataset , custom setting possible
-################################################################################
+####################################################################################################
 
 if generate_datasets:
     from SiFiCCNN.root import Root
@@ -91,9 +91,9 @@ if generate_datasets:
                         n=100000)
     sys.exit()
 
-################################################################################
+####################################################################################################
 # Custom GCN model
-################################################################################
+####################################################################################################
 
 from tensorflow.keras.models import Model
 from tensorflow.keras.layers import Dense, Dropout, Concatenate
@@ -148,37 +148,34 @@ class GCNmodel(Model):
         return cls(**config)
 
 
-################################################################################
+####################################################################################################
 # Training
-################################################################################
+####################################################################################################
 
 if train_clas:
+    # load dataset, apply GCN filter
+    # apply train-test-split, generate  Disjoint loader for training and validation set
     data = dataset.GraphCluster(
         name=DATASET_CONT,
         edge_atr=True,
         adj_arg="binary")
     data.apply(GCNFilter())
-    print(len(data))
-
-    os.chdir(dir_results + RUN_NAME + "/")
-
-    # Train/test split
     idx1 = int(trainsplit * len(data))
     idx2 = int((trainsplit + valsplit) * len(data))
     dataset_tr = data[:idx1]
     dataset_va = data[idx1:idx2]
     dataset_te = data[idx2:]
-
     loader_train = DisjointLoader(dataset_tr,
                                   batch_size=batch_size,
                                   epochs=nEpochs)
     loader_valid = DisjointLoader(dataset_va,
                                   batch_size=batch_size)
 
-    # create class weight dictionary
+    # create class weight dictionary for re-balancing class distributions
     class_weights = data.get_classweight_dict()
     print("# Class weights: ")
     print(class_weights)
+    # TODO: generate standardization from training dataset
 
     model_clas = GCNmodel(n_labels=1,
                           output_activation="sigmoid",
@@ -198,6 +195,9 @@ if train_clas:
                              class_weight=class_weights,
                              verbose=1)
 
+    # change to final result directory
+    # store history, metrics, model
+    os.chdir(dir_results + RUN_NAME + "/")
     plt_models.plot_history_classifier(history.history,
                                        RUN_NAME + "_history_classifier")
     model_clas.save(RUN_NAME + "_classifier")
@@ -245,7 +245,6 @@ if eval_clas:
         #   - ROC analysis
         #   - Score distribution#
         #   - Binary classifier metrics
-
         _, theta_opt, (list_fpr, list_tpr) = fastROCAUC.fastROCAUC(y_scores,
                                                                    y_true,
                                                                    return_score=True)
@@ -253,40 +252,7 @@ if eval_clas:
         plt_models.score_distribution(y_scores, y_true, "score_dist")
         metrics.write_metrics_classifier(y_scores, y_true)
 
-################################################################################
-# Evaluate model
-################################################################################
-"""
+####################################################################################################
+# Training Regression Energy
+####################################################################################################
 
-from src.SiFiCCNN.NeuralNetwork import NNAnalysis
-from src.SiFiCCNN.NeuralNetwork import FastROCAUC
-
-from src.SiFiCCNN.Plotter import PTClassifier
-
-for file in [DATASET_TRAIN]:
-    os.chdir(dir_results + RUN_NAME + "/" + file[:-4] + "/")
-
-    y_true = []
-    y_pred = []
-    for batch in loader_test:
-        inputs, target = batch
-        p = model(inputs, training=False)
-        y_true.append(target)
-        y_pred.append(p.numpy())
-
-    y_true = np.vstack(y_true)
-    y_pred = np.vstack(y_pred)
-    y_true = np.reshape(y_true, newshape=(y_true.shape[0],))
-    y_pred = np.reshape(y_pred, newshape=(y_pred.shape[0],))
-
-    # ROC-AUC Analysis
-    FastROCAUC.fastROCAUC(y_pred, y_true, save_fig="ROCAUC")
-    _, theta_opt = FastROCAUC.fastROCAUC(y_pred, y_true, return_score=True)
-
-    # Plotting of score distributions and ROC-analysis
-    # grab optimal threshold from ROC-analysis
-    PTClassifier.plot_score_distribution(y_pred, y_true, "score_dist")
-
-    # write general binary classifier metrics into console and .txt file
-    NNAnalysis.write_metrics_classifier(y_pred, y_true)
-"""
