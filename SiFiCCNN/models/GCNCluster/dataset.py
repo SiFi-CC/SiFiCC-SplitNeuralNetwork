@@ -201,7 +201,7 @@ class GraphCluster(Dataset):
             ary_mean, ary_std
         """
 
-        ary_norm = np.zeros(shape=(x.shape[0], 2))
+        ary_norm = np.zeros(shape=(x.shape[1], 2))
         ary_norm[:, 0] = np.mean(x, axis=0)
         ary_norm[:, 0] = np.std(x, axis=0)
 
@@ -209,11 +209,11 @@ class GraphCluster(Dataset):
 
     @staticmethod
     def _standardize(x, ary_norm):
-        for i in range(x.shape[0]):
+        for i in range(x.shape[1]):
             x[:, i] = (x[:, i] - ary_norm[i, 0]) / ary_norm[i, 0]
         return x
 
     def save_norm(self,
                   file_name):
-        np.save(self.norm_x, file_name + "_norm_x")
-        np.save(self.norm_e, file_name + "_norm_e")
+        np.save(file_name + "_norm_x", self.norm_x)
+        np.save(file_name + "_norm_e", self.norm_e)
