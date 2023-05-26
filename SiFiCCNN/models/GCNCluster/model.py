@@ -1,84 +1,62 @@
 import pickle as pkl
 import tensorflow as tf
-from spektral.layers import GCNConv, GlobalAttentionPool
 from SiFiCCNN.models.GCNCluster.layers import GCNConvResNetBlock
 
-
-def setupModel(dropout,
-               learning_rate,
-               nFilter=32,
-               activation="relu"):
-    # original feature dimensionality
-    F = 10
-    S = 3
-    # Model definition
-    xIn = tf.keras.layers.Input(shape=(F,))
-    aIn = tf.keras.layers.Input(shape=(None,), sparse=True)
-    iIn = tf.keras.layers.Input(shape=(), dtype=tf.int64)
-
-    x = GCNConv(nFilter, activation=activation, use_bias=True)([xIn, aIn])
-    x = GCNConvResNetBlock(*[x, aIn], nFilter, activation)
-    x = GCNConvResNetBlock(*[x, aIn], nFilter, activation)
-    x = GCNConvResNetBlock(*[x, aIn], nFilter, activation)
-    x = GCNConvResNetBlock(*[x, aIn], nFilter, activation)
-    x = GlobalAttentionPool(32)([x, iIn])
-    x = tf.keras.layers.Flatten()(x)
-
-    if dropout > 0:
-        x = tf.keras.layers.Dropout(dropout)(x)
-
-    x = tf.keras.layers.Dense(nFilter, activation="relu")(x)
-    output = tf.keras.layers.Dense(1, activation="sigmoid")(x)
-
-    # Build model
-    model = tf.keras.models.Model(inputs=[xIn, aIn, iIn], outputs=output)
-    optimizer = tf.keras.optimizers.Adam(learning_rate=learning_rate)
-    model.compile(optimizer=optimizer,
-                  loss="binary_crossentropy",
-                  metrics=["Precision", "Recall"])
-
-    return model
+from tensorflow.keras.models import Model
+from tensorflow.keras.layers import Dense, Dropout, Concatenate
+from spektral.layers import GCNConv, ECCConv, GlobalSumPool
 
 
-def save_model(model,
-               model_name):
-    print("Saving model at: ", model_name + ".h5")
-    model.save_weights(model_name + ".h5")
+class GCNmodel(Model):
 
+    def __init__(self,
+                 n_labels,
+                 output_activation,
+                 dropout=0.0):
+        super().__init__()
 
-def loadModel(savedModelFile,
-              newModel,
-              custom_objects=None):
-    r""" Function to load a model and pass its weights on to a newly set up model.
-    This is needed if a static tensor is used in tf.layers.Input (Input(tensor = someTensor)) in a saved model.
+        self.n_labels = n_labels
+        self.output_activation = output_activation
+        self.dropout_val = dropout
 
-    Args:
-        savedModelFile: string. Path to file of keras model, which can be loaded with tf.keras.models.load_model.
-                        This is used as weight source for newModel
-        newModel: Keras model. Target model for the parameters from the loaded model.
+        self.graph_gcnconv1 = GCNConv(32, activation="relu")
+        self.graph_gcnconv2 = GCNConv(64, activation="relu")
+        self.graph_eccconv1 = ECCConv(32, activation="relu")
+        self.graph_eccconv2 = ECCConv(64, activation="relu")
+        self.pool = GlobalSumPool()
+        self.dropout = Dropout(dropout)
+        self.dense1 = Dense(64, activation="relu")
+        self.dense_out = Dense(n_labels, output_activation)
+        self.concatenate = Concatenate()
 
-    Returns:
-        newModel: model with newly set weights.
-    """
+    def call(self, inputs):
+        xIn, aIn, eIn, iIn = inputs
+        out1 = self.graph_gcnconv1([xIn, aIn])
+        out2 = self.graph_gcnconv2([out1, aIn])
+        out3 = self.graph_eccconv1([xIn, aIn, eIn])
+        out4 = self.graph_eccconv2([out3, aIn, eIn])
+        out5 = self.pool([out2, iIn])
+        out6 = self.pool([out4, iIn])
 
-    # Load trained model
-    temp_model = tf.keras.models.load_model(savedModelFile,
-                                            custom_objects=custom_objects)
-    # Get trained weights of loaded model and pass them on to the new model
-    newModel.set_weights(temp_model.get_weights())
-    # Needed to set optimizer weights properly
-    newModel._make_train_function()
-    # Get and set optimizer weights
-    newModel.optimizer.set_weights(temp_model.optimizer.get_weights())
-    lr_temp = tf.keras.backend.get_value(temp_model.optimizer.lr)
-    tf.keras.backend.set_value(newModel.optimizer.lr, lr_temp)
-    return newModel
+        out7 = self.concatenate([out5, out6])
+        out8 = self.dense1(out7)
+        out9 = self.dropout(out8)
+        out_final = self.dense_out(out9)
 
+        return out_final
 
-def save_history(model_name,
-                 history):
-    # save history
-    if save_history:
+    def get_config(self):
+        return {"n_labels": self.n_labels,
+                "output_activation": self.output_activation,
+                "dropout": self.dropout_val}
+
+    @classmethod
+    def from_config(cls, config):
+        return cls(**config)
+
+    @staticmethod
+    def save_history(model_name,
+                     history):
         with open(model_name + ".hst", 'wb') as f_hist:
             pkl.dump(history, f_hist)
 

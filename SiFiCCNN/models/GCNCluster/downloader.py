@@ -60,13 +60,16 @@ def load(RootParser,
     ary_node_attributes = np.zeros(shape=(n_nodes, 10), dtype=np.float32)
     ary_graph_attributes = np.zeros(shape=(n_graphs, 8), dtype=np.float32)
     ary_edge_attributes = np.zeros(shape=(m_edges, 3), dtype=np.float32)
+    # meta data
+    ary_ep = np.zeros(shape=(n_graphs, ), dtype=np.float32)
+    ary_sp = np.zeros(shape=(n_graphs, ), dtype=np.float32)
 
     node_id = 0
     edge_id = 0
     for i, event in enumerate(RootParser.iterate_events(n=n_graphs)):
         # get number of cluster
         n_cluster = int(len(event.RecoClusterEntries))
-        idx_scat, idx_abs = event.sort_clusters_by_module()
+        # idx_scat, idx_abs = event.sort_clusters_by_module()
         for j in range(n_cluster):
             for k in range(n_cluster):
                 """
@@ -108,9 +111,14 @@ def load(RootParser,
                                       event.target_position_p.y,
                                       event.target_position_p.z]
 
+        ary_ep[i] = event.MCEnergy_Primary
+        ary_sp[i] = event.MCPosition_source.z
+
     np.save(path + "/" + dataset_name + "_A.npy", ary_A)
     np.save(path + "/" + dataset_name + "_graph_indicator.npy", ary_graph_indicator)
     np.save(path + "/" + dataset_name + "_graph_labels.npy", ary_graph_labels)
     np.save(path + "/" + dataset_name + "_node_attributes.npy", ary_node_attributes)
     np.save(path + "/" + dataset_name + "_graph_attributes.npy", ary_graph_attributes)
     np.save(path + "/" + dataset_name + "_edge_attributes.npy", ary_edge_attributes)
+    np.save(path + "/" + dataset_name + "_graph_ep.npy", ary_ep)
+    np.save(path + "/" + dataset_name + "_graph_sp.npy", ary_sp)

@@ -90,7 +90,7 @@ if generate_datasets:
                         path=dir_datasets,
                         n=100000)
     sys.exit()
-
+"""
 ####################################################################################################
 # Custom GCN model
 ####################################################################################################
@@ -148,6 +148,7 @@ class GCNmodel(Model):
         return cls(**config)
 
 
+"""
 ####################################################################################################
 # Training
 ####################################################################################################
@@ -175,11 +176,10 @@ if train_clas:
     class_weights = data.get_classweight_dict()
     print("# Class weights: ")
     print(class_weights)
-    # TODO: generate standardization from training dataset
 
-    model_clas = GCNmodel(n_labels=1,
-                          output_activation="sigmoid",
-                          dropout=0.1)
+    model_clas = model.GCNmodel(n_labels=1,
+                                output_activation="sigmoid",
+                                dropout=0.1)
     optimizer = tf.keras.optimizers.Adam(learning_rate=1e-3)
     loss = "binary_crossentropy"
     list_metrics = ["Precision", "Recall"]
@@ -196,16 +196,20 @@ if train_clas:
                              verbose=1)
 
     # change to final result directory
-    # store history, metrics, model
+    # store history, metrics, model, norm
     os.chdir(dir_results + RUN_NAME + "/")
+    data.save_norm(RUN_NAME + "_classifier")
     plt_models.plot_history_classifier(history.history,
                                        RUN_NAME + "_history_classifier")
     model_clas.save(RUN_NAME + "_classifier")
 
 if eval_clas:
+    # change directory to saved model
+    # load classifier model, load dataset normalization
     os.chdir(dir_results + RUN_NAME + "/")
+    norm_x = np.load(RUN_NAME + "_classifier_norm_x.npy")
+    norm_e = np.load(RUN_NAME + "_classifier_norm_e.npy")
     model_clas = tf.keras.models.load_model(RUN_NAME + "_classifier")
-
     optimizer = tf.keras.optimizers.Adam(learning_rate=1e-3)
     loss = "binary_crossentropy"
     list_metrics = ["Precision", "Recall"]
@@ -214,10 +218,11 @@ if eval_clas:
                        metrics=list_metrics)
 
     for file in [DATASET_CONT, DATASET_0MM, DATASET_5MM]:
-        data = dataset.GraphCluster(
-            name=file,
-            edge_atr=True,
-            adj_arg="binary")
+        data = dataset.GraphCluster(name=file,
+                                    edge_atr=True,
+                                    adj_arg="binary",
+                                    norm_x=norm_x,
+                                    norm_e=norm_e)
         data.apply(GCNFilter())
 
         os.chdir(dir_results + RUN_NAME + "/")
@@ -255,4 +260,3 @@ if eval_clas:
 ####################################################################################################
 # Training Regression Energy
 ####################################################################################################
-

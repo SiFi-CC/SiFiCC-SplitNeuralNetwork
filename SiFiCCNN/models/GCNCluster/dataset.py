@@ -13,17 +13,20 @@ from sklearn.preprocessing import OneHotEncoder, StandardScaler
 ################################################################################
 
 class GraphCluster(Dataset):
-    def __init__(self, name, edge_atr=False, adj_arg="Binary",
+    def __init__(self,
+                 name,
+                 edge_atr=False,
+                 adj_arg="Binary",
+                 norm_x=None,
+                 norm_e=None,
                  **kwargs):
 
         self.name = name
         self.edge_atr = edge_atr
         self.adj_arg = adj_arg
 
-        self.norm_mean_x = []
-        self.norm_std_x = []
-        self.norm_mean_e = []
-        self.norm_std_e = []
+        self.norm_x = norm_x
+        self.norm_e = norm_e
 
         super().__init__(**kwargs)
 
@@ -70,10 +73,9 @@ class GraphCluster(Dataset):
 
         if len(x_list) > 0:
             x_list = np.concatenate(x_list, -1)
-            ary_mean, ary_std = self._get_standardization(x_list)
-            self.norm_mean_e = ary_mean
-            self.norm_std_e = ary_std
-            x_list = self._standardize(x_list, ary_mean, ary_std)
+            if self.norm_x is None:
+                self.norm_x = self._get_standardization(x_list)
+            x_list = self._standardize(x_list, self.norm_x)
             x_list = np.split(x_list, n_nodes_cum[1:])
         else:
             print(
@@ -96,11 +98,9 @@ class GraphCluster(Dataset):
         if len(e_list) > 0:
             e_available = True
             e_list = np.concatenate(e_list, -1)
-
-            ary_mean, ary_std = self._get_standardization(e_list)
-            e_list = self._standardize(e_list, ary_mean, ary_std)
-            self.norm_mean_x = ary_mean
-            self.norm_std_x = ary_std
+            if self.norm_e is None:
+                self.norm_e = self._get_standardization(e_list)
+            e_list = self._standardize(e_list, self.norm_e)
             e_list = np.split(e_list, n_edges_cum)
         else:
             e_available = False
@@ -201,13 +201,19 @@ class GraphCluster(Dataset):
             ary_mean, ary_std
         """
 
-        ary_mean = np.mean(x, axis=0)
-        ary_std = np.std(x, axis=0)
+        ary_norm = np.zeros(shape=(x.shape[0], 2))
+        ary_norm[:, 0] = np.mean(x, axis=0)
+        ary_norm[:, 0] = np.std(x, axis=0)
 
-        return ary_mean, ary_std
+        return ary_norm
 
     @staticmethod
-    def _standardize(x, ary_mean, ary_std):
-        for i in range(len(ary_mean)):
-            x[:, i] = (x[:, i] - ary_mean[i]) / ary_std[i]
+    def _standardize(x, ary_norm):
+        for i in range(x.shape[0]):
+            x[:, i] = (x[:, i] - ary_norm[i, 0]) / ary_norm[i, 0]
         return x
+
+    def save_norm(self,
+                  file_name):
+        np.save(self.norm_x, file_name + "_norm_x")
+        np.save(self.norm_e, file_name + "_norm_e")
