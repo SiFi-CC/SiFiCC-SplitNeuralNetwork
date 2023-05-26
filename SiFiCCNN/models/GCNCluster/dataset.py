@@ -19,6 +19,12 @@ class GraphCluster(Dataset):
         self.name = name
         self.edge_atr = edge_atr
         self.adj_arg = adj_arg
+
+        self.norm_mean_x = []
+        self.norm_std_x = []
+        self.norm_mean_e = []
+        self.norm_std_e = []
+
         super().__init__(**kwargs)
 
     @property
@@ -64,8 +70,10 @@ class GraphCluster(Dataset):
 
         if len(x_list) > 0:
             x_list = np.concatenate(x_list, -1)
-            ary_mean, ary_std = _get_standardization(x_list)
-            x_list = _standardize(x_list, ary_mean, ary_std)
+            ary_mean, ary_std = self._get_standardization(x_list)
+            self.norm_mean_e = ary_mean
+            self.norm_std_e = ary_std
+            x_list = self._standardize(x_list, ary_mean, ary_std)
             x_list = np.split(x_list, n_nodes_cum[1:])
         else:
             print(
@@ -89,8 +97,10 @@ class GraphCluster(Dataset):
             e_available = True
             e_list = np.concatenate(e_list, -1)
 
-            ary_mean, ary_std = _get_standardization(e_list)
-            e_list = _standardize(e_list, ary_mean, ary_std)
+            ary_mean, ary_std = self._get_standardization(e_list)
+            e_list = self._standardize(e_list, ary_mean, ary_std)
+            self.norm_mean_x = ary_mean
+            self.norm_std_x = ary_std
             e_list = np.split(e_list, n_edges_cum)
         else:
             e_available = False
@@ -179,40 +189,25 @@ class GraphCluster(Dataset):
 
         return class_weights
 
+    @staticmethod
+    def _get_standardization(x):
+        """
+        Returns array of mean and std of features along the -1 axis
 
-def _normalize(x, norm=None):
-    """
-    Apply one-hot encoding or z-score to a list of node features
-    """
-    if norm == "ohe":
-        fnorm = OneHotEncoder(sparse=False, categories="auto")
-    elif norm == "zscore":
-        fnorm = StandardScaler()
-    else:
+        Args:
+            x (numpy array): feature matrix
+
+        Returns:
+            ary_mean, ary_std
+        """
+
+        ary_mean = np.mean(x, axis=0)
+        ary_std = np.std(x, axis=0)
+
+        return ary_mean, ary_std
+
+    @staticmethod
+    def _standardize(x, ary_mean, ary_std):
+        for i in range(len(ary_mean)):
+            x[:, i] = (x[:, i] - ary_mean[i]) / ary_std[i]
         return x
-    return fnorm.fit_transform(x)
-
-
-def _get_standardization(x):
-    """
-    Returns array of mean and std of every feature
-
-    Args:
-        x (numpy array): node feature matrix
-
-    Returns:
-        ary_mean, ary_std
-    """
-    ary_mean = np.zeros(shape=(x.shape[1],))
-    ary_std = np.zeros(shape=(x.shape[1],))
-
-    for i in range(x.shape[1]):
-        ary_mean[i] = np.mean(x[:, i])
-        ary_std[i] = np.std(x[:, i])
-    return ary_mean, ary_std
-
-
-def _standardize(x, ary_mean, ary_std):
-    for i in range(len(ary_mean)):
-        x[:, i] = (x[:, i] - ary_mean[i]) / ary_std[i]
-    return x
