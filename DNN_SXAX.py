@@ -1,5 +1,5 @@
 """
-Deep Neural Network Model for event classification and event topology regression for the SiFiCC-project.
+Deep Neural Network models for event classification and event topology regression for the SiFiCC-project.
 This Network operates on the Base setting: X scatterer cluster and X absorber cluster (X > 0) per event.
 
 Currently implemented:
@@ -21,15 +21,15 @@ from src.SiFiCCNN.NeuralNetwork import NeuralNetwork
 from src.SiFiCCNN.NeuralNetwork import NNTraining
 from src.SiFiCCNN.NeuralNetwork import NNEvaluation
 
-from src.SiFiCCNN.Model import DNN_SXAX_classifier
-from src.SiFiCCNN.Model import DNN_SXAX_regression_energy
-from src.SiFiCCNN.Model import DNN_SXAX_regression_position
-from src.SiFiCCNN.Model import DNN_SXAX_regression_theta
+from src.SiFiCCNN.models import DNN_SXAX_classifier
+from src.SiFiCCNN.models import DNN_SXAX_regression_energy
+from src.SiFiCCNN.models import DNN_SXAX_regression_position
+from src.SiFiCCNN.models import DNN_SXAX_regression_theta
 
 # ----------------------------------------------------------------------------------------------------------------------
 # Global Settings
 
-# Root files are purely optimal and are left as legacy settings
+# root files are purely optimal and are left as legacy settings
 ROOT_FILE_BP0mm = "OptimisedGeometry_BP0mm_2e10protons.root"
 ROOT_FILE_BP5mm = "OptimisedGeometry_BP5mm_4e9protons.root"
 # Training file used for classification and regression training

@@ -4,32 +4,6 @@ import pickle as pkl
 import tensorflow as tf
 
 
-def setupModel(nCluster,
-               nOutput,
-               dropout,
-               nNodes,
-               activation="relu",
-               output_activation="sigmoid"):
-    model = tf.keras.models.Sequential()
-    model.add(tf.keras.layers.Flatten(input_shape=(nCluster, 10)))
-    model.add(tf.keras.layers.Dense(nNodes, activation=activation))
-    model.add(tf.keras.layers.Dense(nNodes, activation=activation))
-    """
-    if dropout > 0:
-       model.add(tf.keras.layers.Dropout(dropout))
-
-    model.add(tf.keras.layers.Dense(nNodes, activation=activation))
-    model.add(tf.keras.layers.Dense(nNodes, activation=activation))
-    """
-
-    if dropout > 0:
-        model.add(tf.keras.layers.Dropout(dropout))
-
-    model.add(tf.keras.layers.Dense(nOutput, activation=output_activation))
-
-    return model
-
-
 def save_model(model,
                model_name):
     print("Saving model at: ", model_name + ".h5")

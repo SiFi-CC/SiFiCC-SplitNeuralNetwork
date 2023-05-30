@@ -37,7 +37,7 @@ def load(RootParser,
     # Pre-determine the final array size.
     # Total number of graphs is needed (n samples)
     # Total number of nodes (Iteration over root file needed)
-    print("Counting number 0f graphs to be created")
+    print("Counting number of graphs to be created")
     if n is None:
         n_graphs = RootParser.events_entries
     else:
