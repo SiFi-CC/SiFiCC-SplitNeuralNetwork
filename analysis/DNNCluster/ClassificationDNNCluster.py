@@ -114,7 +114,7 @@ def main():
         tf_model.compile(optimizer=optimizer,
                          loss=loss,
                          metrics=list_metrics)
-        l_callbacks = [tf.keras.callbacks.LearningRateScheduler(tf_model.lr_scheduler)]
+        l_callbacks = [tf.keras.callbacks.LearningRateScheduler(lr_scheduler)]
 
         # set normalization from training dataset
         norm = data.get_standardization(10, 10)
@@ -149,8 +149,8 @@ def main():
                               nNodes=nConnectedNodes,
                               activation="relu",
                               output_activation="sigmoid")
-        tf_model.load(RUN_NAME + "_classifier" + ".hst")
-        norm = np.load(RUN_NAME + "_classifier" + "_norm")
+        tf_model.load(RUN_NAME + "_classifier" + ".h5")
+        norm = np.load(RUN_NAME + "_classifier" + "_norm.npy")
 
         for file in [DATASET_CONT, DATASET_0MM, DATASET_5MM]:
             # predict test dataset
