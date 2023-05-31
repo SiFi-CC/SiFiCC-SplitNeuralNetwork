@@ -7,9 +7,7 @@ import dataset
 import downloader
 
 from SiFiCCNN.analysis import fastROCAUC, metrics
-from SiFiCCNN.utils.plotter import plot_history_classifier, \
-    plot_score_distribution, \
-    plot_roc_curve
+from SiFiCCNN.utils.plotter import plot_history_regression, plot_position_error
 
 
 def generate_dataset(n=None):
@@ -75,10 +73,10 @@ def main():
     learning_rate = 1e-3
     nConnectedNodes = 64
     batch_size = 64
-    nEpochs = 10
+    nEpochs = 20
 
     RUN_NAME = "DNNCluster_" + "S" + str(sx) + "A" + str(ax)
-    do_training = False
+    do_training = True
     do_evaluate = True
 
     # Datasets used
@@ -108,58 +106,59 @@ def main():
     if do_training:
         data = dataset.DenseCluster(name=DATASET_CONT)
         tf_model = setupModel(nCluster=10,
-                              nOutput=1,
+                              nOutput=6,
                               dropout=dropout,
                               nNodes=nConnectedNodes,
                               activation="relu",
-                              output_activation="sigmoid")
+                              output_activation="linear")
 
         optimizer = tf.keras.optimizers.Adam(learning_rate=1e-3)
-        loss = "binary_crossentropy"
-        list_metrics = ["Precision", "Recall"]
+        loss = "mean_absolute_error"
+        list_metrics = ["mean_absolute_error"]
         tf_model.compile(optimizer=optimizer,
                          loss=loss,
                          metrics=list_metrics)
         l_callbacks = [tf.keras.callbacks.LearningRateScheduler(lr_scheduler)]
 
         # set normalization from training dataset
+        # set correct targets, restrict sample to true positive events only
         norm = data.get_standardization(10, 10)
         data.standardize(norm, 10)
-        class_weights = data.get_classweights()
+        data.update_indexing_positives()
+        data.update_targets_position()
 
         history = tf_model.fit(data.x_train(),
                                data.y_train(),
                                validation_data=(data.x_valid(), data.y_valid()),
                                epochs=nEpochs,
                                batch_size=batch_size,
-                               class_weight=class_weights,
                                verbose=1,
                                callbacks=[l_callbacks])
 
         os.chdir(path_results)
         # save model
-        print("Saving model at: ", RUN_NAME + "_classifier" + ".h5")
-        tf_model.save(RUN_NAME + "_classifier" + ".h5")
+        print("Saving model at: ", RUN_NAME + "_regressionPosition" + ".h5")
+        tf_model.save(RUN_NAME + "_regressionPosition" + ".h5")
         # save training history (not needed tbh)
-        with open(RUN_NAME + "_classifier_history" + ".hst", 'wb') as f_hist:
+        with open(RUN_NAME + "_regressionPosition_history" + ".hst", 'wb') as f_hist:
             pkl.dump(history.history, f_hist)
         # save norm
-        np.save(RUN_NAME + "_classifier" + "_norm.npy", norm)
+        np.save(RUN_NAME + "_regressionPosition" + "_norm.npy", norm)
 
         # plot training history
-        plot_history_classifier(history.history, RUN_NAME + "_history_classifier")
+        plot_history_regression(history.history, RUN_NAME + "_history_regressionPosition")
 
     if do_evaluate:
         os.chdir(path_results)
         # load model, norm, history
         tf_model = setupModel(nCluster=10,
-                              nOutput=1,
+                              nOutput=6,
                               dropout=dropout,
                               nNodes=nConnectedNodes,
                               activation="relu",
-                              output_activation="sigmoid")
-        tf_model.load_weights(RUN_NAME + "_classifier" + ".h5")
-        norm = np.load(RUN_NAME + "_classifier" + "_norm.npy")
+                              output_activation="linear")
+        tf_model.load_weights(RUN_NAME + "_regressionPosition" + ".h5")
+        norm = np.load(RUN_NAME + "_regressionPosition" + "_norm.npy")
 
         for file in [DATASET_CONT, DATASET_0MM, DATASET_5MM]:
             # predict test dataset
@@ -175,22 +174,16 @@ def main():
 
             # set normalization from training dataset
             data.standardize(norm, 10)
+            data.update_indexing_positives()
+            data.update_targets_position()
 
-            y_scores = tf_model.predict(data.x_test())
+            y_pred = tf_model.predict(data.x_test())
+            y_pred = np.reshape(y_pred, newshape=(y_pred.shape[0], 6))
             y_true = data.y_test()
-            y_scores = np.reshape(y_scores, newshape=(y_scores.shape[0],))
 
             # evaluate model:
-            #   - ROC analysis
-            #   - Score distribution#
-            #   - Binary classifier metrics
 
-            _, theta_opt, (list_fpr, list_tpr) = fastROCAUC.fastROCAUC(y_scores,
-                                                                       y_true,
-                                                                       return_score=True)
-            plot_roc_curve(list_fpr, list_tpr, "rocauc_curve")
-            plot_score_distribution(y_scores, y_true, "score_dist")
-            metrics.write_metrics_classifier(y_scores, y_true)
+            plot_position_error(y_pred, y_true, "error_regression_position")
 
 
 if __name__ == "__main__":

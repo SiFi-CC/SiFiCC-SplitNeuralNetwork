@@ -33,8 +33,10 @@ class DenseCluster:
     def path(self):
         # get current path, go two subdirectories higher
         path = os.getcwd()
-        path = os.path.abspath(os.path.join(path, os.pardir))
-        path = os.path.abspath(os.path.join(path, os.pardir))
+        while True:
+            path = os.path.abspath(os.path.join(path, os.pardir))
+            if os.path.basename(path) == "SiFiCC-SplitNeuralNetwork":
+                break
         path = os.path.join(path, "datasets", "SiFiCCNN_DenseCluster", self.name)
 
         return path

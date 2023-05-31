@@ -39,7 +39,7 @@ def load(RootParser,
     # grab correct filepath, generate dataset in target directory.
     if path == "":
         path = "/net/scratch_g4rt1/fenger/datasets/"
-    path = os.path.join(path, "SiFiCCNN_GraphCluster", dataset_name)
+    path = os.path.join(path, "SiFiCCNN_DenseCluster", dataset_name)
     if not os.path.isdir(path):
         os.makedirs(path, exist_ok=True)
 
