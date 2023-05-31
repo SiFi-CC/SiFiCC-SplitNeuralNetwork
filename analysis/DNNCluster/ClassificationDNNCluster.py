@@ -1,6 +1,7 @@
 import numpy as np
 import os
 import pickle as pkl
+import json
 import tensorflow as tf
 
 import dataset
@@ -38,12 +39,12 @@ def generate_dataset(n=None):
                         n=n)
 
 
-def setupModel(nCluster,
-               nOutput,
+def setupModel(nOutput,
+               OutputActivation,
                dropout,
                nNodes,
-               activation="relu",
-               output_activation="sigmoid"):
+               nCluster=10,
+               activation="relu", ):
     model = tf.keras.models.Sequential()
     model.add(tf.keras.layers.Flatten(input_shape=(nCluster, 10)))
     model.add(tf.keras.layers.Dense(nNodes, activation=activation))
@@ -52,7 +53,10 @@ def setupModel(nCluster,
     if dropout > 0:
         model.add(tf.keras.layers.Dropout(dropout))
 
-    model.add(tf.keras.layers.Dense(nOutput, activation=output_activation))
+    model.add(tf.keras.layers.Dense(int(nNodes / 2), activation=activation))
+    model.add(tf.keras.layers.Dense(int(nNodes / 2), activation=activation))
+
+    model.add(tf.keras.layers.Dense(nOutput, activation=OutputActivation))
 
     return model
 
@@ -71,15 +75,22 @@ def main():
     # defining hyper parameters
     sx = 4
     ax = 6
-    dropout = 0.2
-    learning_rate = 1e-3
-    nConnectedNodes = 64
+    dropout = 0.1
+    nNodes = 64
     batch_size = 64
     nEpochs = 10
 
     RUN_NAME = "DNNCluster_" + "S" + str(sx) + "A" + str(ax)
     do_training = False
-    do_evaluate = True
+    do_evaluate = False
+
+    # create dictionary for model parameter
+    modelParameter = {"nOutput": 1,
+                      "OutputActivation": "sigmoid",
+                      "dropout": dropout,
+                      "nNodes": nNodes,
+                      "nCluster": 10,
+                      "activation": "relu"}
 
     # Datasets used
     # Training file used for classification and regression training
@@ -107,12 +118,7 @@ def main():
 
     if do_training:
         data = dataset.DenseCluster(name=DATASET_CONT)
-        tf_model = setupModel(nCluster=10,
-                              nOutput=1,
-                              dropout=dropout,
-                              nNodes=nConnectedNodes,
-                              activation="relu",
-                              output_activation="sigmoid")
+        tf_model = setupModel(**modelParameter)
 
         optimizer = tf.keras.optimizers.Adam(learning_rate=1e-3)
         loss = "binary_crossentropy"
@@ -145,19 +151,18 @@ def main():
             pkl.dump(history.history, f_hist)
         # save norm
         np.save(RUN_NAME + "_classifier" + "_norm.npy", norm)
-
         # plot training history
         plot_history_classifier(history.history, RUN_NAME + "_history_classifier")
+        # save model parameter as json
+        with open(RUN_NAME + "_classifier_parameter.json", "w") as json_file:
+            json.dump(modelParameter, json_file)
 
     if do_evaluate:
         os.chdir(path_results)
-        # load model, norm, history
-        tf_model = setupModel(nCluster=10,
-                              nOutput=1,
-                              dropout=dropout,
-                              nNodes=nConnectedNodes,
-                              activation="relu",
-                              output_activation="sigmoid")
+        # load model, model parameter, norm, history
+        with open(RUN_NAME + "_classifier_parameter.json", "r") as json_file:
+            modelParameter = json.load(json_file)
+        tf_model = setupModel(**modelParameter)
         tf_model.load_weights(RUN_NAME + "_classifier" + ".h5")
         norm = np.load(RUN_NAME + "_classifier" + "_norm.npy")
 

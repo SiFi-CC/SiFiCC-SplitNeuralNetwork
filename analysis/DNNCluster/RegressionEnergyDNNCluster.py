@@ -1,58 +1,16 @@
 import numpy as np
 import os
 import pickle as pkl
+import json
 import tensorflow as tf
 
 import dataset
 import downloader
 
+from ClassificationDNNCluster import setupModel, generate_dataset
+
 from SiFiCCNN.analysis import fastROCAUC, metrics
 from SiFiCCNN.utils.plotter import plot_history_regression, plot_energy_error
-
-
-def generate_dataset(n=None):
-    from SiFiCCNN.root import Root
-
-    # Used root files
-    ROOT_FILE_BP0mm = "OptimisedGeometry_BP0mm_2e10protons_withTimestamps.root"
-    ROOT_FILE_BP5mm = "OptimisedGeometry_BP5mm_4e9protons_withTimestamps.root"
-    ROOT_FILE_CONT = "OptimisedGeometry_Continuous_2e10protons.root"
-
-    # go backwards in directory tree until the main repo directory is matched
-    path = os.getcwd()
-    while True:
-        path = os.path.abspath(os.path.join(path, os.pardir))
-        if os.path.basename(path) == "SiFiCC-SplitNeuralNetwork":
-            break
-    path_main = path
-
-    path_root = path_main + "/root_files/"
-    path_datasets = path_main + "/datasets/"
-
-    for file in [ROOT_FILE_CONT, ROOT_FILE_BP0mm, ROOT_FILE_BP5mm]:
-        root = Root.Root(path_root + file)
-        downloader.load(root,
-                        path=path_datasets,
-                        n=n)
-
-
-def setupModel(nCluster,
-               nOutput,
-               dropout,
-               nNodes,
-               activation="relu",
-               output_activation="sigmoid"):
-    model = tf.keras.models.Sequential()
-    model.add(tf.keras.layers.Flatten(input_shape=(nCluster, 10)))
-    model.add(tf.keras.layers.Dense(nNodes, activation=activation))
-    model.add(tf.keras.layers.Dense(nNodes, activation=activation))
-
-    if dropout > 0:
-        model.add(tf.keras.layers.Dropout(dropout))
-
-    model.add(tf.keras.layers.Dense(nOutput, activation=output_activation))
-
-    return model
 
 
 def lr_scheduler(epoch):
@@ -69,15 +27,22 @@ def main():
     # defining hyper parameters
     sx = 4
     ax = 6
-    dropout = 0.2
-    learning_rate = 1e-3
-    nConnectedNodes = 64
+    dropout = 0.1
+    nNodes = 64
     batch_size = 64
-    nEpochs = 20
+    nEpochs = 10
 
     RUN_NAME = "DNNCluster_" + "S" + str(sx) + "A" + str(ax)
-    do_training = True
-    do_evaluate = True
+    do_training = False
+    do_evaluate = False
+
+    # create dictionary for model parameter
+    modelParameter = {"nOutput": 2,
+                      "OutputActivation": "relu",
+                      "dropout": dropout,
+                      "nNodes": nNodes,
+                      "nCluster": 10,
+                      "activation": "relu"}
 
     # Datasets used
     # Training file used for classification and regression training
@@ -105,12 +70,7 @@ def main():
 
     if do_training:
         data = dataset.DenseCluster(name=DATASET_CONT)
-        tf_model = setupModel(nCluster=10,
-                              nOutput=2,
-                              dropout=dropout,
-                              nNodes=nConnectedNodes,
-                              activation="relu",
-                              output_activation="relu")
+        tf_model = setupModel(**modelParameter)
 
         optimizer = tf.keras.optimizers.Adam(learning_rate=1e-3)
         loss = "mean_absolute_error"
@@ -147,16 +107,16 @@ def main():
 
         # plot training history
         plot_history_regression(history.history, RUN_NAME + "_history_regressionEnergy")
+        # save model parameter as json
+        with open(RUN_NAME + "_classifier_parameter.json", "w") as json_file:
+            json.dump(modelParameter, json_file)
 
     if do_evaluate:
         os.chdir(path_results)
-        # load model, norm, history
-        tf_model = setupModel(nCluster=10,
-                              nOutput=2,
-                              dropout=dropout,
-                              nNodes=nConnectedNodes,
-                              activation="relu",
-                              output_activation="relu")
+        # load model, model parameter, norm, history
+        with open(RUN_NAME + "_classifier_parameter.json", "r") as json_file:
+            modelParameter = json.load(json_file)
+        tf_model = setupModel(**modelParameter)
         tf_model.load_weights(RUN_NAME + "_regressionEnergy" + ".h5")
         norm = np.load(RUN_NAME + "_regressionEnergy" + "_norm.npy")
 
@@ -182,7 +142,6 @@ def main():
             y_true = data.y_test()
 
             # evaluate model:
-
             plot_energy_error(y_pred, y_true, "error_regression_energy")
 
 
