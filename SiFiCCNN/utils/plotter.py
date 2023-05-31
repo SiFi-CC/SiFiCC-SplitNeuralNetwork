@@ -645,8 +645,8 @@ def plot_2dhist_sp_score(sp, y_score, y_true, figure_name):
     bin_sp = np.arange(int(min(sp)), int(max(sp)), 1.0)
 
     plt.figure(figsize=(8, 6))
-    plt.xlabel("Signal score")
-    plt.ylabel("True source position z-axis [mm]")
+    plt.xlabel("True source position z-axis [mm]")
+    plt.ylabel("Signal score")
     h0 = plt.hist2d(sp[y_true == 1], y_score[y_true == 1], bins=[bin_sp, bin_score])
     if plot_bragg:
         x = np.linspace(-80.0, 5.0, 1000)
