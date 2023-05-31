@@ -13,7 +13,9 @@ from SiFiCCNN.utils.plotter import plot_history_classifier, \
     plot_roc_curve, \
     plot_efficiencymap, \
     plot_sp_distribution, \
-    plot_pe_distribution
+    plot_pe_distribution, \
+    plot_2dhist_ep_score, \
+    plot_2dhist_sp_score
 
 
 def generate_dataset(n=None):
@@ -211,7 +213,14 @@ def main():
                                  ary_score=y_scores,
                                  ary_true=y_true,
                                  figure_name="pe_distribution")
-
+            plot_2dhist_sp_score(sp=data.sp[data.idx_test()],
+                                 y_score=y_scores,
+                                 y_true=y_true,
+                                 figure_name="2dhist_sp_score")
+            plot_2dhist_ep_score(pe=data.pe[data.idx_test()],
+                                 y_score=y_scores,
+                                 y_true=y_true,
+                                 figure_name="2dhist_pe_score")
 
 if __name__ == "__main__":
     gen_dataset = False
