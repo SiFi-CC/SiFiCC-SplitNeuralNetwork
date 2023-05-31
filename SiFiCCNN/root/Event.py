@@ -179,15 +179,13 @@ class Event:
         # scan for first absorber interaction that has the correct scattering
         # direction
         for idx in range(0, len(self.MCInteractions_p)):
-            if 0 <= self.MCInteractions_p[
-                idx] < 20 and self.absorber.is_vec_in_module(
-                self.MCPosition_p[idx]):
+            if 0 <= self.MCInteractions_p[idx] < 20 and self.absorber.is_vec_in_module(
+                    self.MCPosition_p[idx]):
 
                 # check additionally if the interaction is in the scattering
                 # direction
                 tmp_angle = self.calc_theta_dotvec(
-                    self.MCPosition_p[idx] - self.MCComptonPosition,
-                    self.MCDirection_scatter)
+                    self.MCPosition_p[idx] - self.MCComptonPosition, self.MCDirection_scatter)
                 if tmp_angle < 1e-3:
                     self.target_position_p = self.MCPosition_p[idx]
                     break

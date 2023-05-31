@@ -12,7 +12,7 @@ plt.rcParams.update({'font.size': 12})
 ################################################################################
 
 
-def score_distribution(y_scores, y_true, figure_name):
+def plot_score_distribution(y_scores, y_true, figure_name):
     plt.rcParams.update({'font.size': 16})
 
     # score distribution plot
@@ -42,7 +42,7 @@ def score_distribution(y_scores, y_true, figure_name):
     plt.close()
 
 
-def efficiencymap(y_pred, y_true, y_sp, figure_name, theta=0.5, sr=100):
+def plot_efficiencymap(y_pred, y_true, y_sp, figure_name, theta=0.5, sr=100):
     # determine contribution from each prediction
     # Done by giving correct prediction weight 1, else weight 0
     ary_w = np.zeros(shape=(len(y_pred),))
@@ -93,10 +93,10 @@ def efficiencymap(y_pred, y_true, y_sp, figure_name, theta=0.5, sr=100):
     plt.close()
 
 
-def roc_curve(list_fpr,
-              list_tpr,
-              figure_name,
-              weighted=False):
+def plot_roc_curve(list_fpr,
+                   list_tpr,
+                   figure_name,
+                   weighted=False):
     if weighted:
         auc_label = "weightedAUC"
     else:
@@ -128,10 +128,10 @@ def roc_curve(list_fpr,
     plt.close()
 
 
-def sp_distribution(ary_sp,
-                    ary_score,
-                    ary_true,
-                    figure_name):
+def plot_sp_distribution(ary_sp,
+                         ary_score,
+                         ary_true,
+                         figure_name):
     # plot MC Source Position z-direction
     width = 1.0
     bins = np.arange(int(min(ary_sp)), int(max(ary_sp)), width)
@@ -573,6 +573,7 @@ def plot_theta_error(y_pred, y_true, figure_name):
 
 
 def plot_history_classifier(history, figure_name):
+    # TODO: make this one plot
     plt.rcParams.update({'font.size': 16})
     # plot model performance
     loss = history['loss']
@@ -580,10 +581,10 @@ def plot_history_classifier(history, figure_name):
     # mse = nn_classifier.history["accuracy"]
     # val_mse = nn_classifier.history["val_accuracy"]
 
-    eff = history["precision"]
-    val_eff = history["val_precision"]
-    pur = history["recall"]
-    val_pur = history["val_recall"]
+    eff = history["recall"]
+    val_eff = history["val_recall"]
+    pur = history["precision"]
+    val_pur = history["precision"]
 
     fig = plt.figure(figsize=(8, 5))
     ax1 = fig.add_subplot(211)
@@ -629,6 +630,7 @@ def plot_history_regression(history, figure_name):
     plt.tight_layout()
     plt.savefig(figure_name + ".png")
     plt.close()
+
 
 ################################################################################
 # advanced
