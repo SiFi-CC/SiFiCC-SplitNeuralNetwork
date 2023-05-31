@@ -2,7 +2,7 @@ import os
 import numpy as np
 import uproot
 
-from src.SiFiCCNN.ImageReconstruction import IRVeto
+from SiFiCCNN.ImageReconstruction import IRVeto
 
 
 def export_CC6(ary_e,

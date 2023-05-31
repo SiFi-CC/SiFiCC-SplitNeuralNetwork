@@ -1,8 +1,8 @@
 import numpy as np
 from uproot_methods import TVector3
 
-from src.SiFiCCNN.ImageReconstruction import IRComptonCone
-from src.SiFiCCNN.ImageReconstruction import IRVeto
+from SiFiCCNN.ImageReconstruction import IRComptonCone
+from SiFiCCNN.ImageReconstruction import IRVeto
 
 
 def backprojection(ary_e1,
