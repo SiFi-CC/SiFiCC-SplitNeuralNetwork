@@ -10,7 +10,10 @@ import downloader
 from SiFiCCNN.analysis import fastROCAUC, metrics
 from SiFiCCNN.utils.plotter import plot_history_classifier, \
     plot_score_distribution, \
-    plot_roc_curve
+    plot_roc_curve, \
+    plot_efficiencymap, \
+    plot_sp_distribution, \
+    plot_pe_distribution
 
 
 def generate_dataset(n=None):
@@ -196,6 +199,18 @@ def main():
             plot_roc_curve(list_fpr, list_tpr, "rocauc_curve")
             plot_score_distribution(y_scores, y_true, "score_dist")
             metrics.write_metrics_classifier(y_scores, y_true)
+            plot_efficiencymap(y_pred=y_scores,
+                               y_true=y_true,
+                               y_sp=data.sp[data.idx_test()],
+                               figure_name="efficiencymap")
+            plot_sp_distribution(ary_sp=data.sp[data.idx_test()],
+                                 ary_score=y_scores,
+                                 ary_true=y_true,
+                                 figure_name="sp_distribution")
+            plot_pe_distribution(ary_pe=data.pe[data.idx_test()],
+                                 ary_score=y_scores,
+                                 ary_true=y_true,
+                                 figure_name="pe_distribution")
 
 
 if __name__ == "__main__":
