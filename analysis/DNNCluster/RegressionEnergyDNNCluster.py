@@ -108,13 +108,13 @@ def main():
         # plot training history
         plot_history_regression(history.history, RUN_NAME + "_history_regressionEnergy")
         # save model parameter as json
-        with open(RUN_NAME + "_classifier_parameter.json", "w") as json_file:
+        with open(RUN_NAME + "_regressionEnergy_parameter.json", "w") as json_file:
             json.dump(modelParameter, json_file)
 
     if do_evaluate:
         os.chdir(path_results)
         # load model, model parameter, norm, history
-        with open(RUN_NAME + "_classifier_parameter.json", "r") as json_file:
+        with open(RUN_NAME + "_regressionEnergy_parameter.json", "r") as json_file:
             modelParameter = json.load(json_file)
         tf_model = setupModel(**modelParameter)
         tf_model.load_weights(RUN_NAME + "_regressionEnergy" + ".h5")

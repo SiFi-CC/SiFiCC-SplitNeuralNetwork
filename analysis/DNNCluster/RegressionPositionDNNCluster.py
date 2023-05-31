@@ -27,18 +27,18 @@ def main():
     # defining hyper parameters
     sx = 4
     ax = 6
-    dropout = 0.1
+    dropout = 0.0
     nNodes = 64
     batch_size = 64
-    nEpochs = 10
+    nEpochs = 50
 
     RUN_NAME = "DNNCluster_" + "S" + str(sx) + "A" + str(ax)
     do_training = False
     do_evaluate = False
 
     # create dictionary for model parameter
-    modelParameter = {"nOutput": 1,
-                      "OutputActivation": "sigmoid",
+    modelParameter = {"nOutput": 6,
+                      "OutputActivation": "linear",
                       "dropout": dropout,
                       "nNodes": nNodes,
                       "nCluster": 10,
@@ -107,13 +107,13 @@ def main():
         # plot training history
         plot_history_regression(history.history, RUN_NAME + "_history_regressionPosition")
         # save model parameter as json
-        with open(RUN_NAME + "_classifier_parameter.json", "w") as json_file:
+        with open(RUN_NAME + "_regressionPosition_parameter.json", "w") as json_file:
             json.dump(modelParameter, json_file)
 
     if do_evaluate:
         os.chdir(path_results)
         # load model, model parameter, norm, history
-        with open(RUN_NAME + "_classifier_parameter.json", "r") as json_file:
+        with open(RUN_NAME + "_regressionPosition_parameter.json", "r") as json_file:
             modelParameter = json.load(json_file)
         tf_model = setupModel(**modelParameter)
         tf_model.load_weights(RUN_NAME + "_regressionPosition" + ".h5")
