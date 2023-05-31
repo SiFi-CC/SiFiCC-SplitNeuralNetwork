@@ -125,7 +125,7 @@ def main():
             os.chdir(path_results + file + "/")
 
             # load dataset
-            data = dataset.DenseCluster(DATASET_CONT)
+            data = dataset.DenseCluster(file)
 
             if file in [DATASET_0MM, DATASET_5MM]:
                 data.p_train = 0.0

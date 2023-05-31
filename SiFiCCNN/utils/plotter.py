@@ -632,41 +632,45 @@ def plot_history_regression(history, figure_name):
     plt.close()
 
 
-################################################################################
-# advanced
-################################################################################
+####################################################################################################
+# 2d histograms
+####################################################################################################
 
-def plot_efficiency_sourceposition(ary_sp_pred, ary_sp_true, figure_name):
-    bins = np.arange(-100.0, 100.0, 2.0)
 
-    ary_eff = np.zeros(shape=(len(bins) - 1,))
-    list_eff_err = []
-    ary_bin_err = np.ones(shape=(len(bins) - 1,)) * 0.1
-    hist1, _ = np.histogram(ary_sp_pred, bins=bins)
-    hist0, _ = np.histogram(ary_sp_true, bins=bins)
-    for i in range(len(ary_eff)):
-        if hist1[i] == 0:
-            list_eff_err.append(0)
-            continue
-        else:
-            ary_eff[i] = hist1[i] / hist0[i]
-            list_eff_err.append(np.sqrt((np.sqrt(hist1[i]) / hist0[i]) ** 2 +
-                                        (hist1[i] * np.sqrt(hist0[i]) / hist0[
-                                            i] ** 2) ** 2))
+def plot_2dhist_sp_score(sp, y_score, y_true, figure_name):
+    plot_bragg = True
 
-    fig, axs = plt.subplots(2, 1)
-    axs[0].set_title("Source position efficiency")
-    axs[0].set_ylabel("Counts")
-    axs[0].hist(ary_sp_true, bins=bins, histtype=u"step", color="black",
-                label="All Ideal Compton")
-    axs[0].hist(ary_sp_pred, bins=bins, histtype=u"step", color="red",
-                linestyle="--", label="True Positives")
-    axs[0].legend(loc="lower center")
-    axs[1].set_xlabel("Source Position z-axis [mm]")
-    axs[1].set_ylabel("Efficiency")
-    axs[1].errorbar(bins[:-1] + 0.1, ary_eff, list_eff_err, ary_bin_err,
-                    fmt=".", color="blue")
-    # axs[1].plot(bins[:-1] + 0.5, ary_eff, ".", color="darkblue")
+    plt.rcParams.update({'font.size': 16})
+    bin_score = np.arange(0.0, 1.0, 0.01)
+    bin_sp = np.arange(int(min(sp)), int(max(sp)), 1.0)
+
+    plt.figure(figsize=(8, 6))
+    plt.xlabel("Signal score")
+    plt.ylabel("True source position z-axis [mm]")
+    h0 = plt.hist2d(sp[y_true == 1], y_score[y_true == 1], bins=[bin_sp, bin_score])
+    if plot_bragg:
+        x = np.linspace(-80.0, 5.0, 1000)
+        mu = -2.5
+        sigma = 1.5
+        A = 0.8
+        B = 0.2
+        plt.plot(x, max_super_function(x), color="red", linestyle="--")
+
+    plt.colorbar(h0[3])
+    plt.tight_layout()
+    plt.savefig(figure_name + ".png")
+    plt.close()
+
+
+def plot_2dhist_ep_score(pe, y_score, y_true, figure_name):
+    bin_score = np.arange(0.0, 1.0, 0.05)
+    bin_pe = np.arange(0.0, 16.0, 0.1)
+
+    plt.figure()
+    plt.xlabel("MC Primary Energy [MeV]")
+    plt.ylabel("Score")
+    h0 = plt.hist2d(pe[y_true == 1], y_score[y_true == 1], bins=[bin_pe, bin_score], norm=LogNorm())
+    plt.colorbar(h0[3])
     plt.tight_layout()
     plt.savefig(figure_name + ".png")
     plt.close()
