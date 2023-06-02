@@ -33,9 +33,11 @@ class GraphCluster(Dataset):
     @property
     def path(self):
         # get current path, go two subdirectories higher
-        path = os.path.dirname(os.path.abspath(__file__))
-        for i in range(3):
-            path = os.path.dirname(path)
+        path = os.getcwd()
+        while True:
+            path = os.path.abspath(os.path.join(path, os.pardir))
+            if os.path.basename(path) == "SiFiCC-SplitNeuralNetwork":
+                break
         path = os.path.join(path, "datasets", "SiFiCCNN_GraphCluster", self.name)
 
         return path
@@ -212,3 +214,13 @@ class GraphCluster(Dataset):
         for i in range(x.shape[1]):
             x[:, i] = (x[:, i] - ary_norm[i, 0]) / ary_norm[i, 0]
         return x
+
+    @property
+    def sp(self):
+        sp = np.load(self.path + "/" + self.name + "_graph_sp.npy")
+        return sp
+
+    @property
+    def pe(self):
+        pe = np.load(self.path + "/" + self.name + "_graph_pe.npy")
+        return pe

@@ -54,23 +54,25 @@ def generate_dataset(n=None):
 class GCNmodel(Model):
 
     def __init__(self,
-                 n_labels,
-                 output_activation,
+                 nOutput,
+                 OutputActivation,
+                 nNodes,
                  dropout=0.0):
         super().__init__()
 
-        self.n_labels = n_labels
-        self.output_activation = output_activation
+        self.nOutput = nOutput
+        self.OutputActivation = OutputActivation
         self.dropout_val = dropout
+        self.nNodes = nNodes
 
-        self.graph_gcnconv1 = GCNConv(32, activation="relu")
-        self.graph_gcnconv2 = GCNConv(64, activation="relu")
-        self.graph_eccconv1 = ECCConv(32, activation="relu")
-        self.graph_eccconv2 = ECCConv(64, activation="relu")
+        self.graph_gcnconv1 = GCNConv(nNodes, activation="relu")
+        self.graph_gcnconv2 = GCNConv(int(nNodes * 2), activation="relu")
+        self.graph_eccconv1 = ECCConv(nNodes, activation="relu")
+        self.graph_eccconv2 = ECCConv(int(nNodes * 2), activation="relu")
         self.pool = GlobalSumPool()
         self.dropout = Dropout(dropout)
-        self.dense1 = Dense(64, activation="relu")
-        self.dense_out = Dense(n_labels, output_activation)
+        self.dense1 = Dense(nNodes, activation="relu")
+        self.dense_out = Dense(nOutput, OutputActivation)
         self.concatenate = Concatenate()
 
     def call(self, inputs):
@@ -102,32 +104,30 @@ def lr_scheduler(epoch):
 
 def main():
     # defining hyper parameters
-    dropout = 0.1
+    dropout = 0.2
     nNodes = 64
     batch_size = 64
-    nEpochs = 10
+    nEpochs = 20
 
     trainsplit = 0.7
     valsplit = 0.1
 
     RUN_NAME = "GCNCluster"
-    do_training = False
+    do_training = True
     do_evaluate = False
 
     # create dictionary for model parameter
     modelParameter = {"nOutput": 1,
                       "OutputActivation": "sigmoid",
                       "dropout": dropout,
-                      "nNodes": nNodes,
-                      "nCluster": 10,
-                      "activation": "relu"}
+                      "nNodes": nNodes}
 
     # Datasets used
     # Training file used for classification and regression training
     # Generated via an input generator, contain one Bragg-peak position
-    DATASET_CONT = "DenseClusterS4A6_OptimisedGeometry_Continuous_2e10protons"
-    DATASET_0MM = "DenseClusterS4A6_OptimisedGeometry_BP0mm_2e10protons_withTimestamps"
-    DATASET_5MM = "DenseClusterS4A6_OptimisedGeometry_BP5mm_4e9protons_withTimestamps"
+    DATASET_CONT = "GraphCluster_OptimisedGeometry_Continuous_2e10protons"
+    DATASET_0MM = "GraphCluster_OptimisedGeometry_BP0mm_2e10protons_withTimestamps"
+    DATASET_5MM = "GraphCluster_OptimisedGeometry_BP5mm_4e9protons_withTimestamps"
 
     # go backwards in directory tree until the main repo directory is matched
     path = os.getcwd()
@@ -209,8 +209,7 @@ def main():
         # load model, model parameter, norm, history
         with open(RUN_NAME + "_classifier_parameter.json", "r") as json_file:
             modelParameter = json.load(json_file)
-        tf_model = GCNmodel(**modelParameter)
-        tf_model.load_weights(RUN_NAME + "_classifier")
+        tf_model = tf.keras.models.load_model(RUN_NAME + "_classifier")
         norm_x = np.load(RUN_NAME + "_classifier_norm_x.npy")
         norm_e = np.load(RUN_NAME + "_classifier_norm_e.npy")
 
@@ -236,7 +235,8 @@ def main():
             data.apply(GCNFilter())
             loader_test = DisjointLoader(data,
                                          batch_size=batch_size,
-                                         epochs=1)
+                                         epochs=1,
+                                         shuffle=False)
 
             y_true = []
             y_scores = []
@@ -248,7 +248,7 @@ def main():
 
             y_true = np.vstack(y_true)
             y_scores = np.vstack(y_scores)
-            y_true = np.reshape(y_true, newshape=(y_true.shape[0],))
+            y_true = np.reshape(y_true, newshape=(y_true.shape[0],))*1
             y_scores = np.reshape(y_scores, newshape=(y_scores.shape[0],))
 
             # evaluate model:
@@ -262,33 +262,32 @@ def main():
             plot_roc_curve(list_fpr, list_tpr, "rocauc_curve")
             plot_score_distribution(y_scores, y_true, "score_dist")
             metrics.write_metrics_classifier(y_scores, y_true)
-            """
+
             plot_efficiencymap(y_pred=y_scores,
                                y_true=y_true,
-                               y_sp=data.sp[data.idx_test()],
+                               y_sp=data.sp,
                                figure_name="efficiencymap")
-            plot_sp_distribution(ary_sp=data.sp[data.idx_test()],
+            plot_sp_distribution(ary_sp=data.sp,
                                  ary_score=y_scores,
                                  ary_true=y_true,
                                  figure_name="sp_distribution")
-            plot_pe_distribution(ary_pe=data.pe[data.idx_test()],
+            plot_pe_distribution(ary_pe=data.pe,
                                  ary_score=y_scores,
                                  ary_true=y_true,
                                  figure_name="pe_distribution")
-            plot_2dhist_sp_score(sp=data.sp[data.idx_test()],
+            plot_2dhist_sp_score(sp=data.sp,
                                  y_score=y_scores,
                                  y_true=y_true,
                                  figure_name="2dhist_sp_score")
-            plot_2dhist_ep_score(pe=data.pe[data.idx_test()],
+            plot_2dhist_ep_score(pe=data.pe,
                                  y_score=y_scores,
                                  y_true=y_true,
                                  figure_name="2dhist_pe_score")
-            """
 
 
 if __name__ == "__main__":
     gen_dataset = False
     if gen_dataset:
-        generate_dataset(n=100000)
+        generate_dataset(n=None)
     else:
         main()
