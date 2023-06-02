@@ -212,8 +212,3 @@ class GraphCluster(Dataset):
         for i in range(x.shape[1]):
             x[:, i] = (x[:, i] - ary_norm[i, 0]) / ary_norm[i, 0]
         return x
-
-    def save_norm(self,
-                  file_name):
-        np.save(file_name + "_norm_x", self.norm_x)
-        np.save(file_name + "_norm_e", self.norm_e)
