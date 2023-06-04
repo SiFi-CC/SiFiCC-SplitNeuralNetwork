@@ -19,11 +19,15 @@ class GraphCluster(Dataset):
                  adj_arg="Binary",
                  norm_x=None,
                  norm_e=None,
+                 TPOnly=False,
+                 regression=None,
                  **kwargs):
 
         self.name = name
         self.edge_atr = edge_atr
         self.adj_arg = adj_arg
+        self.TPOnly = TPOnly
+        self.regression = regression
 
         self.norm_x = norm_x
         self.norm_e = norm_e
@@ -35,9 +39,9 @@ class GraphCluster(Dataset):
         # get current path, go two subdirectories higher
         path = os.getcwd()
         while True:
-            path = os.path.abspath(os.path.join(path, os.pardir))
             if os.path.basename(path) == "SiFiCC-SplitNeuralNetwork":
                 break
+            path = os.path.abspath(os.path.join(path, os.pardir))
         path = os.path.join(path, "datasets", "SiFiCCNN_GraphCluster", self.name)
 
         return path
@@ -171,9 +175,32 @@ class GraphCluster(Dataset):
         else:
             a_list = a_e_list
 
-        # Labels
-        labels = np.load(self.path + "/" + self.name + "_graph_labels.npy")  # ["arr_0"]
-        # labels = _normalize(labels[:, None], "ohe")
+        # set dataset target (classification / regression)
+        if self.regression is not None:
+            graph_attributes = np.load(self.path + "/" + self.name + "_graph_attributes.npy")
+            if self.regression == "Energy":
+                y_list = graph_attributes[:, :2]
+            elif self.regression == "Position":
+                y_list = graph_attributes[:, 2:]
+            else:
+                print("Warning: Target not set correct")
+                y_list = np.load(self.path + "/" + self.name + "_graph_labels.npy")
+        else:
+            # Labels
+            y_list = np.load(self.path + "/" + self.name + "_graph_labels.npy")  # ["arr_0"]
+            # labels = _normalize(labels[:, None], "ohe")
+
+        # grab list of true positive events
+        labels = np.load(self.path + "/" + self.name + "_graph_labels.npy")
+
+        # limited to True positives only if needed
+        if self.TPOnly:
+            # Convert to Graph
+            print("Successfully loaded {}.".format(self.name))
+            return [
+                Graph(x=x, a=a, e=e, y=y)
+                for x, a, e, y, label in zip(x_list, a_list, e_list, y_list, labels) if label
+            ]
 
         # Convert to Graph
         print("Successfully loaded {}.".format(self.name))
