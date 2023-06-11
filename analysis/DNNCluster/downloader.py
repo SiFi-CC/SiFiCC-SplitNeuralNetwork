@@ -90,8 +90,9 @@ def load(RootParser,
         idx_scatterer, idx_absorber = event.sort_clusters_by_module(
             use_energy=False)
 
-        if not np.sum(event.RecoClusterEnergies_values) > energy_cut:
-            continue
+        if energy_cut is not None:
+            if not np.sum(event.RecoClusterEnergies_values) > energy_cut:
+                continue
 
         for j, idx in enumerate(np.flip(idx_scatterer)):
             if j >= sx:
