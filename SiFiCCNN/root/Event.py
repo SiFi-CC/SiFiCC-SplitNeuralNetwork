@@ -155,6 +155,8 @@ class Event:
         self.target_energy_p = 0.0
         self.target_angle_theta = 0.0
         self.compton_tag = False
+        self.temp_correctsecondary = False
+        self.temp_condition = False
 
         # set correct targets
         self.set_target_positions()
@@ -178,16 +180,22 @@ class Event:
 
         # scan for first absorber interaction that has the correct scattering
         # direction
-        for idx in range(0, len(self.MCInteractions_p)):
-            if 0 <= self.MCInteractions_p[idx] < 20 and self.absorber.is_vec_in_module(
-                    self.MCPosition_p[idx]):
+        for i, interaction in enumerate(self.MCInteractions_p):
+            # check if additional scattering happens in the scatterer
+            # if true, break as compton cone is not reproducible
+            if interaction < 10 and self.MCPosition_p[i].x < 200.0 and i > 0:
+                break
 
+            if 0 <= interaction < 20 and self.absorber.is_vec_in_module(
+                    self.MCPosition_p[i]):
                 # check additionally if the interaction is in the scattering
                 # direction
                 tmp_angle = self.calc_theta_dotvec(
-                    self.MCPosition_p[idx] - self.MCComptonPosition, self.MCDirection_scatter)
+                    self.MCPosition_p[i] - self.MCComptonPosition, self.MCDirection_scatter)
                 if tmp_angle < 1e-3:
-                    self.target_position_p = self.MCPosition_p[idx]
+                    self.target_position_p = self.MCPosition_p[i]
+                    if interaction > 10:
+                        self.temp_correctsecondary = True
                     break
 
     def set_target_energy(self):
@@ -234,6 +242,14 @@ class Event:
                     self.compton_tag = True
 
     def set_tags_awal(self):
+        # reset targets
+        self.target_position_e = TVector3(0, 0, 0)
+        self.target_position_p = TVector3(0, 0, 0)
+        self.target_energy_e = 0.0
+        self.target_energy_p = 0.0
+        self.target_angle_theta = 0.0
+        self.compton_tag = False
+
         """
         # NOT USED ANYMORE AS DATASETS DO NOT CONTAIN NON COINCIDENCE EVENTS
         # ANYMORE

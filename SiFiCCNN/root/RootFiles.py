@@ -14,3 +14,11 @@ FinalDetectorVersion_RasterCoupling_OPM_38e8protons_local = "/root_files/FinalDe
 FinalDetectorVersion_RasterCoupling_OPM_BP5mm_4e9protons_local = "/root_files/FinalDetectorVersion_RasterCoupling_OPM_BP5mm_4e9protons.root"
 FinalDetectorVersion_RasterCoupling_OPM_Continuous_2e10protons_local = "/root_files/FinalDetectorVersion_RasterCoupling_OPM_Continuous_2e10protons.root"
 ComptonTaggingIssues_5_400_0mm_local = "/root_files/ComptonTaggingIssues_5_400_0mm.root"
+
+# One-to-one coupling - withTimestamps (old tagging)
+onetoone_BP0mm = "OptimisedGeometry_BP0mm_2e10protons_withTimestamps.root"
+onetoone_BP5mm = "OptimisedGeometry_B50mm_4e9protons_withTimestamps.root"
+onetoone_CONT = "OptimisedGeometry_Continuous_2e10protons.root"
+
+# One-to-one coupling - new Tagging
+onetoone_BP0mm_newTag = "OptimisedGeometry_BP0mm_4e9protons_newTagging.root"
