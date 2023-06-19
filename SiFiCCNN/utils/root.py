@@ -1,7 +1,7 @@
 import numpy as np
 import os
 
-from SiFiCCNN.root import Root
+from SiFiCCNN.root import RootParser
 from SiFiCCNN.ImageReconstruction import IRExport
 
 

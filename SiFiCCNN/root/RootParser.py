@@ -9,7 +9,7 @@ from SiFiCCNN.root.Detector import Detector
 from SiFiCCNN.utils.physics import compton_scattering_angle
 
 
-class Root:
+class RootParser:
     """loading and preprocessing of root data for events and setup tree.
 
     """
