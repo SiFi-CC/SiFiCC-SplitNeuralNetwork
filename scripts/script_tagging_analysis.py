@@ -52,14 +52,30 @@ list2_eventtype = []
 list1_sp = []
 list2_sp = []
 
+list1_eventtype_awal = []
+n1_compton_awal = 0
+list1_sp_awal = []
+
+n1_compton_cs = 0
+
 for i, event in enumerate(root_parser_old.iterate_events(n=n1)):
     # event.set_tags_awal()
     if event.compton_tag:
         n1_compton += 1
         list1_eventtype.append(event.MCSimulatedEventType)
         list1_sp.append(event.MCPosition_source.z)
+
+        if event.temp_correctsecondary:
+            n1_compton_cs += 1
+
     if event.MCEnergy_e != 0.0:
         n1_nonzero += 1
+
+    event.set_tags_awal()
+    if event.compton_tag:
+        n1_compton_awal += 1
+        list1_sp_awal.append(event.MCPosition_source.z)
+        list1_eventtype_awal.append(event.MCSimulatedEventType)
 
 for i, event in enumerate(root_parser_new.iterate_events(n=n2)):
     # event.set_tags_awal()
@@ -78,6 +94,9 @@ print("Entries: {:.0f} (4e9 equivalent: {:.0f}))".format(root_parser_old.events_
                                                          root_parser_old.events_entries / 5))
 print("Non-zero entries:: {:.1f} %".format(n1_nonzero / n1 * 100))
 print("Distributed Compton: {:.1f} %".format(n1_compton / n1 * 100))
+
+print("CorrectSecondary: {:.1f} % total | {:.1f} % Compton".format(n1_compton_cs / n1 * 100,
+                                                                   n1_compton_cs / n1_compton * 100))
 
 print("")
 print("LOADED " + root_parser_new.file_name)
@@ -98,11 +117,15 @@ plt.xticks([1, 2, 3, 4, 5, 6],
             "real\ncoincidence\n+ pile-up",
             "random\ncoincidence\n+ pile-up"], rotation=45)
 plt.ticklabel_format(axis="y", style="sci", scilimits=(0, 0))
-plt.hist(list1_eventtype, bins=bins, histtype=u"step", color="black", linestyle="-", linewidth=2.0,
-         label="tagging v1")
+plt.hist(list1_eventtype_awal,
+         bins=bins, histtype=u"step", color="red", linestyle="-.", linewidth=2.0,
+         label="Old Dataset, tagging v1 (Awal)")
+plt.hist(list1_eventtype,
+         bins=bins, histtype=u"step", color="black", linestyle="-", linewidth=2.0,
+         label="Old Dataset, tagging v2")
 plt.hist(list2_eventtype, bins=bins, histtype=u"step", color="blue", linestyle="--", linewidth=2.0,
-         label="tagging v2")
-plt.legend()
+         label="New Dataset, tagging v2")
+plt.legend(loc="upper right")
 plt.grid()
 plt.tight_layout()
 plt.show()
@@ -117,21 +140,58 @@ res = np.zeros(shape=(len(hist1),))
 for i in range(len(hist1)):
     if hist1[i] != 0 and hist2[i] != 0:
         res[i] = (hist1[i] / np.sum(hist1) - hist2[i] / np.sum(hist2)) / (
-                    np.sqrt(hist2[i]) / np.sum(hist2))
+                np.sqrt(hist2[i]) / np.sum(hist2))
+    else:
+        res[i] = 0
+
+axs[0].set_ylabel("Counts (Normalized)")
+axs[0].ticklabel_format(axis="y", style="sci", scilimits=(0, 0))
+axs[0].hist(list1_sp, bins=bins, histtype=u"step", color="black",
+            label="Old Dataset, tagging v2", density=True,
+            linestyle="-", linewidth=1.0)
+axs[0].errorbar(bins[1:] - width / 2, hist1 / np.sum(hist1), np.sqrt(hist1) / np.sum(hist1),
+                color="black", fmt=".")
+axs[0].hist(list2_sp, bins=bins, histtype=u"step", color="blue",
+            label="New Dataset, tagging v2", density=True,
+            linestyle="-", linewidth=1.0)
+axs[0].errorbar(bins[1:] - width / 2, hist2 / np.sum(hist2), np.sqrt(hist2) / np.sum(hist2),
+                color="blue", fmt=".")
+axs[0].legend(loc="upper left")
+axs[0].grid()
+axs[1].set_xlabel("MCPosition_source.z [mm]")
+axs[1].set_ylabel("Residual")
+axs[1].errorbar(bins[1:] - width / 2, res, np.ones(shape=(len(hist2),)), fmt=".", color="red")
+axs[1].hlines(xmin=bins[0], xmax=bins[-1], y=0, linestyle="--", color="black")
+plt.tight_layout()
+plt.show()
+
+# Source position z plot Awal
+fig, axs = plt.subplots(2, 1, figsize=(10, 8), gridspec_kw={'height_ratios': [3, 1]})
+width = 1.0
+bins = np.arange(int(min(list2_sp)), 20, width, dtype=int)
+hist1, _ = np.histogram(list2_sp, bins=bins)
+hist2, _ = np.histogram(list1_sp_awal, bins=bins)
+res = np.zeros(shape=(len(hist1),))
+for i in range(len(hist1)):
+    if hist1[i] != 0 and hist2[i] != 0:
+        res[i] = (hist1[i] / np.sum(hist1) - hist2[i] / np.sum(hist2)) / (
+                np.sqrt(hist2[i]) / np.sum(hist2))
     else:
         res[i] = 0
 
 axs[0].set_ylabel("Counts")
 axs[0].ticklabel_format(axis="y", style="sci", scilimits=(0, 0))
-axs[0].hist(list1_sp, bins=bins, histtype=u"step", color="black", label="tagging v1", density=True,
+axs[0].hist(list2_sp, bins=bins, histtype=u"step", color="black",
+            label="New Dataset, tagging v2", density=True,
             linestyle="-", linewidth=1.0)
 axs[0].errorbar(bins[1:] - width / 2, hist1 / np.sum(hist1), np.sqrt(hist1) / np.sum(hist1),
                 color="black", fmt=".")
-axs[0].hist(list2_sp, bins=bins, histtype=u"step", color="blue", label="tagging v2", density=True,
-            linestyle="-", linewidth=1.0)
+axs[0].hist(list1_sp_awal, bins=bins, histtype=u"step", color="blue",
+            label="Old Dataset, tagging v1",
+            density=True, linestyle="-", linewidth=1.0)
 axs[0].errorbar(bins[1:] - width / 2, hist2 / np.sum(hist2), np.sqrt(hist2) / np.sum(hist2),
                 color="blue", fmt=".")
-axs[0].legend()
+axs[0].legend(loc="upper left")
 axs[0].grid()
 axs[1].set_xlabel("MCPosition_source.z [mm]")
 axs[1].set_ylabel("Residual")
