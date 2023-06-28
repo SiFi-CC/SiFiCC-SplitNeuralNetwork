@@ -230,6 +230,8 @@ def display(event):
         event.target_position_p.x,
         event.target_position_p.y,
         event.target_position_p.z))
+    print("Compton Tag: {}".format(event.compton_tag))
+    print("Missing Primary Tag: {}".format(event.temp_correctsecondary))
     print("\nCompton Scattering Angle theta:")
     print("theta (Energy):",
           "{:5.3f} [rad] | {:5.1f} [deg]".format(event.theta_energy,

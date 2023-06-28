@@ -186,6 +186,7 @@ class Event:
             if interaction < 10 and self.MCPosition_p[i].x < 200.0 and i > 0:
                 break
 
+            # check for primary compton interaction in the absorber
             if 0 <= interaction < 20 and self.absorber.is_vec_in_module(
                     self.MCPosition_p[i]):
                 # check additionally if the interaction is in the scattering
@@ -193,9 +194,9 @@ class Event:
                 tmp_angle = self.calc_theta_dotvec(
                     self.MCPosition_p[i] - self.MCComptonPosition, self.MCDirection_scatter)
                 if tmp_angle < 1e-3:
-                    self.target_position_p = self.MCPosition_p[i]
-                    if interaction > 10:
+                    if interaction >= 10:
                         self.temp_correctsecondary = True
+                    self.target_position_p = self.MCPosition_p[i]
                     break
 
     def set_target_energy(self):
