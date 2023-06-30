@@ -181,6 +181,10 @@ class Event:
         # scan for first absorber interaction that has the correct scattering
         # direction
         for i, interaction in enumerate(self.MCInteractions_p):
+            # filter out firsts digit is needed
+            if len(str(interaction)) > 2:
+                interaction = int(str(interaction)[1:])
+
             # check if additional scattering happens in the scatterer
             # if true, break as compton cone is not reproducible
             if interaction < 10 and self.MCPosition_p[i].x < 200.0 and i > 0:

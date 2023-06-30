@@ -22,7 +22,7 @@ ComptonTaggingIssues_5_400_0mm_local = "/root_files/ComptonTaggingIssues_5_400_0
 
 # One-to-one coupling (old tagging)
 onetoone_BP0mm_taggingv1 = "OptimisedGeometry_BP0mm_2e10protons_withTimestamps.root"
-onetoone_BP5mm_taggingv1 = "OptimisedGeometry_B50mm_4e9protons_withTimestamps.root"
+onetoone_BP5mm_taggingv1 = "OptimisedGeometry_BP5mm_4e9protons_withTimestamps.root"
 onetoone_CONT_taggingv1 = "OptimisedGeometry_Continuous_2e10protons.root"
 
 # Four-to-one coupling (old tagging)
@@ -30,3 +30,4 @@ fourtoone_BP0mm_taggingv1 = "FinalDetectorVersion_RasterCoupling_OPM_38e8protons
 
 # One-to-one coupling - new Tagging
 onetoone_BP0mm_taggingv2 = "OptimisedGeometry_BP0mm_2e10protons_taggingv3.root"
+onetoone_BP5mm_taggingv2 = "OptimisedGeometry_BP5mm_4e9protons_taggingv3.root"

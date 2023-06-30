@@ -47,6 +47,13 @@ def get_digits(number):
 
 
 def get_interaction(MCInteractions_e, MCInteractions_p):
+
+    # fix new interaction id system
+    for i in range(len(MCInteractions_e)):
+        MCInteractions_e[i] = int(str(MCInteractions_e[i])[1:])
+    for i in range(len(MCInteractions_p)):
+        MCInteractions_p[i] = int(str(MCInteractions_p[i])[1:])
+
     list_e_interaction = [[]]
     counter = 0
     list_tmp = []
