@@ -49,7 +49,8 @@ def check_compton_kinematics(e, p, ee=0.0, ep=0.0, compton=True):
         event_energy_uncertainty = np.sqrt(ee ** 2 + ep ** 2)
 
         compton_edge = ((event_energy / (1 + ELECTRON_MASS / (2 * event_energy))),
-                        event_energy * (ELECTRON_MASS + event_energy) / (ELECTRON_MASS / 2 + event_energy) / (
+                        event_energy * (ELECTRON_MASS + event_energy) / (
+                                ELECTRON_MASS / 2 + event_energy) / (
                                 ELECTRON_MASS / 2 + event_energy) * event_energy_uncertainty)
 
         # print(electron_energy_value - electron_energy_uncertainty, compton_edge[0] + compton_edge[1])
@@ -81,7 +82,8 @@ def check_DAC(e, p, p_ex, p_ey, p_ez, p_px, p_py, p_pz, beam_diff, inverse, retu
     n_x = sign / np.sqrt((coneaxis.x * coneaxis.x / coneaxis.z / coneaxis.z) + 1)
     n_z = np.sqrt(1 - (n_x * n_x))
     rotvec = TVector3(n_x, 0, n_z)
-    theta = tmath_acos(1 - ELECTRON_MASS * (1 / (photon_energy) - 1 / (photon_energy + electron_energy)))
+    theta = tmath_acos(
+        1 - ELECTRON_MASS * (1 / (photon_energy) - 1 / (photon_energy + electron_energy)))
 
     if inverse:
         theta = np.pi - theta

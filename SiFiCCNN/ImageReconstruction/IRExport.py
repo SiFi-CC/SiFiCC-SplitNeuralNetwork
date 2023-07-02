@@ -13,11 +13,13 @@ def export_CC6(ary_e,
                ary_px,
                ary_py,
                ary_pz,
-               ary_theta,
+               ary_theta=None,
                filename="MLEM_export",
                use_theta="DOTVEC",
                veto=True,
                verbose=0):
+    # TODO: handle theta angle
+
     # Define verbose statistic on event rejection
     ary_identified = np.ones(shape=(len(ary_e),))
     reject_valid = 0
@@ -38,7 +40,11 @@ def export_CC6(ary_e,
             p_px = ary_px[i]
             p_py = ary_py[i]
             p_pz = ary_pz[i]
-            theta = ary_theta[i]
+
+            if ary_theta is None:
+                theta = None
+            else:
+                theta = ary_theta[i]
 
             if not IRVeto.check_valid_prediction(e, p, p_ex, p_ey, p_ez, p_px, p_py, p_pz, theta):
                 ary_identified[i] = 0
@@ -56,7 +62,7 @@ def export_CC6(ary_e,
                 reject_kinematics += 1
                 continue
 
-            if not IRVeto.check_DAC(e, p, p_ex, p_ey, p_ez, p_px, p_py, p_pz, 0.2, inverse=False):
+            if not IRVeto.check_DAC(e, p, p_ex, p_ey, p_ez, p_px, p_py, p_pz, 20, inverse=False):
                 # print("failed DAAC")
                 ary_identified[i] = 0
                 reject_DAC += 1
