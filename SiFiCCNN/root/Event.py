@@ -135,39 +135,13 @@ class Event:
         self.absorber = absorber
 
         # ----------------------------------------------------------------------
-        # Temporary corrections to MC-Truth with additional control tagging
-
-        # correction of MCDirection_source quantity
-        vec_ref = self.MCComptonPosition - self.MCPosition_source
-        # print(vec_ref.theta, self.MCDirection_source.theta)
-        if not abs(vec_ref.phi - self.MCDirection_source.phi) < 0.1 or not abs(
-                vec_ref.theta - self.MCDirection_source.theta) < 0.1:
-            self.MCDirection_source = self.MCComptonPosition - self.MCPosition_source
-            self.MCDirection_source /= self.MCDirection_source.mag
-
-        # ----------------------------------------------------------------------
-        # Event tagging and deep learning targets
-
-        # initialize neural network targets
-        self.target_position_e = TVector3(0, 0, 0)
-        self.target_position_p = TVector3(0, 0, 0)
-        self.target_energy_e = 0.0
-        self.target_energy_p = 0.0
-        self.target_angle_theta = 0.0
-        self.compton_tag = False
-        self.temp_correctsecondary = False
-        self.temp_condition = False
-
-        # set correct targets
-        self.set_target_positions()
-        self.set_target_energy()
-        self.set_target_angle()
-        self.set_compton_tag()
+        # Control labels (might be disabled later, are mostly for analysis)
+        self.b_phantom_hit = False
 
     # --------------------------------------------------------------------------
     # neural network targets
 
-    def set_target_positions(self):
+    def get_target_positions(self):
         """
         Set scatterer and absorber target interaction position for neural
         network regression
@@ -176,7 +150,8 @@ class Event:
             None
         """
 
-        self.target_position_e = self.MCComptonPosition
+        target_position_e = self.MCComptonPosition
+        target_position_p = TVector3(0, 0, 0)
 
         # scan for first absorber interaction that has the correct scattering
         # direction
@@ -199,30 +174,31 @@ class Event:
                     self.MCPosition_p[i] - self.MCComptonPosition, self.MCDirection_scatter)
                 if tmp_angle < 1e-3:
                     if interaction >= 10:
-                        self.temp_correctsecondary = True
-                    self.target_position_p = self.MCPosition_p[i]
+                        self.b_phantom_hit = True
+                    target_position_p = self.MCPosition_p[i]
                     break
 
-    def set_target_energy(self):
+        return target_position_e, target_position_p
+
+    def get_target_energy(self):
         """
 
         return:
             None
         """
 
-        self.target_energy_e = self.MCEnergy_e
-        self.target_energy_p = self.MCEnergy_p
+        return self.MCEnergy_e, self.MCEnergy_p
 
-    def set_target_angle(self):
+    def get_target_angle(self):
         """
 
         return:
             None
         """
 
-        self.target_angle_theta = self.theta_dotvec
+        return self.theta_dotvec
 
-    def set_compton_tag(self):
+    def get_distcompton_tag(self):
         """
         Scans if a given event is an ideal Compton event and sets the
         corresponding tag. This tag is used as a neural network classification
@@ -236,24 +212,18 @@ class Event:
         return:
             None
         """
-        self.compton_tag = False
+        target_position_e, target_position_p = self.get_target_positions()
+
         # check for electron energy (compton event took place)
         if self.MCEnergy_e > 0.0:
             # check if primary gamma interacted at least 2 times
             if len(self.MCPosition_p) >= 2:
-                if self.scatterer.is_vec_in_module(
-                        self.target_position_e) and self.absorber.is_vec_in_module(
-                    self.target_position_p):
-                    self.compton_tag = True
+                if (self.scatterer.is_vec_in_module(target_position_e)
+                        and self.absorber.is_vec_in_module(target_position_p)):
+                    return True
 
-    def set_tags_awal(self):
+    def get_distcompton_tag_awal(self):
         # reset targets
-        self.target_position_e = TVector3(0, 0, 0)
-        self.target_position_p = TVector3(0, 0, 0)
-        self.target_energy_e = 0.0
-        self.target_energy_p = 0.0
-        self.target_angle_theta = 0.0
-        self.compton_tag = False
 
         """
         # NOT USED ANYMORE AS DATASETS DO NOT CONTAIN NON COINCIDENCE EVENTS
@@ -268,6 +238,9 @@ class Event:
         else:
             self.is_distributed_clusters = False
         """
+        target_position_p = TVector3(0, 0, 0)
+        target_position_e = TVector3(0, 0, 0)
+
         # check if the event is a Compton event
         is_compton = True if self.MCEnergy_e != 0 else False
 
@@ -292,15 +265,12 @@ class Event:
         if is_complete_compton:
             for idx in range(1, len(self.MCInteractions_p)):
                 if 0 < self.MCInteractions_p[idx] < 10:
-                    self.target_position_p = self.MCPosition_p[idx]
+                    target_position_p = self.MCPosition_p[idx]
                     break
             for idx in range(0, len(self.MCInteractions_e)):
                 if 10 <= self.MCInteractions_e[idx] < 20:
-                    self.target_position_e = self.MCPosition_e[idx]
+                    target_position_e = self.MCPosition_e[idx]
                     break
-        else:
-            self.target_position_p = TVector3(0, 0, 0)
-            self.target_position_e = TVector3(0, 0, 0)
 
         # check if the event is a complete distributed Compton event
         # complete distributed Compton event= complete Compton event +
@@ -319,21 +289,54 @@ class Event:
         # next interaction of both
         # e and p is in the different modules of SiFiCC
         if is_complete_compton \
-                and self.scatterer.is_vec_in_module(self.target_position_e) \
-                and self.absorber.is_vec_in_module(self.target_position_p) \
+                and self.scatterer.is_vec_in_module(target_position_e) \
+                and self.absorber.is_vec_in_module(target_position_p) \
                 and self.MCSimulatedEventType == 2:
-            self.compton_tag = True
+            return True
         elif is_complete_compton \
-                and self.scatterer.is_vec_in_module(self.target_position_p) \
-                and self.absorber.is_vec_in_module(self.target_position_e) \
+                and self.scatterer.is_vec_in_module(target_position_p) \
+                and self.absorber.is_vec_in_module(target_position_e) \
                 and self.MCSimulatedEventType == 2:
-            self.compton_tag = True
+            return True
 
-        # unchanged
-        self.target_energy_e = self.MCEnergy_e
-        self.target_energy_p = self.MCEnergy_p
+    # ----------------------------------------------------------------------------------------------
+    # Cut-Based reconstruction
 
-    # --------------------------------------------------------------------------
+    def get_electron_energy(self):
+        idx_scatterer, _ = self.sort_clusters_by_module(use_energy=True)
+        return self.RecoClusterEnergies_values[idx_scatterer[0]], \
+               self.RecoClusterEnergies_uncertainty[idx_scatterer[0]]
+
+    def get_photon_energy(self):
+        _, idx_absorber = self.sort_clusters_by_module(use_energy=True)
+        photon_energy_value = np.sum(
+            self.RecoClusterEnergies_values[idx_absorber])
+        photon_energy_uncertainty = np.sqrt(
+            np.sum(self.RecoClusterEnergies_uncertainty[idx_absorber] ** 2))
+        return photon_energy_value, photon_energy_uncertainty
+
+    def get_electron_position(self):
+        idx_scatterer, _ = self.sort_clusters_by_module(use_energy=True)
+        return self.RecoClusterPosition[idx_scatterer[0]], \
+               self.RecoClusterPosition_uncertainty[idx_scatterer[0]]
+
+    def get_photon_position(self):
+        _, idx_absorber = self.sort_clusters_by_module(use_energy=True)
+        return self.RecoClusterPosition[idx_absorber[0]], \
+               self.RecoClusterPosition_uncertainty[idx_absorber[0]]
+
+    def get_reco_energy(self):
+        reco_energy_e, _ = self.get_electron_energy()
+        reco_energy_p, _ = self.get_photon_energy()
+        return reco_energy_e, reco_energy_p
+
+    def get_reco_position(self):
+        reco_position_e, _ = self.get_electron_position()
+        reco_position_p, _ = self.get_photon_position()
+
+        return reco_position_e, reco_position_p
+
+    # ----------------------------------------------------------------------------------------------
     # SiPM and fibre feature map generation
     # Code manly written by Philippe Clement from NN fibre identification
     @staticmethod
@@ -373,7 +376,7 @@ class Event:
 
         return ary_feature
 
-    # --------------------------------------------------------------------------
+    # ----------------------------------------------------------------------------------------------
     # Graph generation methods
 
     def get_edge_features(self, idx1, idx2):
@@ -384,8 +387,7 @@ class Event:
 
         return r, phi, theta
 
-    # --------------------------------------------------------------------------
-
+    # ----------------------------------------------------------------------------------------------
     # scattering angle
     # calculated from energy and vector dot product of direction vectors given by simulation output
 
@@ -442,29 +444,6 @@ class Event:
         ary_vec2 /= np.sqrt(np.dot(ary_vec2, ary_vec2))
 
         return np.arccos(np.clip(np.dot(ary_vec1, ary_vec2), -1.0, 1.0))
-
-    def get_electron_energy(self):
-        idx_scatterer, _ = self.sort_clusters_by_module(use_energy=True)
-        return self.RecoClusterEnergies_values[idx_scatterer[0]], \
-               self.RecoClusterEnergies_uncertainty[idx_scatterer[0]]
-
-    def get_photon_energy(self):
-        _, idx_absorber = self.sort_clusters_by_module(use_energy=True)
-        photon_energy_value = np.sum(
-            self.RecoClusterEnergies_values[idx_absorber])
-        photon_energy_uncertainty = np.sqrt(
-            np.sum(self.RecoClusterEnergies_uncertainty[idx_absorber] ** 2))
-        return photon_energy_value, photon_energy_uncertainty
-
-    def get_electron_position(self):
-        idx_scatterer, _ = self.sort_clusters_by_module(use_energy=True)
-        return self.RecoClusterPosition[idx_scatterer[0]], \
-               self.RecoClusterPosition_uncertainty[idx_scatterer[0]]
-
-    def get_photon_position(self):
-        _, idx_absorber = self.sort_clusters_by_module(use_energy=True)
-        return self.RecoClusterPosition[idx_absorber[0]], \
-               self.RecoClusterPosition_uncertainty[idx_absorber[0]]
 
     def sort_clusters_energy(self):
         """ sort events by highest energy in descending order
@@ -611,3 +590,12 @@ class Event:
                 continue
 
         return returner
+
+    def correct_source_direction(self):
+        # correction of MCDirection_source quantity
+        vec_ref = self.MCComptonPosition - self.MCPosition_source
+        # print(vec_ref.theta, self.MCDirection_source.theta)
+        if not abs(vec_ref.phi - self.MCDirection_source.phi) < 0.1 or not abs(
+                vec_ref.theta - self.MCDirection_source.theta) < 0.1:
+            self.MCDirection_source = self.MCComptonPosition - self.MCPosition_source
+            self.MCDirection_source /= self.MCDirection_source.mag
