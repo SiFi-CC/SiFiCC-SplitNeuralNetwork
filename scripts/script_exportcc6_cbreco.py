@@ -105,7 +105,7 @@ if __name__ == "__main__":
         print("Possible choices: 'identified', 'distcompton', 'distcompton_awal'")
         sys.exit()
 
-    ROOTFILE = "OptimisedGeometry_BP0mm_2e10protons_taggingv3.root"
-    main(ROOTFILE, tagging=args.tag)
+    # ROOTFILE = "OptimisedGeometry_BP0mm_2e10protons_taggingv3.root"
+    # main(ROOTFILE, tagging=args.tag)
 
-    # main(args.rf, use_tagging=args.tag)
+    main(args.rf, tagging=args.tag)
