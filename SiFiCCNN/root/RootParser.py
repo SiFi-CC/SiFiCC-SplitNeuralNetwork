@@ -1,22 +1,35 @@
-import numpy as np
+# ##################################################################################################
+# RootParser Class
+#
+# Class to load and process root files. Main goal is to iterate over all event entries of a root
+# file and yield the events at each position. Additionally, this class determines what type of
+# information is stored in the file and generate the corresponding event type
+#
+# ##################################################################################################
+
+
 import uproot
 import tqdm
 import sys
 import os
 
-from SiFiCCNN.root.Event import Event
+from SiFiCCNN.root.Event import Event, EventCluster, EventSiPM
 from SiFiCCNN.root.Detector import Detector
-from SiFiCCNN.utils.physics import compton_scattering_angle
 
 
 class RootParser:
-    """loading and preprocessing of root data for events and setup tree.
+    """
+    loading and preprocessing of root data for events and setup tree.
 
     """
 
-    def __init__(self, rootfile_path):
+    def __init__(self,
+                 rootfile_path):
+
+        # Base attributes of a root file
         self.file_base = os.path.basename(rootfile_path)
         self.file_name = os.path.splitext(self.file_base)[0]
+
         # open root file with uproot
         rootfile = uproot.open(rootfile_path)
         self.rootfile_path = rootfile_path
@@ -100,7 +113,8 @@ class RootParser:
                                  self.setup["AbsorberThickness_z"].array()[0])
 
     def iterate_events(self, n=None):
-        """iteration over the events root tree
+        """
+        iteration over the events root tree
 
         Args:
             n (int) or (None):  total number of events being returned,
@@ -140,7 +154,8 @@ class RootParser:
         progbar.close()
 
     def __event_at_basket(self, basket, idx):
-        """create event object from a given position in a root basket
+        """
+        create event object from a given position in a root basket
 
         Args:
             basket (obj: ???): root basket
@@ -150,129 +165,93 @@ class RootParser:
             event (obj: Event)
 
         """
-        # Generate parameter for RootEvent Object
-        # Global
-        param_EventNumber = 0
-        param_MCSimulatedEventType = 0
-        param_MCEnergy_Primary = 0
-        param_MCEnergy_e = 0
-        param_MCEnergy_p = 0
-        param_MCPosition_source = 0
-        param_MCDirection_source = 0
-        param_MCComptonPosition = 0
-        param_MCDirection_scatter = 0
-        param_MCPosition_e = 0
-        param_MCInteractions_e = 0
-        param_MCPosition_p = 0
-        param_MCInteractions_p = 0
-        if self.ifglobal:
-            param_EventNumber = basket["EventNumber"][idx]
-            param_MCSimulatedEventType = basket['MCSimulatedEventType'][idx]
-            if b"MCEnergy_Primary" not in self.list_leaves_final:
-                param_MCEnergy_Primary = basket['MCEnergyPrimary'][idx]
-            else:
-                param_MCEnergy_Primary = basket['MCEnergy_Primary'][idx]
-            param_MCEnergy_e = basket['MCEnergy_e'][idx]
-            param_MCEnergy_p = basket['MCEnergy_p'][idx]
-            param_MCPosition_source = basket['MCPosition_source'][idx]
-            param_MCDirection_source = basket['MCDirection_source'][idx]
-            param_MCComptonPosition = basket['MCComptonPosition'][idx]
-            param_MCDirection_scatter = basket['MCDirection_scatter'][idx]
-            param_MCPosition_e = basket['MCPosition_e'][idx]
-            param_MCInteractions_e = basket['MCInteractions_e'][idx]
-            param_MCPosition_p = basket['MCPosition_p'][idx]
-            param_MCInteractions_p = basket['MCInteractions_p'][idx]
-
-        # Reco
-        param_Identified = 0
-        if self.ifreco:
-            param_Identified = basket['Identified'][idx]
-
-        # Cluster
-        param_RecoClusterPosition = 0
-        param_RecoClusterPosition_uncertainty = 0
-        param_RecoClusterEnergies_values = 0
-        param_RecoClusterEnergies_uncertainty = 0
-        param_RecoClusterEntries = 0
-        param_RecoClusterTimestamps = 0
 
         if self.ifcluster:
-            param_RecoClusterPosition = basket['RecoClusterPositions.position'][
-                idx]
-            param_RecoClusterPosition_uncertainty = \
-                basket['RecoClusterPositions.uncertainty'][idx]
-            param_RecoClusterEnergies_values = \
-                basket['RecoClusterEnergies.value'][idx]
-            param_RecoClusterEnergies_uncertainty = \
-                basket['RecoClusterEnergies.uncertainty'][idx]
-            param_RecoClusterEntries = basket['RecoClusterEntries'][idx]
-            param_RecoClusterTimestamps = basket["RecoClusterTimestamps"][idx]
+            event = EventCluster(EventNumber=basket["EventNumber"][idx],
+                                 MCSimulatedEventType=basket['MCSimulatedEventType'][idx],
+                                 MCEnergy_Primary=basket['MCEnergy_Primary'][idx],
+                                 MCEnergy_e=basket['MCEnergy_e'][idx],
+                                 MCEnergy_p=basket['MCEnergy_p'][idx],
+                                 MCPosition_e=basket['MCPosition_e'][idx],
+                                 MCInteractions_e=basket['MCInteractions_e'][idx],
+                                 MCPosition_p=basket['MCPosition_p'][idx],
+                                 MCInteractions_p=basket['MCInteractions_p'][idx],
+                                 MCPosition_source=basket['MCPosition_source'][idx],
+                                 MCDirection_source=basket['MCDirection_source'][idx],
+                                 MCComptonPosition=basket['MCComptonPosition'][idx],
+                                 MCDirection_scatter=basket['MCDirection_scatter'][idx],
+                                 Identified=basket['Identified'][idx],
+                                 RecoClusterPosition=basket['RecoClusterPositions.position'][idx],
+                                 RecoClusterPosition_uncertainty=
+                                 basket['RecoClusterPositions.uncertainty'][idx],
+                                 RecoClusterEnergies_values=basket['RecoClusterEnergies.value'][
+                                     idx],
+                                 RecoClusterEnergies_uncertainty=
+                                 basket['RecoClusterEnergies.uncertainty'][idx],
+                                 RecoClusterEntries=basket['RecoClusterEntries'][idx],
+                                 RecoClusterTimestamps=basket["RecoClusterTimestamps"][idx],
+                                 module_scatterer=self.scatterer,
+                                 module_absorber=self.absorber)
 
-        # SiPM and fibres
-        param_sipm_triggertime = 0
-        param_sipm_qdc = 0
-        param_sipm_position = 0
-        param_sipm_id = 0
-        param_fibre_time = 0
-        param_fibre_energy = 0
-        param_fibre_position = 0
-        param_fibre_id = 0
         if self.ifsipm:
-            param_sipm_triggertime = basket["SiPMData.fSiPMTriggerTime"][idx]
-            param_sipm_qdc = basket["SiPMData.fSiPMQDC"][idx]
-            param_sipm_position = basket["SiPMData.fSiPMPosition"][idx]
-            param_sipm_id = basket["SiPMData.fSiPMId"][idx]
-            param_fibre_time = basket["FibreData.fFibreTime"][idx]
-            param_fibre_energy = basket["FibreData.fFibreEnergy"][idx]
-            param_fibre_position = basket["FibreData.fFibrePosition"][idx]
-            param_fibre_id = basket["FibreData.fFibreId"][idx]
+            event = EventSiPM(EventNumber=basket["EventNumber"][idx],
+                              MCSimulatedEventType=basket['MCSimulatedEventType'][idx],
+                              MCEnergy_Primary=basket['MCEnergyPrimary'][idx],
+                              MCEnergy_e=basket['MCEnergy_e'][idx],
+                              MCEnergy_p=basket['MCEnergy_p'][idx],
+                              MCPosition_e=basket['MCPosition_e'][idx],
+                              MCInteractions_e=basket['MCInteractions_e'][idx],
+                              MCPosition_p=basket['MCPosition_p'][idx],
+                              MCInteractions_p=basket['MCInteractions_p'][idx],
+                              MCPosition_source=basket['MCPosition_source'][idx],
+                              MCDirection_source=basket['MCDirection_source'][idx],
+                              MCComptonPosition=basket['MCComptonPosition'][idx],
+                              MCDirection_scatter=basket['MCDirection_scatter'][idx],
+                              SiPM_triggertime=basket["SiPMData.fSiPMTriggerTime"][idx],
+                              SiPM_qdc=basket["SiPMData.fSiPMQDC"][idx],
+                              SiPM_position=basket["SiPMData.fSiPMPosition"][idx],
+                              SiPM_id=basket["SiPMData.fSiPMId"][idx],
+                              fibre_time=basket["FibreData.fFibreTime"][idx],
+                              fibre_energy=basket["FibreData.fFibreEnergy"][idx],
+                              fibre_position=basket["FibreData.fFibrePosition"][idx],
+                              fibre_id=basket["FibreData.fFibreId"][idx],
+                              module_scatterer=self.scatterer,
+                              module_absorber=self.absorber)
 
-        event = Event(bglobal=self.ifglobal,
-                      breco=self.ifreco,
-                      bcluster=self.ifcluster,
-                      bsipm=self.ifsipm,
-                      EventNumber=param_EventNumber,
-                      MCSimulatedEventType=param_MCSimulatedEventType,
-                      MCEnergy_Primary=param_MCEnergy_Primary,
-                      MCEnergy_e=param_MCEnergy_e,
-                      MCEnergy_p=param_MCEnergy_p,
-                      MCPosition_e=param_MCPosition_e,
-                      MCInteractions_e=param_MCInteractions_e,
-                      MCPosition_p=param_MCPosition_p,
-                      MCInteractions_p=param_MCInteractions_p,
-                      MCPosition_source=param_MCPosition_source,
-                      MCDirection_source=param_MCDirection_source,
-                      MCComptonPosition=param_MCComptonPosition,
-                      MCDirection_scatter=param_MCDirection_scatter,
-                      Identified=param_Identified,
-                      RecoClusterPosition=param_RecoClusterPosition,
-                      RecoClusterPosition_uncertainty=param_RecoClusterPosition_uncertainty,
-                      RecoClusterEnergies_values=param_RecoClusterEnergies_values,
-                      RecoClusterEnergies_uncertainty=param_RecoClusterEnergies_uncertainty,
-                      RecoClusterEntries=param_RecoClusterEntries,
-                      RecoClusterTimestamps=param_RecoClusterTimestamps,
-                      SiPM_triggertime=param_sipm_triggertime,
-                      SiPM_qdc=param_sipm_qdc,
-                      SiPM_position=param_sipm_position,
-                      SiPM_id=param_sipm_id,
-                      fibre_time=param_fibre_time,
-                      fibre_energy=param_fibre_energy,
-                      fibre_position=param_fibre_position,
-                      fibre_id=param_fibre_id,
-                      scatterer=self.scatterer,
-                      absorber=self.absorber)
+        else:
+            event = Event(EventNumber=basket["EventNumber"][idx],
+                          MCSimulatedEventType=basket['MCSimulatedEventType'][idx],
+                          MCEnergy_Primary=basket['MCEnergy_Primary'][idx],
+                          MCEnergy_e=basket['MCEnergy_e'][idx],
+                          MCEnergy_p=basket['MCEnergy_p'][idx],
+                          MCPosition_e=basket['MCPosition_e'][idx],
+                          MCInteractions_e=basket['MCInteractions_e'][idx],
+                          MCPosition_p=basket['MCPosition_p'][idx],
+                          MCInteractions_p=basket['MCInteractions_p'][idx],
+                          MCPosition_source=basket['MCPosition_source'][idx],
+                          MCDirection_source=basket['MCDirection_source'][idx],
+                          MCComptonPosition=basket['MCComptonPosition'][idx],
+                          MCDirection_scatter=basket['MCDirection_scatter'][idx],
+                          module_scatterer=self.scatterer,
+                          module_absorber=self.absorber)
+
         return event
 
     def get_event(self, position):
-        """Return event for a given position in the root file"""
+        """
+        Return event for a given position in the root file
+        """
         for basket in self.events.iterate(self.list_leaves_final,
                                           entrystart=position,
                                           entrystop=position + 1,
                                           namedecode='utf-8'):
             return self.__event_at_basket(basket, 0)
 
+    '''
+    # CURRENTLY DISABLED
     def export_npz_lookup(self, n=None, is_s1ax=False):
-        """generates compressed npz file containing MC-Truth data and Cut-based
+        """
+        generates compressed npz file containing MC-Truth data and Cut-based
         reco data.
 
         Args:
@@ -365,33 +344,4 @@ class RootParser:
                                 TAGS=ary_tags)
 
         print("file saved: ", self.file_name + "_lookup.npz")
-
-    def export_classic_reco(self, destination):
-        # create empty array for classical cut-based reconstruction
-        ary_cb = np.zeros(shape=(self.events_entries, 10))
-
-        # fill up Cut-Based reconstruction values manually due to
-        # them being stored in branches
-        ary_cb[:, 0] = self.events["Identified"].array()
-        ary_cb[:, 1] = self.events["RecoEnergy_e"]["value"].array()
-        ary_cb[:, 2] = self.events["RecoEnergy_p"]["value"].array()
-        ary_cb[:, 3] = self.events["RecoPosition_e"]["position"].array().x
-        ary_cb[:, 4] = self.events["RecoPosition_e"]["position"].array().y
-        ary_cb[:, 5] = self.events["RecoPosition_e"]["position"].array().z
-        ary_cb[:, 6] = self.events["RecoPosition_p"]["position"].array().x
-        ary_cb[:, 7] = self.events["RecoPosition_p"]["position"].array().y
-        ary_cb[:, 8] = self.events["RecoPosition_p"]["position"].array().z
-        # add compton scattering angle calculated from energy
-        e = self.events["RecoEnergy_e"]["value"].array()
-        p = self.events["RecoEnergy_p"]["value"].array()
-        for i in range(len(e)):
-            ary_cb[i, 9] = compton_scattering_angle(e[i] + p[i], p[i])
-
-        # export dataframe to compressed .npz
-
-        with open(destination + "/" + self.file_name + "_CBRECO.npz",
-                  'wb') as file:
-            np.savez_compressed(file, CB_RECO=ary_cb)
-
-        print("file saved at: ",
-              destination + "/" + self.file_name + "_CBRECO.npz")
+    '''
