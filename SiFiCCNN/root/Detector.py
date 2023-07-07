@@ -1,5 +1,13 @@
+# Detector Class
+#
+# This is a helper class for storing module dimension and positions. Additional methods are
+# implemented regarding containment of clusters inside the detector.
+#
+# ##################################################################################################
+
 class Detector:
-    """object containing detector module dimensions, used in Rootdata.
+    """
+    object containing detector module dimensions and helper methods
 
     Attributes:
         pos (TVec3): vector pointing towards the middle of the detector module
@@ -17,11 +25,13 @@ class Detector:
         self.pos = pos
 
     def is_vec_in_module(self, input_vec):
-        """Checks if a vector points inside the module.
+        """
+        Checks if a vector points inside the module.
 
         Args:
-            input_vec (TVector3) or (list<TVector3>): If a list type of vectors is given, True will be returned
-                                                      if at least one of the vectors is inside the detector
+            input_vec (TVector3) or (list<TVector3>): If a list type of vectors is given, True will
+                                                      be returned. If at least one of the vectors is
+                                                      inside the detector.
 
         Return:
             True if vector points inside module, False otherwise

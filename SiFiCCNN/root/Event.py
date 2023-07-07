@@ -88,6 +88,7 @@ class Event:
         #   - level: describes the secondary level of the interacting particle
         self.MCInteractions_e_uni = np.zeros(shape=(len(self.MCInteractions_e), 2))
         self.MCInteractions_p_uni = np.zeros(shape=(len(self.MCInteractions_p), 2))
+        self.set_interaction_list()
 
         # Control labels (might be disabled later, are mostly for analysis/debugging)
         self.b_phantom_hit = False
@@ -110,31 +111,33 @@ class Event:
         return:
             None
         """
-        # scan for interaction id integer length and encode accordingly
-        # X // 10**n % 10 is an elegant method to get the n+1'st digit of X
-        if len(str(self.MCInteractions_e[0])) <= 2:
-            for i, interact in enumerate(self.MCInteractions_e):
-                self.MCInteractions_e_uni[i, :] = [interact // 10 ** 0 % 10,
-                                                   interact // 10 ** 1 % 10]
-            for i, interact in enumerate(self.MCInteractions_p):
-                self.MCInteractions_p_uni[i, :] = [interact // 10 ** 0 % 10,
-                                                   interact // 10 ** 1 % 10]
-        elif len(str(self.MCInteractions_e[0])) == 3:
-            for i, interact in enumerate(self.MCInteractions_e):
-                self.MCInteractions_e_uni[i, :] = [interact // 10 ** 0 % 10,
-                                                   interact // 10 ** 1 % 10]
-            for i, interact in enumerate(self.MCInteractions_p):
-                self.MCInteractions_p_uni[i, :] = [interact // 10 ** 0 % 10,
-                                                   interact // 10 ** 1 % 10]
-        elif len(str(self.MCInteractions_e[0])) == 5:
-            for i, interact in enumerate(self.MCInteractions_e):
-                self.MCInteractions_e_uni[i, :] = [
-                    interact // 10 ** 2 % 10 + 10 * (interact // 10 ** 3 % 10),
-                    interact // 10 ** 1 % 10]
-            for i, interact in enumerate(self.MCInteractions_p):
-                self.MCInteractions_p_uni[i, :] = [
-                    interact // 10 ** 2 % 10 + 10 * (interact // 10 ** 3 % 10),
-                    interact // 10 ** 1 % 10]
+        # check if interaction list has valid entries
+        if len(self.MCInteractions_e) > 0 and len(self.MCInteractions_p) > 0:
+            # scan for interaction id integer length and encode accordingly
+            # X // 10**n % 10 is an elegant method to get the n+1'st digit of X
+            if len(str(self.MCInteractions_e[0])) <= 2:
+                for i, interact in enumerate(self.MCInteractions_e):
+                    self.MCInteractions_e_uni[i, :] = [interact // 10 ** 0 % 10,
+                                                       interact // 10 ** 1 % 10]
+                for i, interact in enumerate(self.MCInteractions_p):
+                    self.MCInteractions_p_uni[i, :] = [interact // 10 ** 0 % 10,
+                                                       interact // 10 ** 1 % 10]
+            elif len(str(self.MCInteractions_e[0])) == 3:
+                for i, interact in enumerate(self.MCInteractions_e):
+                    self.MCInteractions_e_uni[i, :] = [interact // 10 ** 0 % 10,
+                                                       interact // 10 ** 1 % 10]
+                for i, interact in enumerate(self.MCInteractions_p):
+                    self.MCInteractions_p_uni[i, :] = [interact // 10 ** 0 % 10,
+                                                       interact // 10 ** 1 % 10]
+            elif len(str(self.MCInteractions_e[0])) == 5:
+                for i, interact in enumerate(self.MCInteractions_e):
+                    self.MCInteractions_e_uni[i, :] = [
+                        interact // 10 ** 2 % 10 + 10 * (interact // 10 ** 3 % 10),
+                        interact // 10 ** 1 % 10]
+                for i, interact in enumerate(self.MCInteractions_p):
+                    self.MCInteractions_p_uni[i, :] = [
+                        interact // 10 ** 2 % 10 + 10 * (interact // 10 ** 3 % 10),
+                        interact // 10 ** 1 % 10]
 
     # neural network target getter methods
     def get_target_position(self):
@@ -156,25 +159,22 @@ class Event:
 
         # scan for first absorber interaction that has the correct scattering
         # direction
-        for i, interaction in enumerate(self.MCInteractions_p):
-            # filter out firsts digit is needed
-            if len(str(interaction)) > 2:
-                interaction = int(str(interaction)[1:])
-
+        for i in range(len(self.MCInteractions_p_uni)):
+            # grab interaction type and level from list
+            int_type = self.MCInteractions_p_uni[i, 0]
+            int_level = self.MCInteractions_p_uni[i, 1]
             # check if additional scattering happens in the scatterer
             # if true, break as compton cone is not reproducible
-            if interaction < 10 and self.MCPosition_p[i].x < 200.0 and i > 0:
+            if int_type == 1 and self.MCPosition_p[i].x < 200.0 and i > 0:
                 break
 
             # check for primary compton interaction in the absorber
-            if 0 <= interaction < 20 and self.absorber.is_vec_in_module(
-                    self.MCPosition_p[i]):
-                # check additionally if the interaction is in the scattering
-                # direction
+            if int_level <= 2 and self.absorber.is_vec_in_module(self.MCPosition_p[i]):
+                # check additionally if the interaction is in the scattering direction
                 tmp_angle = vector_angle(self.MCPosition_p[i] - self.MCComptonPosition,
                                          self.MCDirection_scatter)
                 if tmp_angle < 1e-3:
-                    if interaction >= 10:
+                    if int_level > 0:
                         self.b_phantom_hit = True
                     target_position_p = self.MCPosition_p[i]
                     break
@@ -248,13 +248,7 @@ class Event:
         target_position_p = TVector3(0, 0, 0)
         target_position_e = TVector3(0, 0, 0)
 
-        # fix interaction id list to old scheme
-        for i in range(len(self.MCInteractions_e)):
-            if len(str(self.MCInteractions_e[i])) > 2:
-                self.MCInteractions_e[i] = int(str(self.MCInteractions_e[i])[1:])
-        for i in range(len(self.MCInteractions_p)):
-            if len(str(self.MCInteractions_p[i])) > 2:
-                self.MCInteractions_p[i] = int(str(self.MCInteractions_p[i])[1:])
+        # TODO: FIX INTERACTION LIST
 
         # check if the event is a Compton event
         is_compton = True if self.MCEnergy_e != 0 else False
