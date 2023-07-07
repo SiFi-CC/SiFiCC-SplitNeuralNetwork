@@ -6,7 +6,6 @@ def load(RootParser,
          path="",
          sx=4,
          ax=6,
-         energy_cut=None,
          n=None):
     """
     Script to generate a dataset in graph basis.
@@ -22,7 +21,6 @@ def load(RootParser,
                            scratch_g4rt1
         sx          (int): Number of maximum scatterer cluster used
         ax          (int): Number of maximum absorber cluster used
-        energy_cut  (float): energy cut applied to deposited energy per event
         n           (int): Number of events sampled from root file
 
     Return:
@@ -32,9 +30,6 @@ def load(RootParser,
     # define dataset name
     dataset_name = "DenseCluster"
     dataset_name += "S" + str(sx) + "A" + str(ax)
-    if energy_cut is not None:
-        dataset_name += "_ECUT" + str(energy_cut)
-
     dataset_name += "_" + RootParser.file_name
 
     # grab correct filepath, generate dataset in target directory.
@@ -48,51 +43,33 @@ def load(RootParser,
     if not os.path.isdir(path):
         os.makedirs(path, exist_ok=True)
 
-    # Pre-determine the final array size.
-    # only needed if energy cut is applied
-    if energy_cut is not None:
-        print("Counting number of graphs to be created")
-        if n is None:
-            n_samples_total = RootParser.events_entries
-        else:
-            n_samples_total = n
-        n_samples_postcut = 0
-        for i, event in enumerate(RootParser.iterate_events(n=n_samples_total)):
-            if np.sum(event.RecoClusterEnergies_values) > energy_cut:
-                n_samples_postcut += 1
+    # determine the number of events in the final dataset
+    if n is None:
+        n_samples = RootParser.events_entries
     else:
-        if n is None:
-            n_samples_postcut = RootParser.events_entries
-            n_samples_total = RootParser.events_entries
-        else:
-            n_samples_postcut = n
-            n_samples_total = n
+        n_samples = n
 
     # feature dimension
     n_timesteps = (sx + ax)
     n_features = 10
-    print("Number of events to be created: ", n_samples_postcut)
+    print("Number of events to be created: ", n_samples)
     print("Event features: ", n_features)
     print("Event time-steps (Number of clusters): ", n_timesteps)
 
     # create empty arrays for storage
-    sample_features = np.zeros(shape=(n_samples_postcut, n_timesteps, n_features), dtype=np.float32)
-    sample_labels = np.zeros(shape=(n_samples_postcut,), dtype=np.int)
-    sample_attributes = np.zeros(shape=(n_samples_postcut, 8), dtype=np.float32)
-    sample_pe = np.zeros(shape=(n_samples_postcut,), dtype=np.float32)
-    sample_sp = np.zeros(shape=(n_samples_postcut,), dtype=np.float32)
+    sample_features = np.zeros(shape=(n_samples, n_timesteps, n_features), dtype=np.float32)
+    sample_labels = np.zeros(shape=(n_samples,), dtype=np.int)
+    sample_attributes = np.zeros(shape=(n_samples, 8), dtype=np.float32)
+    sample_pe = np.zeros(shape=(n_samples,), dtype=np.float32)
+    sample_sp = np.zeros(shape=(n_samples,), dtype=np.float32)
 
     # main iteration over root file
     index = 0
-    for i, event in enumerate(RootParser.iterate_events(n=n_samples_total)):
+    for i, event in enumerate(RootParser.iterate_events(n=n_samples)):
 
         # get indices of clusters sorted by position in reverse order
         idx_scatterer, idx_absorber = event.sort_clusters_by_module(
             use_energy=False)
-
-        if energy_cut is not None:
-            if not np.sum(event.RecoClusterEnergies_values) > energy_cut:
-                continue
 
         for j, idx in enumerate(np.flip(idx_scatterer)):
             if j >= sx:
