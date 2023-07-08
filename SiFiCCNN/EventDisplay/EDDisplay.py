@@ -7,10 +7,12 @@ from SiFiCCNN.EventDisplay import EDBuilder
 from SiFiCCNN.root import RootLogger
 
 
-# ----------------------------------------------------------------------------------------------------------------------
-
 def display(event):
-    # ------------------------------------------------------------------------------------------------------------------
+    # grab needed attributes from event object
+    target_energy_e, target_energy_p = event.get_target_energy()
+    target_position_e, target_position_p = event.get_target_position()
+
+    # ----------------------------------------------------------------------------------------------
     # Main plotting, general settings of 3D plot
     fig = plt.figure(figsize=(12, 8))
     ax = fig.add_subplot(111, projection='3d')
@@ -23,7 +25,7 @@ def display(event):
     ax.set_ylabel("y-axis [mm]")
     ax.set_zlabel("z-axis [mm]")
 
-    # ------------------------------------------------------------------------------------------------------------------
+    # ----------------------------------------------------------------------------------------------
     # detector edges, orientation axis, (fiber hits)
     # get detector edges
     list_edge_scatterer = EDBuilder.get_edges(event.scatterer.pos.x,
@@ -48,7 +50,7 @@ def display(event):
     ax.plot3D([0, 270 + 46.8 / 2], [0, 0], [0, 0], color="black",
               linestyle="--")
 
-    # ------------------------------------------------------------------------------------------------------------------
+    # ----------------------------------------------------------------------------------------------
     # plot primary gamma trajectory
     a = 250
     ax.plot3D([event.MCPosition_source.x, event.MCComptonPosition.x],
@@ -78,7 +80,7 @@ def display(event):
               [event.MCPosition_source.z, event.MCPosition_source.z + a * event.MCDirection_source.z],
               color="pink")
     """
-    # ------------------------------------------------------------------------------------------------------------------
+    # ----------------------------------------------------------------------------------------------
     # electron interaction plotting
     list_e_interaction, list_p_interaction = EDBuilder.get_interaction(
         event.MCInteractions_e, event.MCInteractions_p)
@@ -106,19 +108,17 @@ def display(event):
                  event.MCPosition_p.z[list_p_interaction[i][j]]],
                 color="purple", linestyle="--")
 
-    # ------------------------------------------------------------------------------------------------------------------
-    # Marker for MC-Truth (Later definition standard for Neural Network)
-    ax.plot3D(event.target_position_e.x, event.target_position_e.y,
-              event.target_position_e.z,
+    # ----------------------------------------------------------------------------------------------
+    # Marker for MC-Truth (Later definition standard for Neural Network
+    ax.plot3D(target_position_e.x, target_position_e.y, target_position_e.z,
               "x", color="red", markersize=event.MCEnergy_e * 10)
-    ax.plot3D(event.target_position_p.x, event.target_position_p.y,
-              event.target_position_p.z,
+    ax.plot3D(target_position_p.x, target_position_p.y, target_position_p.z,
               "x", color="red", markersize=event.MCEnergy_p * 10)
     ax.plot3D(event.MCPosition_source.x, event.MCPosition_source.y,
               event.MCPosition_source.z,
               "o", color="red", markersize=4)
 
-    # ------------------------------------------------------------------------------------------------------------------
+    # ----------------------------------------------------------------------------------------------
     # SiPM and Fibre hits
     # Only drawn if event file contains SiPM and Fibre information
 
@@ -144,16 +144,16 @@ def display(event):
                 ax.plot3D(list_sipm_edges[j][0], list_sipm_edges[j][1],
                           list_sipm_edges[j][2], color="darkgreen")
 
-    # ------------------------------------------------------------------------------------------------------------------
+    # ----------------------------------------------------------------------------------------------
     # True and reconstructed compton cone
 
     if event.bglobal:
-        # Grab Compton scattering angle from source and scattering directions as energy calculations are not good enough
-        # on MC-Truth level
+        # Grab Compton scattering angle from source and scattering directions as energy calculations
+        # are not good enough on MC-Truth level
 
         # Main vectors needed for cone calculations
-        vec_ax1 = event.target_position_e
-        vec_ax2 = event.target_position_p - event.target_position_e
+        vec_ax1 = target_position_e
+        vec_ax2 = target_position_p - target_position_e
         vec_src = event.MCPosition_source
 
         list_cone = EDBuilder.get_compton_cone(vec_ax1, vec_ax2, vec_src,
@@ -219,30 +219,9 @@ def display(event):
             ax.plot3D(list_cluster_x[i], list_cluster_y[i], list_cluster_z[i],
                       "X", color="orange",
                       markersize=event.RecoClusterEnergies_values[i] * b)
-    # ------------------------------------------------------------------------------------------------------------------
-    # Control prints
-    print("\nControl: ")
-    print("True E Position: ({:.3f}, {:.3f}, {:.3f})".format(
-        event.target_position_e.x,
-        event.target_position_e.y,
-        event.target_position_e.z))
-    print("True P Position: ({:.3f}, {:.3f}, {:.3f})".format(
-        event.target_position_p.x,
-        event.target_position_p.y,
-        event.target_position_p.z))
-    print("Compton Tag: {}".format(event.compton_tag))
-    print("Missing Primary Tag: {}".format(event.temp_correctsecondary))
-    print("\nCompton Scattering Angle theta:")
-    print("theta (Energy):",
-          "{:5.3f} [rad] | {:5.1f} [deg]".format(event.theta_energy,
-                                                 event.theta_energy * 360 / 2 / np.pi))
-    print("theta (Vector):",
-          "{:5.3f} [rad] | {:5.1f} [deg]".format(event.theta_dotvec,
-                                                 event.theta_dotvec * 360 / 2 / np.pi))
-
     # print("RETURNER:", event.check_absorber_interaction())
     """
-    # ------------------------------------------------------------------------------------------------------------------
+    # ----------------------------------------------------------------------------------------------
     # title string
     dict_type = {2: "Real Coincidence",
                  3: "Random Coincidence",
