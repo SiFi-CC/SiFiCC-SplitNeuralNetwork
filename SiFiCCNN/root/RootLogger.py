@@ -191,8 +191,7 @@ def print_event_summary_debug(Rootdata, n=0):
                 np.sin(tmp_angle) * r))
 
     if event.breco:
-        print("\n# Reconstruction data: ")
-        print("Cluster Entries: ")
+        print("\nCluster Entries: ")
         print("Energy / Position / Entries / Module")
         for i, cluster in enumerate(event.RecoClusterPosition):
             print(
@@ -209,12 +208,20 @@ def print_event_summary_debug(Rootdata, n=0):
 
         RecoCluster_idx_scatterer, RecoCluster_idx_absorber = event.sort_clusters_by_module(
             use_energy=True)
-        print("\nCluster in Scatterer: {} | Cluster idx: {}".format(
+        print("Cluster in Scatterer: {} | Cluster idx: {}".format(
             len(RecoCluster_idx_scatterer),
             RecoCluster_idx_scatterer))
         print("Cluster in Absorber: {} | Cluster idx: {}".format(
             len(RecoCluster_idx_absorber),
             RecoCluster_idx_absorber))
+
+        print("\nReconstruction data: ")
+        reco_energy_e, reco_energy_p = event.get_reco_energy()
+        reco_position_e, reco_position_p = event.get_reco_position()
+        print("Electron Interaction: {:7.3f} MeV | ({:7.3f}, {:7.3f}, {:7.3f}) mm".format(
+            reco_energy_e, reco_position_e.x, reco_position_e.y, reco_position_e.z))
+        print("Photon   Interaction: {:7.3f} MeV | ({:7.3f}, {:7.3f}, {:7.3f}) mm".format(
+            reco_energy_p, reco_position_p.x, reco_position_p.y, reco_position_p.z))
 
     if event.bsipm:
         print("\n# Fibre Data: ")
@@ -240,3 +247,8 @@ def print_event_summary_debug(Rootdata, n=0):
                     event.SiPM_position[j].y,
                     event.SiPM_position[j].z,
                     event.SiPM_triggertime[j]))
+
+    print("\nControl tags:")
+    print("Distributed Compton          : {}".format(event.get_distcompton_tag()))
+    print("Distributed Compton (Awal)   : {}".format(event.get_distcompton_tag_awal()))
+    print("Phantom hits                 : {}".format(event.b_phantom_hit))
