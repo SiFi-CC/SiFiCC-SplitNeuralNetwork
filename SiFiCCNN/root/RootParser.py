@@ -193,7 +193,7 @@ class RootParser:
                                  module_scatterer=self.scatterer,
                                  module_absorber=self.absorber)
 
-        if self.ifsipm:
+        elif self.ifsipm:
             event = EventSiPM(EventNumber=basket["EventNumber"][idx],
                               MCSimulatedEventType=basket['MCSimulatedEventType'][idx],
                               MCEnergy_Primary=basket['MCEnergyPrimary'][idx],
