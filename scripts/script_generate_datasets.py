@@ -22,7 +22,9 @@ path_datasets = path + "/datasets/"
 ####################################################################################################
 
 from analysis.DNNCluster import downloader
-root_parser_0mm = RootParser.RootParser(RootFiles.onetoone_BP0mm_taggingv2)
-root_parser_5mm = RootParser.RootParser(RootFiles.onetoone_BP5mm_taggingv2)
-downloader.load(root_parser_0mm, path="", n=1000)
-downloader.load(root_parser_5mm, path="", n=1000)
+root_parser_0mm = RootParser.RootParser(path_root + RootFiles.onetoone_BP0mm_taggingv2)
+root_parser_5mm = RootParser.RootParser(path_root + RootFiles.onetoone_BP5mm_taggingv2)
+root_parser_cont = RootParser.RootParser(path_root + RootFiles.onetoone_cont_taggingv2)
+downloader.load(root_parser_0mm, path=path_datasets, n=None)
+downloader.load(root_parser_5mm, path=path_datasets, n=None)
+downloader.load(root_parser_cont, path=path_datasets, n=None)

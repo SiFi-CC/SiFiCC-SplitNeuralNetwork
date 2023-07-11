@@ -17,6 +17,7 @@ fourtoone_BP0mm_taggingv1 = "FinalDetectorVersion_RasterCoupling_OPM_38e8protons
 # One-to-one coupling - new Tagging
 onetoone_BP0mm_taggingv2 = "OptimisedGeometry_BP0mm_2e10protons_taggingv3.root"
 onetoone_BP5mm_taggingv2 = "OptimisedGeometry_BP5mm_4e9protons_taggingv3.root"
+onetoone_cont_taggingv2 = "OptimisedGeometry_Continuous_2e10protons_taggingv3.root"
 
 """
 # files available on the cluster
