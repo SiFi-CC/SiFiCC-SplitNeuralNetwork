@@ -1,3 +1,15 @@
+# ##################################################################################################
+# downloader.py
+#
+# Data generator to create neural network features and targets. The base is the DNNCluster structure
+# Features are limited to sx scatterer cluster and ax absorber clusters, sorted in descending order
+# by energy. If the maximum number of clusters is not matched, it will be zero padded.
+# Standardization is not included here. The full export will be split into single .npy files.
+#
+# This script follows the downloader - dataset - script structure inspired by the Spektral package
+#
+# ##################################################################################################
+
 import numpy as np
 import os
 
@@ -21,7 +33,7 @@ def load(RootParser,
                            scratch_g4rt1
         sx          (int): Number of maximum scatterer cluster used
         ax          (int): Number of maximum absorber cluster used
-        n           (int): Number of events sampled from root file
+        n           (int or None): Number of events sampled from root file
 
     Return:
          None
@@ -32,10 +44,8 @@ def load(RootParser,
     dataset_name += "S" + str(sx) + "A" + str(ax)
     dataset_name += "_" + RootParser.file_name
 
-    # grab correct filepath, generate dataset in target directory.
-    # If directory doesn't exist, it will be created.
-    # "MAIN/dataset/$dataset_name$/"
-
+    # grab correct filepath, generate dataset in target directory. If directory doesn't exist
+    # it will be created: "MAIN/dataset/$dataset_name$/"
     # grab correct filepath, generate dataset in target directory.
     if path == "":
         path = "/net/scratch_g4rt1/fenger/datasets/"
@@ -43,7 +53,8 @@ def load(RootParser,
     if not os.path.isdir(path):
         os.makedirs(path, exist_ok=True)
 
-    # determine the number of events in the final dataset
+    # determine the number of events in the final dataset. Only needed if the number of events
+    # selected is not the maximum, also allows for implementation of cuts
     if n is None:
         n_samples = RootParser.events_entries
     else:
@@ -64,6 +75,7 @@ def load(RootParser,
     sample_sp = np.zeros(shape=(n_samples,), dtype=np.float32)
 
     # main iteration over root file
+    # additional indexing is needed in case physical cuts are applied (not implemented tho)
     index = 0
     for i, event in enumerate(RootParser.iterate_events(n=n_samples)):
 
@@ -99,16 +111,19 @@ def load(RootParser,
                                                    event.RecoClusterPosition_uncertainty[idx].y,
                                                    event.RecoClusterPosition_uncertainty[idx].z]
 
-        # target: ideal compton events tag
-        sample_labels[index] = event.compton_tag * 1
-        sample_attributes[index, :] = np.array([event.target_energy_e,
-                                                event.target_energy_p,
-                                                event.target_position_e.x,
-                                                event.target_position_e.y,
-                                                event.target_position_e.z,
-                                                event.target_position_p.x,
-                                                event.target_position_p.y,
-                                                event.target_position_p.z])
+        # grab target labels and attributes
+        distcompton_tag = event.get_distcompton_tag()
+        target_energy_e, target_energy_p = event.get_target_energy()
+        target_position_e, target_position_p = event.get_target_position()
+        sample_labels[index] = distcompton_tag * 1
+        sample_attributes[index, :] = np.array([target_energy_e,
+                                                target_energy_p,
+                                                target_position_e.x,
+                                                target_position_e.y,
+                                                target_position_e.z,
+                                                target_position_p.x,
+                                                target_position_p.y,
+                                                target_position_p.z])
 
         # write meta data
         sample_sp[index] = event.MCPosition_source.z
