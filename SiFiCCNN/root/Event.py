@@ -371,6 +371,105 @@ class Event:
             self.MCDirection_source = self.MCComptonPosition - self.MCPosition_source
             self.MCDirection_source /= self.MCDirection_source.mag
 
+    def _summary(self, debug=False):
+        """
+        Called by method "summary". Prints out primary gamma track information of event as well as
+        Simulation settings/parameter. This method is called first for a global event summary as it
+        prints out the main information first.
+
+        Args:
+            debug (bool): If true, prints additional high level information
+
+        Return:
+             None
+        """
+        # start of print
+        print("\n##################################################")
+        print("##### Event Summary (ID: {:18}) #####".format(self.EventNumber))
+        print("##################################################\n")
+        print("Event number (ID): {}".format(self.EventNumber))
+        print("Event type: {}".format(self.MCSimulatedEventType))
+
+        # Neural network targets + additional tagging
+        print("\n### Event tagging: ###")
+        target_energy_e, target_energy_p = self.get_target_energy()
+        target_position_e, target_position_p = self.get_target_position()
+        print("Target Energy Electron: {:.3f} [MeV]".format(target_energy_e))
+        print("Target Position Electron: ({:7.3f}, {:7.3f}, {:7.3f}) [mm]".format(
+            target_position_e.x, target_position_e.y, target_position_e.z))
+        print("Target Energy Photon: {:.3f} [MeV]".format(target_energy_p))
+        print("Target Position Photon: ({:7.3f}, {:7.3f}, {:7.3f}) [mm]".format(
+            target_position_p.x, target_position_p.y, target_position_p.z))
+        print("Distributed Compton          : {}".format(self.get_distcompton_tag()))
+        print("Distributed Compton (legacy) : {}".format(self.get_distcompton_tag_legacy()))
+        print("Phantom hit                  : {}".format(self.b_phantom_hit))
+
+        # primary gamma track information
+        print("\n### Primary Gamma track: ###")
+        print("EnergyPrimary: {:.3f} [MeV]".format(self.MCEnergy_Primary))
+        print("RealEnergy_e: {:.3f} [MeV]".format(self.MCEnergy_e))
+        print("RealEnergy_p: {:.3f} [MeV]".format(self.MCEnergy_p))
+        print("RealPosition_source: ({:7.3f}, {:7.3f}, {:7.3f}) [mm]".format(
+            self.MCPosition_source.x, self.MCPosition_source.y, self.MCPosition_source.z))
+        print("RealDirection_source: ({:7.3f}, {:7.3f}, {:7.3f}) [mm]".format(
+            self.MCDirection_source.x, self.MCDirection_source.y, self.MCDirection_source.z))
+        print("RealComptonPosition: ({:7.3f}, {:7.3f}, {:7.3f}) [mm]".format(
+            self.MCComptonPosition.x, self.MCComptonPosition.y, self.MCComptonPosition.z))
+        print("RealDirection_scatter: ({:7.3f}, {:7.3f}, {:7.3f}) [mm]".format(
+            self.MCDirection_scatter.x, self.MCDirection_scatter.y, self.MCDirection_scatter.z))
+
+        # Interaction list electron
+        print("\n# Electron interaction chain #")
+        print("Position [mm] | Interaction: (type, level)")
+        for i in range(self.MCInteractions_e_uni.shape[0]):
+            print("({:7.3f}, {:7.3f}, {:7.3f}) | ({:3}, {:3}) ".format(
+                self.MCPosition_e.x[i],
+                self.MCPosition_e.y[i],
+                self.MCPosition_e.z[i],
+                self.MCInteractions_e_uni[i, 0],
+                self.MCInteractions_e_uni[i, 1]))
+
+        # Interaction list photon
+        print("\n# Photon interaction chain #")
+        if not debug:
+            print("Position [mm] | Interaction: (type, level)")
+            for i in range(self.MCInteractions_p_uni.shape[0]):
+                print("({:7.3f}, {:7.3f}, {:7.3f}) | ({:3}, {:3})".format(
+                    self.MCPosition_p.x[i],
+                    self.MCPosition_p.y[i],
+                    self.MCPosition_p.z[i],
+                    self.MCInteractions_p_uni[i, 0],
+                    self.MCInteractions_p_uni[i, 1]))
+        else:
+            print("Position [mm] | Interaction: (type, level) | Direction difference")
+            for i in range(self.MCInteractions_p_uni.shape[0]):
+                tmp_vec = self.MCPosition_p[i] - self.MCComptonPosition
+                r = tmp_vec.mag
+                tmp_vec /= tmp_vec.mag
+                tmp_angle = vector_angle(tmp_vec, self.MCDirection_scatter)
+                print(
+                    "({:7.3f}, {:7.3f}, {:7.3f}) | ({:3}, {:3}) | {:.5f} [rad] ({:7.5f} [mm])".format(
+                        self.MCPosition_p.x[i],
+                        self.MCPosition_p.y[i],
+                        self.MCPosition_p.z[i],
+                        self.MCInteractions_p_uni[i, 0],
+                        self.MCInteractions_p_uni[i, 1],
+                        tmp_angle,
+                        np.sin(tmp_angle) * r))
+
+    def summary(self, debug=False):
+        """
+        Print full summary of event structure.
+
+        Args:
+            debug: bool, If true, plots additional information of event
+
+        return:
+            None
+        """
+
+        self._summary(debug=debug)
+
 
 class EventCluster(Event):
     """
@@ -635,6 +734,40 @@ class EventCluster(Event):
 
         return tvec3
 
+    def summary(self, debug=False):
+        # call primary summary method first
+        self._summary(debug=debug)
+
+        # add Cluster reconstruction print out
+        print("\n# Cluster Entries: #")
+        print("Energy [MeV] | Position [mm] | Entries | Timestamp [ns]")
+        for i, cluster in enumerate(self.RecoClusterPosition):
+            print(
+                "{:.3f} | {:.3f} | ({:7.3f}, {:7.3f}, {:7.3f}) | {:3} | {:7.5}".format(
+                    i,
+                    self.RecoClusterEnergies_values[i],
+                    cluster.x,
+                    cluster.y,
+                    cluster.z,
+                    self.RecoClusterEntries[i],
+                    self.RecoClusterTimestamps_relative[i]))
+
+        RecoCluster_idx_scatterer, RecoCluster_idx_absorber = self.sort_clusters_by_module(
+            use_energy=True)
+        print("Cluster in Scatterer: {} | Cluster idx: {}".format(
+            len(RecoCluster_idx_scatterer), RecoCluster_idx_scatterer))
+        print("Cluster in Absorber: {} | Cluster idx: {}".format(
+            len(RecoCluster_idx_absorber), RecoCluster_idx_absorber))
+
+        print("\n# Cut-Based Reconstruction: #")
+        print("Identification: {}".format(self.Identified))
+        reco_energy_e, reco_energy_p = self.get_reco_energy()
+        reco_position_e, reco_position_p = self.get_reco_position()
+        print("Electron Interaction: {:7.3f} [MeV] | ({:7.3f}, {:7.3f}, {:7.3f}) [mm]".format(
+            reco_energy_e, reco_position_e.x, reco_position_e.y, reco_position_e.z))
+        print("Photon   Interaction: {:7.3f} [MeV] | ({:7.3f}, {:7.3f}, {:7.3f}) [mm]".format(
+            reco_energy_p, reco_position_p.x, reco_position_p.y, reco_position_p.z))
+
 
 class EventSiPM(Event):
     """
@@ -719,3 +852,32 @@ class EventSiPM(Event):
             ary_feature[x_final, y_final, z_final, 1] = self.SiPM_triggertime[i]
 
         return ary_feature
+
+    def summary(self, debug=False):
+        # call primary summary method first
+        self._summary(debug=debug)
+
+        # add Cluster reconstruction print out
+        print("\n# Fibre Data: #")
+        print("ID | Energy [MeV] | Position [mm] | TriggerTime [ns]")
+        for j in range(len(self.fibre_id)):
+            print(
+                "{:3.3f} | {:5.3f} | ({:7.3f}, {:7.3f}, {:7.3f}) | {:7.5}".format(
+                    self.fibre_id[j],
+                    self.fibre_energy[j],
+                    self.fibre_position[j].x,
+                    self.fibre_position[j].y,
+                    self.fibre_position[j].z,
+                    self.fibre_time[j]))
+
+        print("\n# SiPM Data: #")
+        print("ID | QDC | Position [mm] | TriggerTime [ns]")
+        for j in range(len(self.SiPM_id)):
+            print(
+                "{:3.3f} | {:5.3f} | ({:7.3f}, {:7.3f}, {:7.3f}) | {:7.5}".format(
+                    self.SiPM_id[j],
+                    self.SiPM_qdc[j],
+                    self.SiPM_position[j].x,
+                    self.SiPM_position[j].y,
+                    self.SiPM_position[j].z,
+                    self.SiPM_triggertime[j]))
