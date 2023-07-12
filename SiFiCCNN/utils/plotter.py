@@ -27,9 +27,9 @@ def plot_score_distribution(y_scores, y_true, figure_name):
     plt.xlabel("Signal score")
     plt.ylabel("counts")
     plt.hist(np.array(ary_scores_pos), bins=bins, color="orange",
-             label="true positives", alpha=0.25)
+             label="True positives", alpha=0.25)
     plt.hist(np.array(ary_scores_neg), bins=bins, color="blue",
-             label="true negatives", alpha=0.25)
+             label="True negatives", alpha=0.25)
     h0, _, _ = plt.hist(np.array(ary_scores_pos), bins=bins, histtype=u"step",
                         color="orange")
     h1, _, _ = plt.hist(np.array(ary_scores_neg), bins=bins, histtype=u"step",
@@ -78,11 +78,13 @@ def plot_efficiencymap(y_pred, y_true, y_sp, figure_name, theta=0.5, sr=100):
     axs[0].set_title("Source position efficiency")
     axs[0].set_ylabel("Counts")
     axs[0].hist(y_sp, bins=ary_bin, histtype=u"step", weights=y_true,
-                color="black", alpha=0.5, label="Truth")
+                color="black", alpha=0.5, label="Dist. Compton")
     axs[0].hist(y_sp, bins=ary_bin, histtype=u"step", weights=ary_w,
                 color="red", alpha=0.5, linestyle="--",
                 label="Prediction")
     axs[0].legend(loc="upper right")
+    axs[1].set_ylim(0, 1)
+    axs[1].grid()
     axs[1].set_xlabel("Source Position z-axis [mm]")
     axs[1].set_ylabel("Efficiency")
     axs[1].errorbar(ary_bin[:-1] + width, ary_eff, ary_eff_err, ary_bin_err,
@@ -161,7 +163,7 @@ def plot_sp_distribution(ary_sp,
     plt.errorbar(bins[1:] - width / 2, hist0, np.sqrt(hist0), color="orange",
                  fmt=".")
     plt.errorbar(bins[1:] - width / 2, hist2, np.sqrt(hist2), color="black",
-                 fmt=".", label="Ideal Compton events")
+                 fmt=".", label="Dist. Compton events")
     plt.errorbar(bins[1:] - width / 2, hist1, np.sqrt(hist1), color="red",
                  fmt=".", label="True Positive events")
     plt.legend()
@@ -203,7 +205,7 @@ def plot_pe_distribution(ary_pe,
     plt.errorbar(bins[1:] - width / 2, hist0, np.sqrt(hist0), color="orange",
                  fmt=".")
     plt.errorbar(bins[1:] - width / 2, hist2, np.sqrt(hist2), color="black",
-                 fmt=".", label="Ideal Compton events")
+                 fmt=".", label="Dist. Compton events")
     plt.errorbar(bins[1:] - width / 2, hist1, np.sqrt(hist1), color="red",
                  fmt=".", label="True Positive events")
     plt.yscale("log")
