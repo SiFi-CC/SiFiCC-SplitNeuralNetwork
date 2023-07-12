@@ -16,9 +16,9 @@ def main():
     # Datasets used
     # Training file used for classification and regression training
     # Generated via an input generator, contain one Bragg-peak position
-    DATASET_CONT = "DenseClusterS4A6_OptimisedGeometry_Continuous_2e10protons"
-    DATASET_0MM = "DenseClusterS4A6_OptimisedGeometry_BP0mm_2e10protons_withTimestamps"
-    DATASET_5MM = "DenseClusterS4A6_OptimisedGeometry_BP5mm_4e9protons_withTimestamps"
+    DATASET_CONT = "DenseClusterS4A6_OptimisedGeometry_Continuous_2e10protons_taggingv3"
+    DATASET_0MM = "DenseClusterS4A6_OptimisedGeometry_BP0mm_2e10protons_taggingv3"
+    DATASET_5MM = "DenseClusterS4A6_OptimisedGeometry_BP5mm_4e9protons_taggingv3"
 
     # go backwards in directory tree until the main repo directory is matched
     path = os.getcwd()
@@ -54,7 +54,11 @@ def main():
         # predict test dataset
         os.chdir(path_results + file + "/")
         # load dataset
-        data = dataset.DenseCluster(DATASET_CONT)
+        data = dataset.DenseCluster(file)
+
+        # TEMPORARY: DROP OUT ALL EVENTS WITH MORE THAN ONE SCATTERER CLUSTER
+        data.update_indexing_ordered()
+
         # set full dataset to test sample
         data.p_train = 0.0
         data.p_valid = 0.0
@@ -67,13 +71,12 @@ def main():
         y_pred_energy = model_regE.predict(data.x_test())
         y_pred_position = model_regP.predict(data.x_test())
 
-        nn_pred = np.zeros(shape=(data.entries, 10))
+        nn_pred = np.zeros(shape=(len(data.y_test()), 9))
         nn_pred[:, 0] = np.reshape(y_scores, newshape=(len(y_scores),))
         nn_pred[:, 1:3] = np.reshape(y_pred_energy,
                                      newshape=(y_pred_energy.shape[0], y_pred_energy.shape[1]))
-        nn_pred[:, 3:-1] = np.reshape(y_pred_position,
-                                      newshape=(y_pred_position.shape[0], y_pred_position.shape[1]))
-        # last column stays empty for possible theta angle prediction
+        nn_pred[:, 3:] = np.reshape(y_pred_position,
+                                    newshape=(y_pred_position.shape[0], y_pred_position.shape[1]))
 
         # This is done this way cause y_scores gets a really dumb shape from tensorflow
         idx_clas_pos = [float(y_scores[i]) > threshold for i in range(len(y_scores))]
@@ -91,9 +94,10 @@ def main():
                             ary_px=nn_pred[idx_clas_pos, 6],
                             ary_py=nn_pred[idx_clas_pos, 7],
                             ary_pz=nn_pred[idx_clas_pos, 8],
-                            ary_theta=nn_pred[idx_clas_pos, 9],
-                            filename=file + "_CC6" + "_theta" + str(threshold).replace(".", ""),
-                            verbose=1)
+                            filename="CC6IR_NNRECO_" + file + "_theta" + str(threshold).replace(".",
+                                                                                                ""),
+                            verbose=1,
+                            veto=True)
 
 
 if __name__ == "__main__":

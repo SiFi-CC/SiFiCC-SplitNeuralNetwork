@@ -5,7 +5,6 @@ import json
 import tensorflow as tf
 
 import dataset
-import downloader
 
 from tensorflow.keras.models import Model
 from tensorflow.keras.layers import Dense, Dropout, Concatenate
@@ -23,32 +22,6 @@ from SiFiCCNN.utils.plotter import plot_history_classifier, \
     plot_pe_distribution, \
     plot_2dhist_ep_score, \
     plot_2dhist_sp_score
-
-
-def generate_dataset(n=None):
-    from SiFiCCNN.root import Root
-
-    # Used root files
-    ROOT_FILE_BP0mm = "OptimisedGeometry_BP0mm_2e10protons_withTimestamps.root"
-    ROOT_FILE_BP5mm = "OptimisedGeometry_BP5mm_4e9protons_withTimestamps.root"
-    ROOT_FILE_CONT = "OptimisedGeometry_Continuous_2e10protons.root"
-
-    # go backwards in directory tree until the main repo directory is matched
-    path = os.getcwd()
-    while True:
-        path = os.path.abspath(os.path.join(path, os.pardir))
-        if os.path.basename(path) == "SiFiCC-SplitNeuralNetwork":
-            break
-    path_main = path
-
-    path_root = path_main + "/root_files/"
-    path_datasets = path_main + "/datasets/"
-
-    for file in [ROOT_FILE_CONT, ROOT_FILE_BP0mm, ROOT_FILE_BP5mm]:
-        root = Root.Root(path_root + file)
-        downloader.load(root,
-                        path=path_datasets,
-                        n=n)
 
 
 class GCNmodel(Model):
@@ -113,8 +86,8 @@ def main():
     valsplit = 0.1
 
     RUN_NAME = "GCNCluster"
-    do_training = True
-    do_evaluate = False
+    do_training = False
+    do_evaluate = True
 
     # create dictionary for model parameter
     modelParameter = {"nOutput": 1,
@@ -125,9 +98,9 @@ def main():
     # Datasets used
     # Training file used for classification and regression training
     # Generated via an input generator, contain one Bragg-peak position
-    DATASET_CONT = "GraphCluster_OptimisedGeometry_Continuous_2e10protons"
-    DATASET_0MM = "GraphCluster_OptimisedGeometry_BP0mm_2e10protons_withTimestamps"
-    DATASET_5MM = "GraphCluster_OptimisedGeometry_BP5mm_4e9protons_withTimestamps"
+    DATASET_CONT = "GraphCluster_OptimisedGeometry_Continuous_2e10protons_taggingv3"
+    DATASET_0MM = "GraphCluster_OptimisedGeometry_BP0mm_2e10protons_taggingv3"
+    DATASET_5MM = "GraphCluster_OptimisedGeometry_BP5mm_4e9protons_taggingv3"
 
     # go backwards in directory tree until the main repo directory is matched
     path = os.getcwd()
@@ -245,7 +218,6 @@ def main():
                 p = tf_model(inputs, training=False)
                 y_true.append(target)
                 y_scores.append(p.numpy())
-
             y_true = np.vstack(y_true)
             y_scores = np.vstack(y_scores)
             y_true = np.reshape(y_true, newshape=(y_true.shape[0],))*1
@@ -286,8 +258,4 @@ def main():
 
 
 if __name__ == "__main__":
-    gen_dataset = False
-    if gen_dataset:
-        generate_dataset(n=None)
-    else:
-        main()
+    main()

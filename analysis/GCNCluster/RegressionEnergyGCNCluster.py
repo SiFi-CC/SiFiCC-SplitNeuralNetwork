@@ -7,7 +7,7 @@ import tensorflow as tf
 import dataset
 import downloader
 
-from ClassificationGCNCluster import GCNmodel, generate_dataset
+from ClassificationGCNCluster import GCNmodel
 
 from spektral.layers import GCNConv, ECCConv, GlobalSumPool
 from spektral.data.loaders import DisjointLoader
@@ -38,7 +38,7 @@ def main():
     valsplit = 0.1
 
     RUN_NAME = "GCNCluster"
-    do_training = False
+    do_training = True
     do_evaluate = True
 
     # create dictionary for model parameter
@@ -50,9 +50,9 @@ def main():
     # Datasets used
     # Training file used for classification and regression training
     # Generated via an input generator, contain one Bragg-peak position
-    DATASET_CONT = "GraphCluster_OptimisedGeometry_Continuous_2e10protons"
-    DATASET_0MM = "GraphCluster_OptimisedGeometry_BP0mm_2e10protons_withTimestamps"
-    DATASET_5MM = "GraphCluster_OptimisedGeometry_BP5mm_4e9protons_withTimestamps"
+    DATASET_CONT = "GraphCluster_OptimisedGeometry_Continuous_2e10protons_taggingv3"
+    DATASET_0MM = "GraphCluster_OptimisedGeometry_BP0mm_2e10protons_taggingv3"
+    DATASET_5MM = "GraphCluster_OptimisedGeometry_BP5mm_4e9protons_taggingv3"
 
     # go backwards in directory tree until the main repo directory is matched
     path = os.getcwd()
@@ -182,8 +182,4 @@ def main():
 
 
 if __name__ == "__main__":
-    gen_dataset = False
-    if gen_dataset:
-        generate_dataset(n=None)
-    else:
-        main()
+    main()

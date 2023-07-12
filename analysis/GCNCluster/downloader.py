@@ -4,7 +4,6 @@ import os
 
 def load(RootParser,
          path="",
-         energy_cut=None,
          n=None):
     """
     Script to generate a dataset in graph basis.
@@ -18,8 +17,7 @@ def load(RootParser,
         RootParser  (root Object): root object containing root file
         path        (str): destination path, if not given it will default to
                            scratch_g4rt1
-        energy_cut  (float): energy cut applied to deposited energy
-        n           (int): Number of events sampled from root file
+        n           (int or None): Number of events sampled from root file
 
     Return:
          None
@@ -27,8 +25,6 @@ def load(RootParser,
 
     # define dataset name
     dataset_name = "GraphCluster"
-    if energy_cut is not None:
-        dataset_name += "_ECUT" + str(energy_cut).replace(".", "DOT") + "MEV"
     dataset_name += "_" + RootParser.file_name
 
     # grab correct filepath, generate dataset in target directory.
@@ -41,32 +37,16 @@ def load(RootParser,
     # Pre-determine the final array size.
     # Total number of graphs is needed (n samples)
     # Total number of nodes (Iteration over root file needed)
-    # Energy cut (if needed) applied
     print("Counting number of graphs to be created")
     if n is None:
-        n_samples = RootParser.events_entries
+        n_graphs = RootParser.events_entries
     else:
-        n_samples = n
-
-    if energy_cut is not None:
-        n_graphs = 0
-        n_nodes = 0
-        m_edges = 0
-        for i, event in enumerate(RootParser.iterate_events(n=n_samples)):
-            if np.sum(event.RecoClusterEnergies_values) > energy_cut:
-                n_graphs += 1
-                n_nodes += len(event.RecoClusterEntries)
-                m_edges += len(event.RecoClusterEntries) * len(event.RecoClusterEntries)
-    else:
-        if n is None:
-            n_graphs = RootParser.events_entries
-        else:
-            n_graphs = n
-        n_nodes = 0
-        m_edges = 0
-        for i, event in enumerate(RootParser.iterate_events(n=n_graphs)):
-            n_nodes += len(event.RecoClusterEntries)
-            m_edges += len(event.RecoClusterEntries) * len(event.RecoClusterEntries)
+        n_graphs = n
+    n_nodes = 0
+    m_edges = 0
+    for i, event in enumerate(RootParser.iterate_events(n=n_graphs)):
+        n_nodes += len(event.RecoClusterEntries)
+        m_edges += len(event.RecoClusterEntries) * len(event.RecoClusterEntries)
     print("Number of Graphs to be created: ", n_graphs)
     print("Total number of nodes to be created: ", n_nodes)
     print("Graph features: ", 10)
@@ -121,15 +101,19 @@ def load(RootParser,
                                                event.RecoClusterPosition_uncertainty.z[j]]
             node_id += 1
 
-        ary_graph_labels[i] = event.compton_tag
-        ary_graph_attributes[i, :] = [event.target_energy_e,
-                                      event.target_energy_p,
-                                      event.target_position_e.x,
-                                      event.target_position_e.y,
-                                      event.target_position_e.z,
-                                      event.target_position_p.x,
-                                      event.target_position_p.y,
-                                      event.target_position_p.z]
+        # grab target labels and attributes
+        distcompton_tag = event.get_distcompton_tag()
+        target_energy_e, target_energy_p = event.get_target_energy()
+        target_position_e, target_position_p = event.get_target_position()
+        ary_graph_labels[i] = distcompton_tag * 1
+        ary_graph_attributes[i, :] = [target_energy_e,
+                                      target_energy_p,
+                                      target_position_e.x,
+                                      target_position_e.y,
+                                      target_position_e.z,
+                                      target_position_p.x,
+                                      target_position_p.y,
+                                      target_position_p.z]
 
         ary_ep[i] = event.MCEnergy_Primary
         ary_sp[i] = event.MCPosition_source.z

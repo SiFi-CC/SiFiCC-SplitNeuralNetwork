@@ -59,9 +59,10 @@ class DenseCluster:
         # get current path, go two subdirectories higher
         path = os.getcwd()
         while True:
-            path = os.path.abspath(os.path.join(path, os.pardir))
             if os.path.basename(path) == "SiFiCC-SplitNeuralNetwork":
                 break
+            path = os.path.abspath(os.path.join(path, os.pardir))
+
         path = os.path.join(path, "datasets", "SiFiCCNN_DenseCluster", self.name)
 
         return path
@@ -173,9 +174,48 @@ class DenseCluster:
         Returns:
             None
         """
-        ary_idx = np.arange(0, self.entries, 1.0, dtype=int)
+        self.ary_idx = np.arange(0, self.entries, 1.0, dtype=int)
         rng = np.random.default_rng(42)
         rng.shuffle(self.ary_idx)
+
+    def update_indexing_ordered(self):
+        """
+        Updates the ary_idx attribute to contain all indices in order.
+
+        Returns:
+            None
+        """
+        self.ary_idx = np.arange(0, self.entries, 1.0, dtype=int)
+
+    def update_indexing_s1ax(self):
+        """
+        Updates the ary_idx attribute to contain all indices for events with only one scatterer
+        cluster.
+
+        Returns:
+            None
+        """
+        list_idx = []
+        for i in range(self.entries):
+            # check if attribute of second timestamp is zero == second cluster is not filled
+            if self.features[i, 1, 0] == 0.0:
+                list_idx.append(i)
+        self.ary_idx = np.array(list_idx)
+
+    def update_indexing_s1ax_positive(self):
+        """
+        Updates the ary_idx attribute to contain all indices for events with only one scatterer
+        cluster.
+
+        Returns:
+            None
+        """
+        list_idx = []
+        for i in range(self.entries):
+            # check if attribute of second timestamp is zero == second cluster is not filled
+            if self.features[i, 1, 0] == 0.0 and self.labels[i] == 1:
+                list_idx.append(i)
+        self.ary_idx = np.array(list_idx)
 
     def update_targets_clas(self):
         """
@@ -215,9 +255,9 @@ class DenseCluster:
             dict, dictionary containing class weights
         """
         # set sample weights to class weights
-        _, counts = np.unique(self.labels, return_counts=True)
-        class_weights = {0: len(self.labels) / (2 * counts[0]),
-                         1: len(self.labels) / (2 * counts[1])}
+        _, counts = np.unique(self.labels[self.ary_idx], return_counts=True)
+        class_weights = {0: len(self.labels[self.ary_idx]) / (2 * counts[0]),
+                         1: len(self.labels[self.ary_idx]) / (2 * counts[1])}
 
         return class_weights
 

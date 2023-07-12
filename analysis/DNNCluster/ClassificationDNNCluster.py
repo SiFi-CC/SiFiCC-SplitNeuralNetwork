@@ -5,7 +5,6 @@ import json
 import tensorflow as tf
 
 import dataset
-import downloader
 
 from SiFiCCNN.analysis import fastROCAUC, metrics
 from SiFiCCNN.utils.plotter import plot_history_classifier, \
@@ -18,38 +17,26 @@ from SiFiCCNN.utils.plotter import plot_history_classifier, \
     plot_2dhist_sp_score
 
 
-def generate_dataset(n=None):
-    from SiFiCCNN.root import Root
-
-    # Used root files
-    ROOT_FILE_BP0mm = "OptimisedGeometry_BP0mm_2e10protons_withTimestamps.root"
-    ROOT_FILE_BP5mm = "OptimisedGeometry_BP5mm_4e9protons_withTimestamps.root"
-    ROOT_FILE_CONT = "OptimisedGeometry_Continuous_2e10protons.root"
-
-    # go backwards in directory tree until the main repo directory is matched
-    path = os.getcwd()
-    while True:
-        path = os.path.abspath(os.path.join(path, os.pardir))
-        if os.path.basename(path) == "SiFiCC-SplitNeuralNetwork":
-            break
-    path_main = path
-
-    path_root = path_main + "/root_files/"
-    path_datasets = path_main + "/datasets/"
-
-    for file in [ROOT_FILE_CONT, ROOT_FILE_BP0mm, ROOT_FILE_BP5mm]:
-        root = Root.Root(path_root + file)
-        downloader.load(root,
-                        path=path_datasets,
-                        n=n)
-
-
 def setupModel(nOutput,
                OutputActivation,
                dropout,
                nNodes,
                nCluster=10,
                activation="relu", ):
+    """
+    Method for building the keras sequential model.
+
+    Args:
+        nOutput: int, number of output nodes
+        OutputActivation: activation function of output layer
+        dropout: float, dropout percentage
+        nNodes: int, number of nodes in network
+        nCluster: int, number of total clusters used in input
+        activation: main activation function for all hidden layers
+
+    Returns:
+        keras model
+    """
     model = tf.keras.models.Sequential()
     model.add(tf.keras.layers.Flatten(input_shape=(nCluster, 10)))
     model.add(tf.keras.layers.Dense(nNodes, activation=activation))
@@ -67,11 +54,20 @@ def setupModel(nOutput,
 
 
 def lr_scheduler(epoch):
-    if epoch < 20:
+    """
+    Learning rate scheduler used for training. Given to callblack.
+
+    Args:
+        epoch:
+
+    Returns:
+        learning rate
+    """
+    if epoch < 5:
         return 1e-3
-    if epoch < 30:
+    if epoch < 10:
         return 5e-4
-    if epoch < 40:
+    if epoch < 20:
         return 1e-4
     return 1e-5
 
@@ -80,14 +76,14 @@ def main():
     # defining hyper parameters
     sx = 4
     ax = 6
-    dropout = 0.1
+    dropout = 0.10
     nNodes = 64
     batch_size = 64
-    nEpochs = 10
+    nEpochs = 20
 
     RUN_NAME = "DNNCluster_" + "S" + str(sx) + "A" + str(ax)
-    do_training = False
-    do_evaluate = False
+    do_training = True
+    do_evaluate = True
 
     # create dictionary for model parameter
     modelParameter = {"nOutput": 1,
@@ -100,9 +96,9 @@ def main():
     # Datasets used
     # Training file used for classification and regression training
     # Generated via an input generator, contain one Bragg-peak position
-    DATASET_CONT = "DenseClusterS4A6_OptimisedGeometry_Continuous_2e10protons"
-    DATASET_0MM = "DenseClusterS4A6_OptimisedGeometry_BP0mm_2e10protons_withTimestamps"
-    DATASET_5MM = "DenseClusterS4A6_OptimisedGeometry_BP5mm_4e9protons_withTimestamps"
+    DATASET_CONT = "DenseClusterS4A6_OptimisedGeometry_Continuous_2e10protons_taggingv3"
+    DATASET_0MM = "DenseClusterS4A6_OptimisedGeometry_BP0mm_2e10protons_taggingv3"
+    DATASET_5MM = "DenseClusterS4A6_OptimisedGeometry_BP5mm_4e9protons_taggingv3"
 
     # go backwards in directory tree until the main repo directory is matched
     path = os.getcwd()
@@ -122,6 +118,9 @@ def main():
             os.mkdir(path_results + "/" + file + "/")
 
     if do_training:
+        # main training loop:
+        # Load dataset class, build keras model, calculate standardization parameter, apply them
+        # apply class-weights for classification, fit the model, save all results
         data = dataset.DenseCluster(name=DATASET_CONT)
         tf_model = setupModel(**modelParameter)
 
@@ -222,9 +221,6 @@ def main():
                                  y_true=y_true,
                                  figure_name="2dhist_pe_score")
 
+
 if __name__ == "__main__":
-    gen_dataset = False
-    if gen_dataset:
-        generate_dataset(n=100000)
-    else:
-        main()
+    main()

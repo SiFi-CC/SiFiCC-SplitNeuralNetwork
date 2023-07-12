@@ -5,15 +5,21 @@ import json
 import tensorflow as tf
 
 import dataset
-import downloader
 
-from ClassificationDNNCluster import setupModel, generate_dataset
-
-from SiFiCCNN.analysis import fastROCAUC, metrics
+from ClassificationDNNCluster import setupModel
 from SiFiCCNN.utils.plotter import plot_history_regression, plot_energy_error
 
 
 def lr_scheduler(epoch):
+    """
+    Learning rate scheduler used for training. Given to callblack.
+
+    Args:
+        epoch:
+
+    Returns:
+        learning rate
+    """
     if epoch < 20:
         return 1e-3
     if epoch < 30:
@@ -27,14 +33,14 @@ def main():
     # defining hyper parameters
     sx = 4
     ax = 6
-    dropout = 0.1
-    nNodes = 64
+    dropout = 0.05
+    nNodes = 32
     batch_size = 64
-    nEpochs = 10
+    nEpochs = 50
 
     RUN_NAME = "DNNCluster_" + "S" + str(sx) + "A" + str(ax)
-    do_training = False
-    do_evaluate = False
+    do_training = True
+    do_evaluate = True
 
     # create dictionary for model parameter
     modelParameter = {"nOutput": 2,
@@ -47,9 +53,9 @@ def main():
     # Datasets used
     # Training file used for classification and regression training
     # Generated via an input generator, contain one Bragg-peak position
-    DATASET_CONT = "DenseClusterS4A6_OptimisedGeometry_Continuous_2e10protons"
-    DATASET_0MM = "DenseClusterS4A6_OptimisedGeometry_BP0mm_2e10protons_withTimestamps"
-    DATASET_5MM = "DenseClusterS4A6_OptimisedGeometry_BP5mm_4e9protons_withTimestamps"
+    DATASET_CONT = "DenseClusterS4A6_OptimisedGeometry_Continuous_2e10protons_taggingv3"
+    DATASET_0MM = "DenseClusterS4A6_OptimisedGeometry_BP0mm_2e10protons_taggingv3"
+    DATASET_5MM = "DenseClusterS4A6_OptimisedGeometry_BP5mm_4e9protons_taggingv3"
 
     # go backwards in directory tree until the main repo directory is matched
     path = os.getcwd()
@@ -70,6 +76,8 @@ def main():
 
     if do_training:
         data = dataset.DenseCluster(name=DATASET_CONT)
+        data.update_indexing_positives()
+
         tf_model = setupModel(**modelParameter)
 
         optimizer = tf.keras.optimizers.Adam(learning_rate=1e-3)
@@ -84,7 +92,6 @@ def main():
         # set correct targets, restrict sample to true positive events only
         norm = data.get_standardization(10, 10)
         data.standardize(norm, 10)
-        data.update_indexing_positives()
         data.update_targets_energy()
 
         history = tf_model.fit(data.x_train(),
@@ -126,6 +133,7 @@ def main():
 
             # load dataset
             data = dataset.DenseCluster(file)
+            data.update_indexing_positives()
 
             if file in [DATASET_0MM, DATASET_5MM]:
                 data.p_train = 0.0
@@ -134,7 +142,6 @@ def main():
 
             # set normalization from training dataset
             data.standardize(norm, 10)
-            data.update_indexing_positives()
             data.update_targets_energy()
 
             y_pred = tf_model.predict(data.x_test())
@@ -146,8 +153,4 @@ def main():
 
 
 if __name__ == "__main__":
-    gen_dataset = False
-    if gen_dataset:
-        generate_dataset(n=100000)
-    else:
-        main()
+    main()
