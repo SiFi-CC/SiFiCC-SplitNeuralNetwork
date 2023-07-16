@@ -117,7 +117,7 @@ class RootParser:
         iteration over the events root tree
 
         Args:
-            n (int) or (None):  total number of events being returned,
+            n (int or None):    total number of events being returned,
                                 if None the maximum number will be iterated.
 
         Returns:
