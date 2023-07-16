@@ -10,7 +10,7 @@ from SiFiCCNN.ImageReconstruction import IRExport
 
 def main():
     # defining hyper parameters
-    RUN_NAME = "DNNCluster_S4A6"
+    RUN_NAME = "DNNCluster_S4A6_NORM"
     threshold = 0.5
 
     # Datasets used
@@ -64,7 +64,8 @@ def main():
         data.p_valid = 0.0
         data.p_test = 1.0
         # set normalization from training dataset
-        data.standardize(norm, 10)
+        data.normalize()
+        # data.standardize(norm, 10)
 
         # full neural network chain
         y_scores = model_clas.predict(data.x_test())

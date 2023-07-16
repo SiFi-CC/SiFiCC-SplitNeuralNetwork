@@ -306,3 +306,11 @@ class DenseCluster:
         """
         for i in range(n_features):
             self.features[:, :, i] = (self.features[:, :, i] - norm[i, 0]) / norm[i, 1]
+
+    def normalize(self, n_features=10):
+
+        ary_p0 = np.array([0, 0, 0, 210, 0, 0, 0, 0, 0, 0])
+        ary_p1 = np.array([2, 5, 3, 60, 50, 50, 3, 3, 16, 3])
+
+        for i in range(n_features):
+            self.features[:, :, i] = (self.features[:, :, i] - ary_p0[i]) / ary_p1[i]

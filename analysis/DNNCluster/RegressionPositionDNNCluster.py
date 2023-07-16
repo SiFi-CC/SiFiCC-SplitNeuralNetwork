@@ -22,14 +22,14 @@ def lr_scheduler(epoch):
 
 def main():
     # defining hyper parameters
-    sx = 1
+    sx = 4
     ax = 6
     dropout = 0.0
     nNodes = 64
     batch_size = 64
     nEpochs = 50
 
-    RUN_NAME = "DNNCluster_" + "S" + str(sx) + "A" + str(ax)
+    RUN_NAME = "DNNCluster_" + "S" + str(sx) + "A" + str(ax) + "_NORM"
     do_training = True
     do_evaluate = True
 
@@ -82,7 +82,8 @@ def main():
         # set normalization from training dataset
         # set correct targets, restrict sample to true positive events only
         norm = data.get_standardization(10, 10)
-        data.standardize(norm, 10)
+        #data.standardize(norm, 10)
+        data.normalize()
         data.update_targets_position()
 
         history = tf_model.fit(data.x_train(),
@@ -131,7 +132,8 @@ def main():
                 data.p_test = 1.0
 
             # set normalization from training dataset
-            data.standardize(norm, 10)
+            # data.standardize(norm, 10)
+            data.normalize()
             data.update_targets_position()
 
             y_pred = tf_model.predict(data.x_test())

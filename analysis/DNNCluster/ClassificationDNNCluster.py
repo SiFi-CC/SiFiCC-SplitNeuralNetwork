@@ -4,7 +4,7 @@ import pickle as pkl
 import json
 import tensorflow as tf
 
-import dataset
+from analysis.DNNCluster import dataset
 
 from SiFiCCNN.analysis import fastROCAUC, metrics
 from SiFiCCNN.utils.plotter import plot_history_classifier, \
@@ -81,7 +81,7 @@ def main():
     batch_size = 64
     nEpochs = 20
 
-    RUN_NAME = "DNNCluster_" + "S" + str(sx) + "A" + str(ax)
+    RUN_NAME = "DNNCluster_" + "S" + str(sx) + "A" + str(ax) + "_NORM"
     do_training = True
     do_evaluate = True
 
@@ -134,7 +134,8 @@ def main():
 
         # set normalization from training dataset
         norm = data.get_standardization(10, 10)
-        data.standardize(norm, 10)
+        #data.standardize(norm, 10)
+        data.normalize()
         class_weights = data.get_classweights()
 
         history = tf_model.fit(data.x_train(),
@@ -183,7 +184,8 @@ def main():
                 data.p_test = 1.0
 
             # set normalization from training dataset
-            data.standardize(norm, 10)
+            # data.standardize(norm, 10)
+            data.normalize()
 
             y_scores = tf_model.predict(data.x_test())
             y_true = data.y_test()
