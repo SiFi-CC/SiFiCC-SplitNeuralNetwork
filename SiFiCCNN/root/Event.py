@@ -86,8 +86,8 @@ class Event:
         # variants. Uniformed variant is defined in a (nx2) array where the columns describe:
         #   - type: describes the interaction type of particle interaction
         #   - level: describes the secondary level of the interacting particle
-        self.MCInteractions_e_uni = np.zeros(shape=(len(self.MCInteractions_e), 2))
-        self.MCInteractions_p_uni = np.zeros(shape=(len(self.MCInteractions_p), 2))
+        self.MCInteractions_e_uni = np.zeros(shape=(len(self.MCInteractions_e), 4))
+        self.MCInteractions_p_uni = np.zeros(shape=(len(self.MCInteractions_p), 4))
         self.set_interaction_list()
 
         # Control labels (might be disabled later, are mostly for analysis/debugging)
@@ -117,27 +117,31 @@ class Event:
             # X // 10**n % 10 is an elegant method to get the n+1'st digit of X
             if len(str(self.MCInteractions_e[0])) <= 2:
                 for i, interact in enumerate(self.MCInteractions_e):
-                    self.MCInteractions_e_uni[i, :] = [interact // 10 ** 0 % 10,
-                                                       interact // 10 ** 1 % 10]
+                    self.MCInteractions_e_uni[i, :2] = [interact // 10 ** 0 % 10,
+                                                        interact // 10 ** 1 % 10]
                 for i, interact in enumerate(self.MCInteractions_p):
-                    self.MCInteractions_p_uni[i, :] = [interact // 10 ** 0 % 10,
-                                                       interact // 10 ** 1 % 10]
+                    self.MCInteractions_p_uni[i, :2] = [interact // 10 ** 0 % 10,
+                                                        interact // 10 ** 1 % 10]
             elif len(str(self.MCInteractions_e[0])) == 3:
                 for i, interact in enumerate(self.MCInteractions_e):
-                    self.MCInteractions_e_uni[i, :] = [interact // 10 ** 0 % 10,
-                                                       interact // 10 ** 1 % 10]
+                    self.MCInteractions_e_uni[i, :3] = [interact // 10 ** 0 % 10,
+                                                        interact // 10 ** 1 % 10,
+                                                        interact // 10 ** 2 % 10]
                 for i, interact in enumerate(self.MCInteractions_p):
-                    self.MCInteractions_p_uni[i, :] = [interact // 10 ** 0 % 10,
-                                                       interact // 10 ** 1 % 10]
+                    self.MCInteractions_p_uni[i, :3] = [interact // 10 ** 0 % 10,
+                                                        interact // 10 ** 1 % 10,
+                                                        interact // 10 ** 2 % 10]
             elif len(str(self.MCInteractions_e[0])) == 5:
                 for i, interact in enumerate(self.MCInteractions_e):
                     self.MCInteractions_e_uni[i, :] = [
                         interact // 10 ** 2 % 10 + 10 * (interact // 10 ** 3 % 10),
-                        interact // 10 ** 1 % 10]
+                        interact // 10 ** 1 % 10,
+                        interact // 10 ** 0 % 10]
                 for i, interact in enumerate(self.MCInteractions_p):
                     self.MCInteractions_p_uni[i, :] = [
                         interact // 10 ** 2 % 10 + 10 * (interact // 10 ** 3 % 10),
-                        interact // 10 ** 1 % 10]
+                        interact // 10 ** 1 % 10,
+                        interact // 10 ** 0 % 10]
 
     # neural network target getter methods
     def get_target_position(self):
@@ -441,17 +445,18 @@ class Event:
                     self.MCInteractions_p_uni[i, 0],
                     self.MCInteractions_p_uni[i, 1]))
         else:
-            print("Position [mm] | Interaction: (type, level) | Direction difference")
+            print("Position [mm] | Interaction: (Ptype, Itype, level) | Direction difference")
             for i in range(self.MCInteractions_p_uni.shape[0]):
                 tmp_vec = self.MCPosition_p[i] - self.MCComptonPosition
                 r = tmp_vec.mag
                 tmp_vec /= tmp_vec.mag
                 tmp_angle = vector_angle(tmp_vec, self.MCDirection_scatter)
                 print(
-                    "({:7.3f}, {:7.3f}, {:7.3f}) | ({:3}, {:3}) | {:.5f} [rad] ({:7.5f} [mm])".format(
+                    "({:7.3f}, {:7.3f}, {:7.3f}) | ({:3}, {:3}, {:3}) | {:.5f} [rad] ({:7.5f} [mm])".format(
                         self.MCPosition_p.x[i],
                         self.MCPosition_p.y[i],
                         self.MCPosition_p.z[i],
+                        self.MCInteractions_p_uni[i, 2],
                         self.MCInteractions_p_uni[i, 0],
                         self.MCInteractions_p_uni[i, 1],
                         tmp_angle,
