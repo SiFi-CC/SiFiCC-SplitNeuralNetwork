@@ -10,12 +10,15 @@
 
 import numpy as np
 import os
+
 import matplotlib.pyplot as plt
 from matplotlib.colors import LogNorm
 from scipy.optimize import curve_fit
 
 plt.rcParams.update({'font.size': 12})
+
 from SiFiCCNN.root import RootParser, RootFiles
+from SiFiCCNN.utils.physics import vector_angle
 
 # get current path, go two subdirectories higher
 path = os.getcwd()
@@ -28,7 +31,7 @@ path_root = path + "/root_files/"
 
 # load root files
 # As a comparison the old BP0mm with taggingv1 will be loaded as well
-root_parser_old = RootParser.RootParser(path_root + RootFiles.onetoone_BP0mm_taggingv2)
+root_parser_old = RootParser.RootParser(path_root + RootFiles.onetoone_BP5mm_taggingv2)
 root_parser_new = RootParser.RootParser(path_root + RootFiles.onetoone_BP0mm_taggingv2)
 
 # --------------------------------------------------------------------------------------------------
@@ -58,8 +61,18 @@ mc_px = np.zeros(shape=(n1,))
 mc_py = np.zeros(shape=(n1,))
 mc_pz = np.zeros(shape=(n1,))
 
+# counting statistics
 n1_compton = 0
 n1_compton_ph = 0
+
+# distance measurements cluster/interaction
+# distance of the nearest cluster/interaction to scattered gamma track
+list_clustdist = []
+list_clustdist_ph = []
+list_clustdist_all = []
+list_intdist = []
+list_intdist_ph = []
+list_intdist_all = []
 
 list1_tdot = []
 list1_ph_tdot = []
@@ -75,47 +88,81 @@ list1_eabs = []
 list1_ph_ep = []
 list1_ph_eabs = []
 
+# main iteration over root file. All needed quantities for the analysis are collected at once to
+# save on iterations over the root file
 for i, event in enumerate(root_parser_old.iterate_events(n=n1)):
-    # set mc truths
-    mc_ee[i] = event.target_energy_e
-    mc_ep[i] = event.target_energy_p
-    mc_ex[i] = event.target_position_e.x
-    mc_ey[i] = event.target_position_e.y
-    mc_ez[i] = event.target_position_e.z
-    mc_px[i] = event.target_position_p.x
-    mc_py[i] = event.target_position_p.y
-    mc_pz[i] = event.target_position_p.z
+    # grab MC-Truth values and collect them
+    target_energy_e, target_energy_p = event.get_target_energy()
+    target_position_e, target_position_p = event.get_target_position()
+    mc_ee[i] = target_energy_e
+    mc_ep[i] = target_energy_p
+    mc_ex[i] = target_position_e.x
+    mc_ey[i] = target_position_e.y
+    mc_ez[i] = target_position_e.z
+    mc_px[i] = target_position_p.x
+    mc_py[i] = target_position_p.y
+    mc_pz[i] = target_position_p.z
 
-    if event.compton_tag:
-        tmp_angle = event.calc_theta_dotvec(
-            event.target_position_p - event.MCComptonPosition, event.MCDirection_scatter)
-        idx_scat, idx_abs = event.sort_clusters_by_module()
+    # at this point skip events that are meaningless for phantom hit analysis
+    if not len(event.MCPosition_p) > 1:
+        continue
+
+    # collect quantities from phantom hits and distributed compton events
+    idx_scat, idx_abs = event.sort_clusters_by_module()
+    tmp_list_dist = []
+    for j in idx_abs:
+        tmp_vector_cluster = event.RecoClusterPosition[j] - event.MCComptonPosition
+        tmp_angle_cluster = vector_angle(event.MCDirection_scatter,
+                                         tmp_vector_cluster)
+        dist_cluster = np.sin(tmp_angle_cluster) * tmp_vector_cluster.mag
+        tmp_list_dist.append(dist_cluster)
+    min_dist_cluster = min(tmp_list_dist)  # distance of the closest cluster to scattering direction
+
+    tmp_list_dist = []
+    for j in range(1, len(event.MCPosition_p)):
+        tmp_vector_int = event.MCPosition_p[j] - event.MCComptonPosition
+        tmp_angle_int = vector_angle(event.MCDirection_scatter,
+                                     tmp_vector_int)
+        dist_int = np.sin(tmp_angle_int) * tmp_vector_int.mag
+        tmp_list_dist.append(dist_int)
+    min_dist_int = min(tmp_list_dist)  # distance of the closest cluster to scattering direction
+
+    # for all events
+    list_clustdist_all.append(min_dist_cluster)
+    list_intdist_all.append(min_dist_int)
+
+    # collection from only distributed compton events (phantom hits included)
+    if event.get_distcompton_tag():
         n1_compton += 1
 
-        if not event.temp_correctsecondary:
+        if not event.b_phantom_hit:
             mask_compton[i] = 1
-            list1_tdot.append(event.theta_dotvec)
+            list1_tdot.append(event.scatter_angle_dotvec)
             list1_pe.append(event.MCEnergy_Primary)
             list1_ep.append(event.MCEnergy_p)
             list1_eabs.append(np.sum(event.RecoClusterEnergies_values[idx_abs]))
-            list1_tdot_diff.append(tmp_angle)
+
+            list_clustdist.append(min_dist_cluster)
+            list_intdist.append(min_dist_int)
 
         else:
             mask_ph[i] = 1
             n1_compton_ph += 1
-            list1_ph_tdot.append(event.theta_dotvec)
+            list1_ph_tdot.append(event.scatter_angle_dotvec)
             list1_ph_pe.append(event.MCEnergy_Primary)
 
             list1_ph_ep.append(event.MCEnergy_p)
             list1_ph_eabs.append(np.sum(event.RecoClusterEnergies_values[idx_abs]))
-            list1_tdot_ph_diff.append(tmp_angle)
+
+            list_clustdist_ph.append(min_dist_cluster)
+            list_intdist_ph.append(min_dist_int)
 
 # --------------------------------------------------------------------------------------------------
 # Analysis output
 # print general statistics of root file for control
 print("LOADED " + root_parser_old.file_name)
-print("CorrectSecondary: {:.1f} % total | {:.1f} % Compton".format(n1_compton_ph / n1 * 100,
-                                                                   n1_compton_ph / n1_compton * 100))
+print("Phantom hits: {:.1f} % total | {:.1f} % Compton".format(n1_compton_ph / n1 * 100,
+                                                               n1_compton_ph / n1_compton * 100))
 
 # Plot histogram scattering angle (DotVec)
 plt.figure(figsize=(12, 6))
@@ -132,6 +179,46 @@ plt.grid()
 plt.tight_layout()
 plt.show()
 
+# plot distance of the closest cluster to scatter trajectory
+plt.figure(figsize=(12,6))
+plt.xlabel("Distance closest cluster to trajectory [mm]")
+plt.ylabel("Counts normalized(a.u.)")
+# plt.xscale("log")
+plt.yscale("log")
+# bins = np.concatenate([[0.0], np.logspace(-8, -1, 60, endpoint=True)])
+bins = np.arange(0.0, 100.0, 0.1)
+plt.hist(list_clustdist, bins=bins, histtype=u"step", linestyle="--", linewidth=1.5,
+         color="blue", label="Distributed Compton")
+plt.hist(list_clustdist_all, bins=bins, histtype=u"step", linestyle="-", linewidth=1.5,
+         color="black", label="All")
+plt.hist(list_clustdist_ph, bins=bins, histtype=u"step", linestyle="--", linewidth=1.5,
+         color="green", label="Phantom hits")
+plt.legend()
+plt.grid()
+plt.tight_layout()
+plt.show()
+
+# plot distance of the closest interaction to scatter trajectory
+plt.figure(figsize=(12,6))
+plt.xlabel("Distance closest interaction to trajectory [mm]")
+plt.ylabel("Counts normalized(a.u.)")
+plt.xscale("log")
+plt.yscale("log")
+bins = np.concatenate([[0.0], np.logspace(-11, 1, 120, endpoint=True)])
+# bins = np.arange(0.0, 10.0, 0.1)
+plt.hist(list_intdist, bins=bins, histtype=u"step", linestyle="--", linewidth=1.5,
+         color="blue", label="Distributed Compton")
+plt.hist(list_intdist_all, bins=bins, histtype=u"step", linestyle="-", linewidth=1.5,
+         color="black", label="All")
+plt.hist(list_intdist_ph, bins=bins, histtype=u"step", linestyle="--", linewidth=1.5,
+         color="green", label="Phantom hits")
+plt.legend()
+plt.grid()
+plt.tight_layout()
+plt.show()
+
+
+"""
 fig, axs = plt.subplots(1, 2, figsize=(12, 6))
 bins = np.arange(0.0, 10.0, 0.1)
 axs[0].set_xlabel(r"$E_{Absorber}^{Reco}$ [Mev]")
@@ -182,7 +269,8 @@ plt.legend()
 plt.grid()
 plt.tight_layout()
 plt.show()
-
+"""
+"""
 # --------------------------------------------------------------------------------------------------
 # comparison in cut-based reco
 
@@ -434,3 +522,4 @@ plt.legend()
 plt.grid()
 plt.tight_layout()
 plt.show()
+"""
