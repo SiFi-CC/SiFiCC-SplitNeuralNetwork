@@ -133,12 +133,12 @@ class Event:
                                                         interact // 10 ** 2 % 10]
             elif len(str(self.MCInteractions_e[0])) == 5:
                 for i, interact in enumerate(self.MCInteractions_e):
-                    self.MCInteractions_e_uni[i, :] = [
+                    self.MCInteractions_e_uni[i, :3] = [
                         interact // 10 ** 2 % 10 + 10 * (interact // 10 ** 3 % 10),
                         interact // 10 ** 1 % 10,
                         interact // 10 ** 0 % 10]
                 for i, interact in enumerate(self.MCInteractions_p):
-                    self.MCInteractions_p_uni[i, :] = [
+                    self.MCInteractions_p_uni[i, :3] = [
                         interact // 10 ** 2 % 10 + 10 * (interact // 10 ** 3 % 10),
                         interact // 10 ** 1 % 10,
                         interact // 10 ** 0 % 10]
