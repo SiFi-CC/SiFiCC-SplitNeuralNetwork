@@ -38,7 +38,7 @@ root_parser = RootParser.RootParser(path_root + RootFiles.onetoone_cont_taggingv
 
 # number of entries considered for analysis (either integer or None for all entries available)
 # n1 <=> old tagging file, n2 <=> new tagging file
-n = 10000
+n = 100000
 
 if n is None:
     n_entries = root_parser.events_entries
@@ -82,45 +82,6 @@ list1_eabs = []
 list1_ph_ep = []
 list1_ph_eabs = []
 
-# first iteration over root file to determine the acceptance of phantom hits
-# This iteration should be independent of the distributed compton tag
-list_angle_type1 = []
-list_angle_type2 = []
-list_angle_type3 = []
-
-list_angle_first_type1 = []
-list_angle_first_type2 = []
-list_angle_first_type3 = []
-
-for i, event in enumerate(root_parser.iterate_events(n=n_entries)):
-    if not len(event.MCPosition_p) > 1:
-        continue
-
-    # this loop scans for the first interaction that passes a low dummy acceptance
-    for j in range(1, len(event.MCPosition_p)):
-        tmp_vector = event.MCPosition_p[j] - event.MCComptonPosition
-        tmp_angle = vector_angle(event.MCDirection_scatter, tmp_vector)
-        if tmp_angle < 1e-1:
-            if event.MCInteractions_p_uni[j, 2] == 1:
-                list_angle_first_type1.append(tmp_angle)
-                break
-            if event.MCInteractions_p_uni[j, 2] == 2:
-                list_angle_first_type2.append(tmp_angle)
-                break
-            if event.MCInteractions_p_uni[j, 2] == 3:
-                list_angle_first_type3.append(tmp_angle)
-                break
-
-    for j in range(1, len(event.MCPosition_p)):
-        tmp_vector = event.MCPosition_p[j] - event.MCComptonPosition
-        tmp_angle = vector_angle(event.MCDirection_scatter, tmp_vector)
-        if event.MCInteractions_p_uni[j, 2] == 1:
-            list_angle_type1.append(tmp_angle)
-        if event.MCInteractions_p_uni[j, 2] == 2:
-            list_angle_type2.append(tmp_angle)
-        if event.MCInteractions_p_uni[j, 2] == 3:
-            list_angle_type3.append(tmp_angle)
-
 # main iteration over root file. All needed quantities for the analysis are collected at once to
 # save on iterations over the root file
 for i, event in enumerate(root_parser.iterate_events(n=n_entries)):
@@ -136,32 +97,13 @@ for i, event in enumerate(root_parser.iterate_events(n=n_entries)):
     mc_py[i] = target_position_p.y
     mc_pz[i] = target_position_p.z
 
-    # at this point skip events that are meaningless for phantom hit analysis
+    # at this point skip events that are meaningless for phantom hit analysis:
+    # events with no primary gamma interactions or scatter direction is not forward
     if not len(event.MCPosition_p) > 1:
         continue
 
-    # collect quantities from phantom hits and distributed compton events
+    # grab indexing for scatterer and absorber clusters
     idx_scat, idx_abs = event.sort_clusters_by_module()
-    tmp_list_dist = []
-    for j in idx_abs:
-        tmp_vector_cluster = event.RecoClusterPosition[j] - event.MCComptonPosition
-        tmp_angle_cluster = vector_angle(event.MCDirection_scatter,
-                                         tmp_vector_cluster)
-        dist_cluster = np.sin(tmp_angle_cluster) * tmp_vector_cluster.mag
-        tmp_list_dist.append(dist_cluster)
-    min_dist_cluster = min(tmp_list_dist)  # distance of the closest cluster to scattering direction
-
-    tmp_list_dist = []
-    for j in range(1, len(event.MCPosition_p)):
-        tmp_vector_int = event.MCPosition_p[j] - event.MCComptonPosition
-        tmp_angle_int = vector_angle(event.MCDirection_scatter,
-                                     tmp_vector_int)
-        dist_int = np.sin(tmp_angle_int) * tmp_vector_int.mag
-        tmp_list_dist.append(dist_int)
-    min_dist_int = min(tmp_list_dist)  # distance of the closest cluster to scattering direction
-
-    # for all events
-    list_clustdist_all.append(min_dist_cluster)
 
     # collection from only distributed compton events (phantom hits included)
     if event.get_distcompton_tag():
@@ -174,8 +116,6 @@ for i, event in enumerate(root_parser.iterate_events(n=n_entries)):
             list1_ep.append(event.MCEnergy_p)
             list1_eabs.append(np.sum(event.RecoClusterEnergies_values[idx_abs]))
 
-            list_clustdist.append(min_dist_cluster)
-
         else:
             mask_ph[i] = 1
             n_compton_ph += 1
@@ -185,86 +125,38 @@ for i, event in enumerate(root_parser.iterate_events(n=n_entries)):
             list1_ph_ep.append(event.MCEnergy_p)
             list1_ph_eabs.append(np.sum(event.RecoClusterEnergies_values[idx_abs]))
 
-            list_clustdist_ph.append(min_dist_cluster)
-
 # ##################################################################################################
 # Analysis output
 # print general statistics of root file for control
 print("LOADED " + root_parser.file_name)
 print("Phantom hits: {:.1f} % total | {:.1f} % Compton".format(n_compton_ph / n_entries * 100,
                                                                n_compton_ph / n_compton * 100))
-
-# ##################################################################################################
-# Determination of angle acceptance for phantom hits
-
-plt.figure(figsize=(12, 6))
-plt.xlabel(r"$\theta_{control}$ [rad]")
-plt.ylabel("Counts")
-plt.xscale("log")
-plt.yscale("log")
-bins = np.concatenate([[0.0], np.logspace(-8, 2, 100, endpoint=True)])
-plt.hist(list_angle_type1, bins=bins, histtype=u"step", linestyle="-", linewidth=1.5,
-         color="black", label=r"$\gamma$")
-plt.hist(list_angle_type2, bins=bins, histtype=u"step", linestyle="--", linewidth=1.5,
-         color="blue", label=r"$e^{-}$")
-plt.hist(list_angle_type3, bins=bins, histtype=u"step", linestyle="--", linewidth=1.5,
-         color="red", label=r"$e^{+}$")
-plt.legend()
-plt.grid()
-plt.tight_layout()
-plt.show()
-
-plt.xlabel(r"$\theta_{control}$ [rad]")
-plt.ylabel("Counts")
-plt.xscale("log")
-plt.yscale("log")
-bins = np.concatenate([[0.0], np.logspace(-8, 2, 100, endpoint=True)])
-plt.hist(list_angle_first_type1, bins=bins, histtype=u"step", linestyle="-", linewidth=1.5,
-         color="black", label=r"$\gamma$")
-plt.hist(list_angle_first_type2, bins=bins, histtype=u"step", linestyle="--", linewidth=1.5,
-         color="blue", label=r"$e^{-}$")
-plt.hist(list_angle_first_type3, bins=bins, histtype=u"step", linestyle="--", linewidth=1.5,
-         color="red", label=r"$e^{+}$")
-plt.legend()
-plt.grid()
-plt.tight_layout()
-plt.show()
-
 # ##################################################################################################
 # Phantom hits control plots
 
 
 # Plot histogram scattering angle (DotVec)
-plt.figure(figsize=(12, 6))
-plt.xlabel(r"Compton scattering angle $\theta_{DotVec}$ [rad]")
-plt.ylabel("Counts (Normalized)")
-plt.ticklabel_format(axis="y", style="sci", scilimits=(0, 0))
-bins = np.linspace(0, np.pi, 100)
-plt.hist(list1_tdot, bins=bins, histtype=u"step", linestyle="-", color="black", density=True,
-         label="Distributed Compton", linewidth=1.5)
-plt.hist(list1_ph_tdot, bins=bins, histtype=u"step", linestyle="--", color="blue", density=True,
-         label="Phantom hits", linewidth=1.5)
-plt.legend(loc="upper right")
-plt.grid()
-plt.tight_layout()
-plt.show()
-
-# plot distance of the closest cluster to scatter trajectory
-plt.figure(figsize=(12, 6))
-plt.xlabel("Distance closest cluster to trajectory [mm]")
-plt.ylabel("Counts normalized(a.u.)")
-# plt.xscale("log")
-plt.yscale("log")
-# bins = np.concatenate([[0.0], np.logspace(-8, -1, 60, endpoint=True)])
-bins = np.arange(0.0, 100.0, 0.1)
-plt.hist(list_clustdist, bins=bins, histtype=u"step", linestyle="--", linewidth=1.5,
-         color="blue", label="Distributed Compton")
-plt.hist(list_clustdist_all, bins=bins, histtype=u"step", linestyle="-", linewidth=1.5,
-         color="black", label="All")
-plt.hist(list_clustdist_ph, bins=bins, histtype=u"step", linestyle="--", linewidth=1.5,
-         color="green", label="Phantom hits")
-plt.legend()
-plt.grid()
+fig, axs = plt.subplots(1, 2, figsize=(12, 6))
+bins = np.linspace(0, np.pi * 3 / 4, 70)
+axs[0].set_xlabel(r"Compton scattering angle $\theta$ [rad]")
+axs[0].set_ylabel("Counts")
+axs[0].ticklabel_format(axis="y", style="sci", scilimits=(0, 0))
+axs[0].hist(list1_tdot, bins=bins, histtype=u"step", linestyle="-", color="black",
+            label="Distributed Compton", linewidth=1.5)
+axs[0].hist(list1_ph_tdot, bins=bins, histtype=u"step", linestyle="--", color="blue",
+            label="Phantom hits", linewidth=1.5)
+axs[0].legend(loc="upper right")
+axs[0].grid()
+bins = np.arange(0.0, 10.0, 0.1)
+axs[1].set_xlabel("Primary Energy [MeV]")
+axs[1].set_ylabel("Counts")
+axs[1].ticklabel_format(axis="y", style="sci", scilimits=(0, 0))
+axs[1].hist(list1_pe, bins=bins, histtype=u"step", linestyle="-", color="black",
+            label="Distributed Compton", linewidth=1.5)
+axs[1].hist(list1_ph_pe, bins=bins, histtype=u"step", linestyle="--", color="blue",
+            label="Phantom hits", linewidth=1.5)
+axs[1].grid()
+axs[1].legend()
 plt.tight_layout()
 plt.show()
 
@@ -289,20 +181,6 @@ fig.colorbar(h0[3], ax=axs[0])
 fig.colorbar(h1[3], ax=axs[1])
 plt.show()
 
-# Plot histogram primary energy
-plt.figure(figsize=(12, 6))
-plt.xlabel("Primary Energy [MeV]")
-plt.ylabel("Counts (Normalized)")
-plt.ticklabel_format(axis="y", style="sci", scilimits=(0, 0))
-bins = np.arange(0.0, 10.0, 0.1)
-plt.hist(list1_pe, bins=bins, histtype=u"step", linestyle="-", color="black", density=True,
-         label="Distributed Compton", linewidth=1.5)
-plt.hist(list1_ph_pe, bins=bins, histtype=u"step", linestyle="--", color="blue", density=True,
-         label="Phantom hits", linewidth=1.5)
-plt.grid()
-plt.legend()
-plt.tight_layout()
-plt.show()
 
 # Plot identification angle distribution
 plt.figure(figsize=(12, 6))
@@ -320,21 +198,21 @@ plt.grid()
 plt.tight_layout()
 plt.show()
 """
-"""
+
 # --------------------------------------------------------------------------------------------------
 # comparison in cut-based reco
 
 # fill up Cut-Based reconstruction values manually due to
 # them being stored in branches
 
-reco_ee = root_parser_old.events["RecoEnergy_e"]["value"].array()[:n1]
-reco_ep = root_parser_old.events["RecoEnergy_p"]["value"].array()[:n1]
-reco_ex = root_parser_old.events["RecoPosition_e"]["position"].array().x[:n1]
-reco_ey = root_parser_old.events["RecoPosition_e"]["position"].array().y[:n1]
-reco_ez = root_parser_old.events["RecoPosition_e"]["position"].array().z[:n1]
-reco_px = root_parser_old.events["RecoPosition_p"]["position"].array().x[:n1]
-reco_py = root_parser_old.events["RecoPosition_p"]["position"].array().y[:n1]
-reco_pz = root_parser_old.events["RecoPosition_p"]["position"].array().z[:n1]
+reco_ee = root_parser.events["RecoEnergy_e"]["value"].array()[:n_entries]
+reco_ep = root_parser.events["RecoEnergy_p"]["value"].array()[:n_entries]
+reco_ex = root_parser.events["RecoPosition_e"]["position"].array().x[:n_entries]
+reco_ey = root_parser.events["RecoPosition_e"]["position"].array().y[:n_entries]
+reco_ez = root_parser.events["RecoPosition_e"]["position"].array().z[:n_entries]
+reco_px = root_parser.events["RecoPosition_p"]["position"].array().x[:n_entries]
+reco_py = root_parser.events["RecoPosition_p"]["position"].array().y[:n_entries]
+reco_pz = root_parser.events["RecoPosition_p"]["position"].array().z[:n_entries]
 print("LOADED: Cut-Based reconstruction")
 
 
@@ -572,4 +450,3 @@ plt.legend()
 plt.grid()
 plt.tight_layout()
 plt.show()
-"""
