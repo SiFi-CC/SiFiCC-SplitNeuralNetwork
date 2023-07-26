@@ -16,12 +16,12 @@ plt.rcParams.update({'font.size': 12})
 
 # Define root files used
 # The root file should be in the same folder as the script
-ROOTFILE_FP_0MM = "CC6IR_NNRECO_FPONLY_BP0mm_fit.root"
-ROOTFILE_FP_5MM = "CC6IR_NNRECO_FPONLY_BP5mm_fit.root"
-ROOTFILE_FP_CONT = "CC6IR_NNRECO_FPONLY_Cont_fit.root"
+ROOTFILE_FP_0MM = "FIT_NNRECO_FPONLY_DenseClusterS4A6_4e9protons_BP0mm_theta05.root"
+ROOTFILE_FP_5MM = "FIT_NNRECO_FPONLY_DenseClusterS4A6_4e9protons_BP5mm_theta05.root"
+ROOTFILE_FP_CONT = "FIT_NNRECO_FPONLY_DenseClusterS4A6_4e9protons_BP0mm_theta05.root"
 
-ROOTFILE_S4A6_0MM = "CC6IR_NNRECO_DNNClusterS4A6_BP0mm_fit.root"
-ROOTFILE_S4A6_5MM = "CC6IR_NNRECO_DNNClusterS4A6_BP5mm_fit.root"
+ROOTFILE_S4A6_0MM = "FIT_NNRECO_DenseClusterS4A6_4e9protons_BP0mm_theta05.root"
+ROOTFILE_S4A6_5MM = "FIT_NNRECO_DenseClusterS4A6_4e9protons_BP5mm_theta05.root"
 
 # open root files with uproot
 file_fp_0mm = uproot.open(ROOTFILE_FP_0MM)
@@ -90,21 +90,21 @@ plt.show()
 plt.figure(figsize=(12, 8))
 plt.xlabel("Beam z-axis [mm]")
 plt.ylabel("Counts")
-plt.plot(bin_center, ary_proj_s4a6_0mm / (np.sum(ary_proj_s4a6_0mm) * width), ".",
+plt.plot(bin_center, ary_proj_s4a6_0mm, ".",
          color="red", label="S4A6 BP0mm", zorder=0)
-plt.plot(bin_center, ary_proj_s4a6_5mm / (np.sum(ary_proj_s4a6_5mm) * width), ".",
+plt.plot(bin_center, ary_proj_s4a6_5mm, ".",
          color="blue", label="S4A6 BP5mm", zorder=0)
-plt.plot(bin_center, ary_proj_fp_avr / (np.sum(ary_proj_fp_avr) * width) * 0.71 * 0.5, ".",
-         color="limegreen", label="Avg.", zorder=0)
+plt.plot(bin_center, ary_proj_fp_avr, ".",
+         color="limegreen", label="Avg. FP bg.", zorder=0)
 plt.legend()
 plt.grid()
 plt.show()
 
 # subtraction plots
-ary_proj_s4a6_0mm /= (np.sum(ary_proj_s4a6_0mm) * width)
-ary_proj_s4a6_5mm /= (np.sum(ary_proj_s4a6_5mm) * width)
-ary_proj_fp_avr /= (np.sum(ary_proj_fp_avr) * width)
-ary_proj_fp_avr = ary_proj_fp_avr * 0.71 * 0.5
+#ary_proj_s4a6_0mm /= (np.sum(ary_proj_s4a6_0mm) * width)
+#ary_proj_s4a6_5mm /= (np.sum(ary_proj_s4a6_5mm) * width)
+#ary_proj_fp_avr /= (np.sum(ary_proj_fp_avr) * width)
+ary_proj_fp_avr = ary_proj_fp_avr # *1.4
 plt.figure(figsize=(12, 8))
 plt.xlabel("Beam z-axis [mm]")
 plt.ylabel("Counts")
