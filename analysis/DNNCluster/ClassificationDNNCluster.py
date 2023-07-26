@@ -63,11 +63,11 @@ def lr_scheduler(epoch):
     Returns:
         learning rate
     """
-    if epoch < 5:
+    if epoch < 70:
         return 1e-3
-    if epoch < 10:
-        return 5e-4
-    if epoch < 20:
+    if epoch < 80:
+        return 5e-3
+    if epoch < 90:
         return 1e-4
     return 1e-5
 
@@ -76,13 +76,13 @@ def main():
     # defining hyper parameters
     sx = 4
     ax = 6
-    dropout = 0.10
+    dropout = 0.0
     nNodes = 64
     batch_size = 64
-    nEpochs = 20
+    nEpochs = 30
 
-    RUN_NAME = "DNNCluster_" + "S" + str(sx) + "A" + str(ax) + "_NORM"
-    do_training = True
+    RUN_NAME = "DNNCluster_" + "S" + str(sx) + "A" + str(ax)
+    do_training = False
     do_evaluate = True
 
     # create dictionary for model parameter
@@ -124,6 +124,11 @@ def main():
         data = dataset.DenseCluster(name=DATASET_CONT)
         tf_model = setupModel(**modelParameter)
 
+        # update train-test-split
+        data.p_train = 0.5
+        data.p_valid = 0.2
+        data.p_test = 0.3
+
         optimizer = tf.keras.optimizers.Adam(learning_rate=1e-3)
         loss = "binary_crossentropy"
         list_metrics = ["Precision", "Recall"]
@@ -134,8 +139,8 @@ def main():
 
         # set normalization from training dataset
         norm = data.get_standardization(10, 10)
-        #data.standardize(norm, 10)
-        data.normalize()
+        data.standardize(norm, 10)
+
         class_weights = data.get_classweights()
 
         history = tf_model.fit(data.x_train(),
@@ -184,8 +189,7 @@ def main():
                 data.p_test = 1.0
 
             # set normalization from training dataset
-            # data.standardize(norm, 10)
-            data.normalize()
+            data.standardize(norm, 10)
 
             y_scores = tf_model.predict(data.x_test())
             y_true = data.y_test()

@@ -13,9 +13,9 @@ from SiFiCCNN.utils.plotter import plot_history_regression, plot_position_error
 def lr_scheduler(epoch):
     if epoch < 20:
         return 1e-3
-    if epoch < 30:
-        return 5e-4
     if epoch < 40:
+        return 5e-4
+    if epoch < 60:
         return 1e-4
     return 1e-5
 
@@ -27,9 +27,9 @@ def main():
     dropout = 0.0
     nNodes = 64
     batch_size = 64
-    nEpochs = 50
+    nEpochs = 100
 
-    RUN_NAME = "DNNCluster_" + "S" + str(sx) + "A" + str(ax) + "_NORM"
+    RUN_NAME = "DNNCluster_" + "S" + str(sx) + "A" + str(ax)
     do_training = True
     do_evaluate = True
 
@@ -82,8 +82,7 @@ def main():
         # set normalization from training dataset
         # set correct targets, restrict sample to true positive events only
         norm = data.get_standardization(10, 10)
-        #data.standardize(norm, 10)
-        data.normalize()
+        data.standardize(norm, 10)
         data.update_targets_position()
 
         history = tf_model.fit(data.x_train(),
@@ -132,8 +131,7 @@ def main():
                 data.p_test = 1.0
 
             # set normalization from training dataset
-            # data.standardize(norm, 10)
-            data.normalize()
+            data.standardize(norm, 10)
             data.update_targets_position()
 
             y_pred = tf_model.predict(data.x_test())
