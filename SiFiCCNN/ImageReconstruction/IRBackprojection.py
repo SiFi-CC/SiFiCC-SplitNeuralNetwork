@@ -13,7 +13,6 @@ def backprojection(ary_e1,
                    ary_x2,
                    ary_y2,
                    ary_z2,
-                   ary_theta,
                    scatz=100.0,
                    scaty=40.0,
                    use_theta="DOTVEC",
@@ -28,8 +27,8 @@ def backprojection(ary_e1,
     Source: https://bragg.if.uj.edu.pl/gccbwiki//images/0/0e/KR_20170222_CCandCarbonLine.pdf
 
     Vector of image pixel center ad cone apex will be calculated. If angle between vector
-    and cone axis is equal to scattering angle theta, then pixel value will be increased. Else continue.
-    Repeated for all pixels
+    and cone axis is equal to scattering angle theta, then pixel value will be increased.
+    Else continue. Repeated for all pixels
 
     Args:
         ary_e1      (numpy array): energy electron
@@ -40,12 +39,12 @@ def backprojection(ary_e1,
         ary_x2      (numpy array): x position of photon
         ary_y2      (numpy array): y position of photon
         ary_z2      (numpy array): z position of photon
-        ary_theta   (numpy array): theta angle of compton scattering
         scaty       (Int): y-dimension of final image (1 pixel == 1 mm)
         scatz       (Int): z-dimension of final image (1 pixel == 1 mm)
         use_theta   (string): If "DOTVEC", dotvec angle will be use for theta
                                 "ENERGY" if energy vector should be used
-        optimized   (Boolean): If true, optimized back-projection will be used, final image might be inaccurate
+        optimized   (Boolean): If true, optimized back-projection will be used, final image might
+                               be inaccurate
         veto        (Boolean): If true, Cut-Based filter will be applied to veto out events
 
     Return:
@@ -80,7 +79,7 @@ def backprojection(ary_e1,
                                                  ary_x2[i],
                                                  ary_y2[i],
                                                  ary_z2[i],
-                                                 ary_theta[i]):
+                                                 theta=0.0):
                 continue
             if not IRVeto.check_compton_arc(ary_e1[i], ary_e2[i]):
                 continue
@@ -96,7 +95,8 @@ def backprojection(ary_e1,
                                     inverse=False):
                 continue
 
-        # create cone object
+        # Create ComptonCone object
+        # Selection of method determining the Compton angle theta
         cone = IRComptonCone.ComptonCone(ary_e1[i],
                                          ary_e2[i],
                                          ary_x1[i],
@@ -104,15 +104,15 @@ def backprojection(ary_e1,
                                          ary_z1[i],
                                          ary_x2[i],
                                          ary_y2[i],
-                                         ary_z2[i],
-                                         ary_theta[i])
+                                         ary_z2[i])
 
-        # grab exceptions from scattering angle
-        theta = 0
         if use_theta == "DOTVEC":
             theta = cone.theta_dotvec
-        if use_theta == "ENERGY":
+        elif use_theta == "ENERGY":
             theta = cone.theta_energy
+        else:
+            print("Error! Invalid theta argument!")
+            return
         if theta == 0.0:
             continue
 
@@ -139,11 +139,13 @@ def backprojection(ary_e1,
                     ary_map[z, y] = 1
                     pixelCenter = TVector3(0.0, -ylimit + widthy / 2 + (y * widthy),
                                            -zlimit + widthz / 2 + (z * widthz))
-                    axis = TVector3(ary_x1[i], ary_y1[i], ary_z1[i]) - TVector3(ary_x2[i], ary_y2[i], ary_z2[i])
+                    axis = TVector3(ary_x1[i], ary_y1[i], ary_z1[i]) - TVector3(ary_x2[i],
+                                                                                ary_y2[i],
+                                                                                ary_z2[i])
                     linkingVector = pixelCenter - TVector3(ary_x1[i], ary_y1[i], ary_z1[i])
                     angle = axis.angle(linkingVector)
                     resolution = np.arctan(0.5 * widthz * np.sqrt(2) / (D / A))
-                    if abs(cone.theta - angle) <= resolution:
+                    if abs(theta - angle) <= resolution:
                         ary_image[z, y] += 1
 
                         ary_image_temp[z, y] += 1
@@ -164,13 +166,15 @@ def backprojection(ary_e1,
                             ary_map[z, y] = 1
                             pixelCenter = TVector3(0.0, -ylimit + widthy / 2 + (y * widthy),
                                                    -zlimit + widthz / 2 + (z * widthz))
-                            axis = TVector3(ary_x1[i], ary_y1[i], ary_z1[i]) - TVector3(ary_x2[i], ary_y2[i], ary_z2[i])
+                            axis = TVector3(ary_x1[i], ary_y1[i], ary_z1[i]) - TVector3(ary_x2[i],
+                                                                                        ary_y2[i],
+                                                                                        ary_z2[i])
                             linkingVector = pixelCenter - TVector3(ary_x1[i], ary_y1[i], ary_z1[i])
                             angle = axis.angle(linkingVector)
 
                             resolution = np.arctan(0.5 * widthz * np.sqrt(2) / (D / A))
 
-                            if abs(cone.theta - angle) <= resolution:
+                            if abs(theta - angle) <= resolution:
                                 ary_image[z, y] += 1
                                 ary_image_temp[z, y] += 1
                                 list_pixel_cache.append((z, y))
@@ -193,7 +197,9 @@ def backprojection(ary_e1,
                     # calculation done in uproot TVector3 for optimization
                     pixelCenter = TVector3(0.0, -ylimit + widthy / 2 + (y * widthy),
                                            -zlimit + widthz / 2 + (z * widthz))
-                    axis = TVector3(ary_x1[i], ary_y1[i], ary_z1[i]) - TVector3(ary_x2[i], ary_y2[i], ary_z2[i])
+                    axis = TVector3(ary_x1[i], ary_y1[i], ary_z1[i]) - TVector3(ary_x2[i],
+                                                                                ary_y2[i],
+                                                                                ary_z2[i])
                     linkingVector = pixelCenter - TVector3(ary_x1[i], ary_y1[i], ary_z1[i])
                     angle = axis.angle(linkingVector)
 
@@ -205,7 +211,7 @@ def backprojection(ary_e1,
     return ary_image
 
 
-# ----------------------------------------------------------------------------------------------------------------------
+# --------------------------------------------------------------------------------------------------
 # methods for easy execution of back projection
 
 def get_projection(image):

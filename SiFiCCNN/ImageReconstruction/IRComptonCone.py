@@ -2,15 +2,14 @@ import numpy as np
 
 
 class ComptonCone:
-    def __init__(self, e1, e2, x1, y1, z1, x2, y2, z2, theta):
+    def __init__(self, e1, e2, x1, y1, z1, x2, y2, z2):
         # parameter
         self.vec1 = np.array([x1, y1, z1])
         self.vec2 = np.array([x2, y2, z2])
         self.e1 = e1
         self.e2 = e2
 
-        self.theta = theta
-        self.theta_dotvec = theta
+        self.theta_dotvec = self.get_theta_dotvec(x1, y1, z1, x2, y2, z2)
         self.theta_energy = ComptonCone.get_theta_energy(e1, e2)
 
         # constructing cone positions
