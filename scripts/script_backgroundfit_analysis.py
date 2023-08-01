@@ -7,6 +7,7 @@
 # ##################################################################################################
 
 import numpy as np
+import os
 import matplotlib.pyplot as plt
 import uproot
 from scipy.optimize import curve_fit
@@ -17,6 +18,13 @@ plt.rcParams.update({'font.size': 12})
 # interpolation: cubic smoothing spline method
 from scipy import interpolate
 
+# back-projection
+from SiFiCCNN.ImageReconstruction import IRBackprojection
+
+####################################################################################################
+# Background fitting plots
+####################################################################################################
+'''
 # Define root files used
 # The root file should be in the same folder as the script
 ROOTFILE_FP_0MM = "FIT_NNRECO_FPONLY_DenseClusterS4A6_4e9protons_BP0mm_theta05.root"
@@ -193,3 +201,31 @@ for k in range(1, 30):
 plt.legend()
 plt.grid()
 plt.show()
+'''
+####################################################################################################
+# Back-projection plots
+####################################################################################################
+
+# Find correct parent path of repository
+# iterate backwards in directories until the main repo directory is matched
+path = os.getcwd()
+while True:
+    path = os.path.abspath(os.path.join(path, os.pardir))
+    if os.path.basename(path) == "SiFiCC-SplitNeuralNetwork":
+        break
+path_main = path
+path_root = path_main + "/root_files/"
+path_results = path_main + "/results/DNNCluster_S4A6/"
+path_0mm = path_results + "DenseClusterS4A6_OptimisedGeometry_BP0mm_2e10protons_taggingv3/"
+path_5mm = path_results + "DenseClusterS4A6_OptimisedGeometry_BP5mm_4e9protons_taggingv3/"
+path_cont = path_results + "DenseClusterS4A6_OptimisedGeometry_Continuous_2e10protons_taggingv3/"
+
+ROOTFILE_FP_0MM = path_0mm + "CC6IR_NNRECO_FPONLY_DenseClusterS4A6_OptimisedGeometry_BP0mm_2e10protons_taggingv3_theta05.root"
+ROOTFILE_FP_5MM = path_5mm + "CC6IR_NNRECO_FPONLY_DenseClusterS4A6_OptimisedGeometry_BP5mm_4e9protons_taggingv3_theta05.root"
+# ROOTFILE_FP_CONT = "CC6IR_NNRECO_FPONLY_DenseClusterS4A6_4e9protons_BP0mm_theta05.root"
+
+ROOTFILE_S4A6_0MM = path_0mm + "CC6IR_NNRECO_DenseClusterS4A6_OptimisedGeometry_BP0mm_2e10protons_taggingv3_theta05.root"
+ROOTFILE_S4A6_5MM = path_5mm + "CC6IR_NNRECO_DenseClusterS4A6_OptimisedGeometry_BP5mm_4e9protons_taggingv3_theta05.root"
+
+ary_image_0mm = IRBackprojection.from_root(ROOTFILE_S4A6_0MM, n=170000)
+np.save("backproj_bp0mm.npy", ary_image_0mm)
