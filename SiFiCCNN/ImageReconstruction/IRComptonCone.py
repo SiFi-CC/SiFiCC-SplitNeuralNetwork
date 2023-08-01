@@ -9,13 +9,6 @@ class ComptonCone:
         self.e1 = e1
         self.e2 = e2
 
-        self.theta_dotvec = self.get_theta_dotvec(x1, y1, z1, x2, y2, z2)
-        self.theta_energy = ComptonCone.get_theta_energy(e1, e2)
-
-        # constructing cone positions
-        self.axis = ComptonCone.connect_points(x1, y1, z1, x2, y2, z2)
-        self.apex = np.array([x1, y1, z1])
-
     @staticmethod
     def connect_points(x1, y1, z1, x2, y2, z2):
         """
@@ -98,3 +91,19 @@ class ComptonCone:
         ary_vec2 /= mag_vec2
 
         return np.arccos(np.clip(np.dot(ary_vec1, ary_vec2), -1.0, 1.0))
+
+    @property
+    def theta_dotvec(self):
+        return self.get_theta_dotvec(*self.vec1, *self.vec2)
+
+    @property
+    def theta_energy(self):
+        return self.get_theta_energy(self.e1, self.e2)
+
+    @property
+    def axis(self):
+        return self.connect_points(*self.vec1, *self.vec2)
+
+    @property
+    def apex(self):
+        return self.vec1

@@ -1,5 +1,9 @@
 import numpy as np
+import uproot
 from uproot_methods import TVector3
+
+# progress bar
+import tqdm
 
 from SiFiCCNN.ImageReconstruction import IRComptonCone
 from SiFiCCNN.ImageReconstruction import IRVeto
@@ -69,7 +73,7 @@ def backprojection(ary_e1,
     ary_image = np.zeros(shape=(nbinsz, nbinsy))
 
     # main image reconstruction algorythm
-    for i in range(entries):
+    for i in tqdm.tqdm(range(entries)):
         if veto:
             if not IRVeto.check_valid_prediction(ary_e1[i],
                                                  ary_e2[i],
@@ -124,7 +128,7 @@ def backprojection(ary_e1,
 
             # optimized sampling of z-dimension
             # zbin_sampling = np.arange(0, nbinsz, 4, dtype=int)
-            zbin_sampling = np.arange(0, nbinsz, 4, dtype=int)
+            zbin_sampling = np.arange(0, nbinsz, 3, dtype=int)
             """            
             for i in range(nbinsz):
                 zbin_step = int(nbinsz / 2 + (i + 1) ** 2)
@@ -264,7 +268,6 @@ def get_backprojection(ary_score,
                                    ary_x2[ary_idx_pos[:n_pos_subsample]],
                                    ary_y2[ary_idx_pos[:n_pos_subsample]],
                                    ary_z2[ary_idx_pos[:n_pos_subsample]],
-                                   ary_theta[ary_idx_pos[:n_pos_subsample]],
                                    scatz=scatz,
                                    scaty=scaty,
                                    use_theta=use_theta,
@@ -279,3 +282,50 @@ def get_backprojection(ary_score,
     proj_std = np.std(ary_proj, axis=0)
 
     return proj_mean, proj_std
+
+
+def from_root(file,
+              n=None):
+
+    root_file = uproot.open(file)
+    tree_conelist = root_file[b"ConeList"]
+
+    ary_e1 = tree_conelist["E1"].array()
+    ary_e2 = tree_conelist["E2"].array()
+    ary_x1 = tree_conelist["y_1"].array()
+    ary_y1 = tree_conelist["z_1"].array() * (-1)
+    ary_z1 = tree_conelist["x_1"].array() * (-1)
+    ary_x2 = tree_conelist["y_2"].array()
+    ary_y2 = tree_conelist["z_2"].array() * (-1)
+    ary_z2 = tree_conelist["x_2"].array() * (-1)
+
+    # define maximum number of entries used
+    # If the number of events used is not the maximum, shuffle all indices and select sub-set
+    n_total = len(ary_e1)
+    ary_idx = np.arange(0, n_total, 1.0, dtype=int)
+    rng = np.random.default_rng(42)
+    rng.shuffle(ary_idx)
+    if n is None:
+        n = n_total
+    ary_idx = ary_idx[:n]
+
+    # generate back-projection image
+    ary_image = backprojection(ary_e1[ary_idx],
+                               ary_e2[ary_idx],
+                               ary_x1[ary_idx],
+                               ary_y1[ary_idx],
+                               ary_z1[ary_idx],
+                               ary_x2[ary_idx],
+                               ary_y2[ary_idx],
+                               ary_z2[ary_idx],
+                               scatz=70.0,
+                               scaty=70.0,
+                               use_theta="ENERGY",
+                               optimized=True,
+                               veto=False)
+
+    return ary_image
+
+
+
+
