@@ -97,6 +97,9 @@ for i, event in enumerate(root_parser.iterate_events(n=n_entries)):
     mc_py[i] = target_position_p.y
     mc_pz[i] = target_position_p.z
 
+    tmp_angle = vector_angle(target_position_p - target_position_e,
+                             event.MCDirection_scatter)
+
     # at this point skip events that are meaningless for phantom hit analysis:
     # events with no primary gamma interactions or scatter direction is not forward
     if not len(event.MCPosition_p) > 1:
@@ -115,6 +118,7 @@ for i, event in enumerate(root_parser.iterate_events(n=n_entries)):
             list1_pe.append(event.MCEnergy_Primary)
             list1_ep.append(event.MCEnergy_p)
             list1_eabs.append(np.sum(event.RecoClusterEnergies_values[idx_abs]))
+            list1_tdot_diff.append(tmp_angle)
 
         else:
             mask_ph[i] = 1
@@ -124,6 +128,7 @@ for i, event in enumerate(root_parser.iterate_events(n=n_entries)):
 
             list1_ph_ep.append(event.MCEnergy_p)
             list1_ph_eabs.append(np.sum(event.RecoClusterEnergies_values[idx_abs]))
+            list1_tdot_ph_diff.append(tmp_angle)
 
 # ##################################################################################################
 # Analysis output
@@ -180,7 +185,7 @@ axs[1].plot([0, 10 - 2 * 0.511], [0 + 2 * 0.511, 10], linestyle="--", color="red
 fig.colorbar(h0[3], ax=axs[0])
 fig.colorbar(h1[3], ax=axs[1])
 plt.show()
-
+"""
 
 # Plot identification angle distribution
 plt.figure(figsize=(12, 6))
@@ -197,7 +202,6 @@ plt.legend()
 plt.grid()
 plt.tight_layout()
 plt.show()
-"""
 
 # --------------------------------------------------------------------------------------------------
 # comparison in cut-based reco
