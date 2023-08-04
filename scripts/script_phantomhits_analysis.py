@@ -15,7 +15,7 @@ import matplotlib.pyplot as plt
 from matplotlib.colors import LogNorm
 from scipy.optimize import curve_fit
 
-plt.rcParams.update({'font.size': 12})
+plt.rcParams.update({'font.size': 16})
 
 from SiFiCCNN.root import RootParser, RootFiles
 from SiFiCCNN.utils.physics import vector_angle
@@ -194,10 +194,14 @@ plt.ylabel("Counts")
 plt.xscale("log")
 plt.yscale("log")
 bins = np.concatenate([[0.0], np.logspace(-8, -2, 60, endpoint=True)])
+"""
 plt.hist(list1_tdot_diff, bins=bins, histtype=u"step", linestyle="-", linewidth=1.5,
          color="black", label="Distributed Compton")
-plt.hist(list1_tdot_ph_diff, bins=bins, histtype=u"step", linestyle="--", linewidth=1.5,
+"""
+hist0, _ = np.histogram(list1_tdot_ph_diff, bins=bins)
+plt.hist(list1_tdot_ph_diff, bins=bins, histtype=u"step", linestyle="--", linewidth=2.0,
          color="blue", label="Phantom hits")
+plt.vlines(x=1e-3, ymin=0, ymax=max(hist0), color="red", linestyle="--", label="upper limit")
 plt.legend()
 plt.grid()
 plt.tight_layout()
