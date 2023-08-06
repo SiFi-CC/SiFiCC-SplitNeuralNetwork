@@ -59,7 +59,7 @@ def load(RootParser,
     ary_graph_labels = np.zeros(shape=(n_graphs,), dtype=np.bool)
     ary_node_attributes = np.zeros(shape=(n_nodes, 10), dtype=np.float32)
     ary_graph_attributes = np.zeros(shape=(n_graphs, 8), dtype=np.float32)
-    ary_edge_attributes = np.zeros(shape=(m_edges, 3), dtype=np.float32)
+    ary_edge_attributes = np.zeros(shape=(m_edges, 6), dtype=np.float32)
     # meta data
     ary_ep = np.zeros(shape=(n_graphs,), dtype=np.float32)
     ary_sp = np.zeros(shape=(n_graphs,), dtype=np.float32)
@@ -80,12 +80,14 @@ def load(RootParser,
 
                 # exception for self loops
                 if j != k:
-                    # grab edge features
-                    r, phi, theta = event.get_edge_features(j, k)
+                    # grab edge features in polar and cartesian representation
+                    r, phi, theta = event.get_edge_features(j, k, cartesian=False)
+                    dx, dy, dz = event.get_edge_features(j, k, cartesian=True)
                 else:
                     r, phi, theta = 0, 0, 0
+                    dx, dy, dz = 0, 0, 0
 
-                ary_edge_attributes[edge_id, :] = [r, phi, theta]
+                ary_edge_attributes[edge_id, :] = [dx, dy, dz, r, phi, theta]
                 edge_id += 1
 
             ary_graph_indicator[node_id] = i
@@ -124,5 +126,5 @@ def load(RootParser,
     np.save(path + "/" + dataset_name + "_node_attributes.npy", ary_node_attributes)
     np.save(path + "/" + dataset_name + "_graph_attributes.npy", ary_graph_attributes)
     np.save(path + "/" + dataset_name + "_edge_attributes.npy", ary_edge_attributes)
-    np.save(path + "/" + dataset_name + "_graph_ep.npy", ary_ep)
+    np.save(path + "/" + dataset_name + "_graph_pe.npy", ary_ep)
     np.save(path + "/" + dataset_name + "_graph_sp.npy", ary_sp)
