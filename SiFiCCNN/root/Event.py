@@ -594,23 +594,34 @@ class EventCluster(Event):
         return reco_position_e, reco_position_p
 
     # Graph generation methods
-    def get_edge_features(self, idx1, idx2):
+    def get_edge_features(self, idx1, idx2, cartesian=True):
         """
         Calculates the euclidean distance, azimuthal angle, polar angle between two vectors.
 
         Args:
             idx1: Vector 1 given by index of RecoClusterPosition list
             idx2: Vector 2 given by index of RecoClusterPosition list
+            cartesian:  bool, if true vector difference is given in cartesian coordinates
+                        otherwise in polar coordinates
 
         Returns:
             euclidean distance, azimuthal angle, polar angle
         """
         vec = self.RecoClusterPosition[idx2] - self.RecoClusterPosition[idx1]
-        r = vec.mag
-        phi = vec.phi
-        theta = vec.theta
 
-        return r, phi, theta
+        if not cartesian:
+            r = vec.mag
+            phi = vec.phi
+            theta = vec.theta
+
+            return r, phi, theta
+
+        else:
+            dx = vec.x
+            dy = vec.y
+            dz = vec.z
+
+            return dx, dy, dz
 
     def sort_clusters_energy(self):
         """
