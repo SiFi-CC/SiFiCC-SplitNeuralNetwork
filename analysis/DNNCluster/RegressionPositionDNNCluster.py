@@ -11,12 +11,12 @@ from SiFiCCNN.utils.plotter import plot_history_regression, plot_position_error
 
 
 def lr_scheduler(epoch):
-    if epoch < 20:
+    if epoch < 50:
         return 1e-3
-    if epoch < 40:
-        return 5e-4
-    if epoch < 60:
+    if epoch < 75 :
         return 1e-4
+    if epoch < 100:
+        return 1e-5
     return 1e-5
 
 
@@ -39,7 +39,8 @@ def main():
                       "dropout": dropout,
                       "nNodes": nNodes,
                       "nCluster": 10,
-                      "activation": "relu"}
+                      "activation": "relu",
+                      "batch_norm": False}
 
     # Datasets used
     # Training file used for classification and regression training
@@ -68,6 +69,11 @@ def main():
     if do_training:
         data = dataset.DenseCluster(name=DATASET_CONT)
         data.update_indexing_s1ax_positive()
+
+        # update train-test-split
+        data.p_train = 0.5
+        data.p_valid = 0.2
+        data.p_test = 0.3
 
         tf_model = setupModel(**modelParameter)
 

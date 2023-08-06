@@ -22,7 +22,8 @@ def setupModel(nOutput,
                dropout,
                nNodes,
                nCluster=10,
-               activation="relu", ):
+               activation="relu",
+               batch_norm=True):
     """
     Method for building the keras sequential model.
 
@@ -33,22 +34,43 @@ def setupModel(nOutput,
         nNodes: int, number of nodes in network
         nCluster: int, number of total clusters used in input
         activation: main activation function for all hidden layers
+        batch_norm: bool, true if batch normalization is used
 
     Returns:
         keras model
     """
     model = tf.keras.models.Sequential()
+
+    # layer blocks
     model.add(tf.keras.layers.Flatten(input_shape=(nCluster, 10)))
-    model.add(tf.keras.layers.Dense(nNodes, activation=activation))
-    model.add(tf.keras.layers.Dense(nNodes, activation=activation))
+    model.add(tf.keras.layers.Dense(nNodes))
+    if batch_norm:
+        model.add(tf.keras.layers.BatchNormalization())
+    model.add(tf.keras.layers.Activation(activation))
 
-    if dropout > 0:
-        model.add(tf.keras.layers.Dropout(dropout))
+    model.add(tf.keras.layers.Dense(nNodes))
+    if batch_norm:
+        model.add(tf.keras.layers.BatchNormalization())
+    model.add(tf.keras.layers.Activation(activation))
+    model.add(tf.keras.layers.Dropout(dropout))
 
-    model.add(tf.keras.layers.Dense(int(nNodes / 2), activation=activation))
-    model.add(tf.keras.layers.Dense(int(nNodes / 2), activation=activation))
+    # second block
+    model.add(tf.keras.layers.Dense(int(nNodes / 2)))
+    if batch_norm:
+        model.add(tf.keras.layers.BatchNormalization())
+    model.add(tf.keras.layers.Activation(activation))
 
-    model.add(tf.keras.layers.Dense(nOutput, activation=OutputActivation))
+    model.add(tf.keras.layers.Dense(int(nNodes / 2)))
+    if batch_norm:
+        model.add(tf.keras.layers.BatchNormalization())
+    model.add(tf.keras.layers.Activation(activation))
+    model.add(tf.keras.layers.Dropout(dropout / 2))
+
+    # last block
+    model.add(tf.keras.layers.Dense(nOutput))
+    if batch_norm:
+        model.add(tf.keras.layers.BatchNormalization())
+    model.add(tf.keras.layers.Activation(OutputActivation))
 
     return model
 
@@ -63,26 +85,26 @@ def lr_scheduler(epoch):
     Returns:
         learning rate
     """
-    if epoch < 70:
+    if epoch < 30:
         return 1e-3
-    if epoch < 80:
+    if epoch < 40:
         return 5e-3
-    if epoch < 90:
+    if epoch < 50:
         return 1e-4
-    return 1e-5
+    return 1e-3
 
 
 def main():
     # defining hyper parameters
     sx = 4
     ax = 6
-    dropout = 0.0
+    dropout = 0.2
     nNodes = 64
-    batch_size = 64
-    nEpochs = 30
+    batch_size = 128
+    nEpochs = 50
 
     RUN_NAME = "DNNCluster_" + "S" + str(sx) + "A" + str(ax)
-    do_training = False
+    do_training = True
     do_evaluate = True
 
     # create dictionary for model parameter
@@ -91,7 +113,8 @@ def main():
                       "dropout": dropout,
                       "nNodes": nNodes,
                       "nCluster": 10,
-                      "activation": "relu"}
+                      "activation": "relu",
+                      "batch_norm": True}
 
     # Datasets used
     # Training file used for classification and regression training

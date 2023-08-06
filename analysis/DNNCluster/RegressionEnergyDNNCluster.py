@@ -20,13 +20,13 @@ def lr_scheduler(epoch):
     Returns:
         learning rate
     """
-    if epoch < 20:
+    if epoch < 50:
+        return 1e-3
+    if epoch < 75:
         return 1e-4
-    if epoch < 30:
-        return 5e-5
-    if epoch < 40:
+    if epoch < 100:
         return 1e-5
-    return 1e-6
+    return 1e-5
 
 
 def main():
@@ -36,7 +36,7 @@ def main():
     dropout = 0.0
     nNodes = 64
     batch_size = 64
-    nEpochs = 50
+    nEpochs = 100
 
     RUN_NAME = "DNNCluster_" + "S" + str(sx) + "A" + str(ax)
     do_training = True
@@ -48,7 +48,8 @@ def main():
                       "dropout": dropout,
                       "nNodes": nNodes,
                       "nCluster": 10,
-                      "activation": "relu"}
+                      "activation": "relu",
+                      "batch_norm": False}
 
     # Datasets used
     # Training file used for classification and regression training
@@ -77,6 +78,11 @@ def main():
     if do_training:
         data = dataset.DenseCluster(name=DATASET_CONT)
         data.update_indexing_positives()
+
+        # update train-test-split
+        data.p_train = 0.5
+        data.p_valid = 0.2
+        data.p_test = 0.3
 
         tf_model = setupModel(**modelParameter)
 
