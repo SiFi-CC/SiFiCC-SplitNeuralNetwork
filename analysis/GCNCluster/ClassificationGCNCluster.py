@@ -24,7 +24,7 @@ from SiFiCCNN.utils.plotter import plot_history_classifier, \
     plot_2dhist_sp_score
 
 
-class GCNmodel(Model):
+class NNmodel(Model):
 
     def __init__(self,
                  nOutput,
@@ -45,6 +45,7 @@ class GCNmodel(Model):
         self.pool = GlobalSumPool()
         self.dropout = Dropout(dropout)
         self.dense1 = Dense(nNodes, activation="relu")
+        self.dense2 = Dense(int(nNodes / 2), activation="relu")
         self.dense_out = Dense(nOutput, OutputActivation)
         self.concatenate = Concatenate()
 
@@ -59,8 +60,24 @@ class GCNmodel(Model):
 
         out7 = self.concatenate([out5, out6])
         out8 = self.dense1(out7)
+        out9 = self.dense2(out8)
+        out10 = self.dropout(out9)
+        out_final = self.dense_out(out10)
+
+        """
+        xIn, aIn, eIn, iIn = inputs
+        out1 = self.graph_gcnconv1([xIn, aIn])
+        out2 = self.graph_gcnconv2([out1, aIn])
+        out3 = self.graph_eccconv1([xIn, aIn, eIn])
+        out4 = self.graph_eccconv2([out3, aIn, eIn])
+        out5 = self.pool([out2, iIn])
+        out6 = self.pool([out4, iIn])
+
+        out7 = self.concatenate([out5, out6])
+        out8 = self.dense1(out7)
         out9 = self.dropout(out8)
         out_final = self.dense_out(out9)
+        """
 
         return out_final
 
@@ -82,14 +99,14 @@ def main():
     batch_size = 64
     nEpochs = 20
 
-    trainsplit = 0.7
-    valsplit = 0.1
+    trainsplit = 0.6
+    valsplit = 0.2
 
     RUN_NAME = "GCNCluster"
-    do_training = False
+    do_training = True
     do_evaluate = True
 
-    # create dictionary for model parameter
+    # create dictionary for model and training parameter
     modelParameter = {"nOutput": 1,
                       "OutputActivation": "sigmoid",
                       "dropout": dropout,
@@ -110,7 +127,6 @@ def main():
             break
     path_main = path
     path_results = path_main + "/results/" + RUN_NAME + "/"
-    path_datasets = path_main + "/datasets/"
 
     # create subdirectory for run output
     if not os.path.isdir(path_results):
@@ -120,141 +136,168 @@ def main():
             os.mkdir(path_results + "/" + file + "/")
 
     if do_training:
-        data = dataset.GraphCluster(name=DATASET_CONT,
-                                    edge_atr=True,
-                                    adj_arg="binary")
-        tf_model = GCNmodel(**modelParameter)
-
-        optimizer = tf.keras.optimizers.Adam(learning_rate=1e-3)
-        loss = "binary_crossentropy"
-        list_metrics = ["Precision", "Recall"]
-        tf_model.compile(optimizer=optimizer,
-                         loss=loss,
-                         metrics=list_metrics)
-        l_callbacks = [tf.keras.callbacks.LearningRateScheduler(lr_scheduler)]
-
-        # set normalization from training dataset
-        # dataset is initialized standardized
-        class_weights = data.get_classweight_dict()
-
-        # apply GCN filter
-        # generate disjoint loader from dataset
-        data.apply(GCNFilter())
-        idx1 = int(trainsplit * len(data))
-        idx2 = int((trainsplit + valsplit) * len(data))
-        dataset_tr = data[:idx1]
-        dataset_va = data[idx1:idx2]
-        dataset_te = data[idx2:]
-        loader_train = DisjointLoader(dataset_tr,
-                                      batch_size=batch_size,
-                                      epochs=nEpochs)
-        loader_valid = DisjointLoader(dataset_va,
-                                      batch_size=batch_size)
-
-        history = tf_model.fit(loader_train,
-                               epochs=nEpochs,
-                               steps_per_epoch=loader_train.steps_per_epoch,
-                               validation_data=loader_valid,
-                               validation_steps=loader_valid.steps_per_epoch,
-                               class_weight=class_weights,
-                               verbose=1,
-                               callbacks=[l_callbacks])
-
-        os.chdir(path_results)
-        # save model
-        print("Saving model at: ", RUN_NAME + "_classifier" + ".h5")
-        tf_model.save(RUN_NAME + "_classifier")
-        # save training history (not needed tbh)
-        with open(RUN_NAME + "_classifier_history" + ".hst", 'wb') as f_hist:
-            pkl.dump(history.history, f_hist)
-        # save norm
-        np.save(RUN_NAME + "_classifier" + "_norm_x", data.norm_x)
-        np.save(RUN_NAME + "_classifier" + "_norm_e", data.norm_e)
-        # save model parameter as json
-        with open(RUN_NAME + "_classifier_parameter.json", "w") as json_file:
-            json.dump(modelParameter, json_file)
-
-        # plot training history
-        plot_history_classifier(history.history, RUN_NAME + "_history_classifier")
+        training(dataset_name=DATASET_CONT,
+                 RUN_NAME=RUN_NAME,
+                 trainsplit=trainsplit,
+                 valsplit=valsplit,
+                 batch_size=batch_size,
+                 nEpochs=nEpochs,
+                 path=path_results,
+                 modelParameter=modelParameter)
 
     if do_evaluate:
-        os.chdir(path_results)
-        # load model, model parameter, norm, history
-        with open(RUN_NAME + "_classifier_parameter.json", "r") as json_file:
-            modelParameter = json.load(json_file)
-        tf_model = tf.keras.models.load_model(RUN_NAME + "_classifier")
-        norm_x = np.load(RUN_NAME + "_classifier_norm_x.npy")
-        norm_e = np.load(RUN_NAME + "_classifier_norm_e.npy")
-
-        optimizer = tf.keras.optimizers.Adam(learning_rate=1e-3)
-        loss = "binary_crossentropy"
-        list_metrics = ["Precision", "Recall"]
-        tf_model.compile(optimizer=optimizer,
-                         loss=loss,
-                         metrics=list_metrics)
-
         for file in [DATASET_CONT, DATASET_0MM, DATASET_5MM]:
-            # predict test dataset
-            os.chdir(path_results + file + "/")
+            evaluate(dataset_name=file,
+                     RUN_NAME=RUN_NAME,
+                     path=path_results)
 
-            # load dataset
-            data = dataset.GraphCluster(name=file,
-                                        edge_atr=True,
-                                        adj_arg="binary",
-                                        norm_x=norm_x,
-                                        norm_e=norm_e)
 
-            # apply GCN filter, generate disjoint loaders from dataset
-            data.apply(GCNFilter())
-            loader_test = DisjointLoader(data,
-                                         batch_size=batch_size,
-                                         epochs=1,
-                                         shuffle=False)
+def training(dataset_name,
+             RUN_NAME,
+             trainsplit,
+             valsplit,
+             batch_size,
+             nEpochs,
+             path,
+             modelParameter):
+    # load graph dataset
+    data = dataset.GraphCluster(name=dataset_name,
+                                edge_atr=True,
+                                adj_arg="binary")
+    # build model from parameter
+    tf_model = NNmodel(**modelParameter)
+    optimizer = tf.keras.optimizers.Adam(learning_rate=1e-3)
+    loss = "binary_crossentropy"
+    list_metrics = ["Precision", "Recall"]
+    tf_model.compile(optimizer=optimizer,
+                     loss=loss,
+                     metrics=list_metrics)
+    l_callbacks = [tf.keras.callbacks.LearningRateScheduler(lr_scheduler)]
 
-            y_true = []
-            y_scores = []
-            for batch in loader_test:
-                inputs, target = batch
-                p = tf_model(inputs, training=False)
-                y_true.append(target)
-                y_scores.append(p.numpy())
-            y_true = np.vstack(y_true)
-            y_scores = np.vstack(y_scores)
-            y_true = np.reshape(y_true, newshape=(y_true.shape[0],))*1
-            y_scores = np.reshape(y_scores, newshape=(y_scores.shape[0],))
+    # set normalization from training dataset
+    # dataset is initialized standardized
+    class_weights = data.get_classweight_dict()
 
-            # evaluate model:
-            #   - ROC analysis
-            #   - Score distribution#
-            #   - Binary classifier metrics
+    # apply GCN filter
+    # generate disjoint loader from dataset
+    data.apply(GCNFilter())
+    idx1 = int(trainsplit * len(data))
+    idx2 = int((trainsplit + valsplit) * len(data))
+    dataset_tr = data[:idx1]
+    dataset_va = data[idx1:idx2]
+    dataset_te = data[idx2:]
+    loader_train = DisjointLoader(dataset_tr,
+                                  batch_size=batch_size,
+                                  epochs=nEpochs)
+    loader_valid = DisjointLoader(dataset_va,
+                                  batch_size=batch_size)
 
-            _, theta_opt, (list_fpr, list_tpr) = fastROCAUC.fastROCAUC(y_scores,
-                                                                       y_true,
-                                                                       return_score=True)
-            plot_roc_curve(list_fpr, list_tpr, "rocauc_curve")
-            plot_score_distribution(y_scores, y_true, "score_dist")
-            metrics.write_metrics_classifier(y_scores, y_true)
+    history = tf_model.fit(loader_train,
+                           epochs=nEpochs,
+                           steps_per_epoch=loader_train.steps_per_epoch,
+                           validation_data=loader_valid,
+                           validation_steps=loader_valid.steps_per_epoch,
+                           class_weight=class_weights,
+                           verbose=1,
+                           callbacks=[l_callbacks])
 
-            plot_efficiencymap(y_pred=y_scores,
-                               y_true=y_true,
-                               y_sp=data.sp,
-                               figure_name="efficiencymap")
-            plot_sp_distribution(ary_sp=data.sp,
-                                 ary_score=y_scores,
-                                 ary_true=y_true,
-                                 figure_name="sp_distribution")
-            plot_pe_distribution(ary_pe=data.pe,
-                                 ary_score=y_scores,
-                                 ary_true=y_true,
-                                 figure_name="pe_distribution")
-            plot_2dhist_sp_score(sp=data.sp,
-                                 y_score=y_scores,
-                                 y_true=y_true,
-                                 figure_name="2dhist_sp_score")
-            plot_2dhist_ep_score(pe=data.pe,
-                                 y_score=y_scores,
-                                 y_true=y_true,
-                                 figure_name="2dhist_pe_score")
+    os.chdir(path)
+    # save model
+    print("Saving model at: ", RUN_NAME + "_classifier" + ".h5")
+    tf_model.save(RUN_NAME + "_classifier")
+    # save training history (not needed tbh)
+    with open(RUN_NAME + "_classifier_history" + ".hst", 'wb') as f_hist:
+        pkl.dump(history.history, f_hist)
+    # save norm
+    np.save(RUN_NAME + "_classifier" + "_norm_x", data.norm_x)
+    np.save(RUN_NAME + "_classifier" + "_norm_e", data.norm_e)
+    # save model parameter as json
+    with open(RUN_NAME + "_classifier_parameter.json", "w") as json_file:
+        json.dump(modelParameter, json_file)
+
+    # plot training history
+    plot_history_classifier(history.history, RUN_NAME + "_history_classifier")
+
+
+def evaluate(dataset_name,
+             RUN_NAME,
+             path):
+    os.chdir(path)
+    # load model, model parameter, norm, history
+    with open(RUN_NAME + "_classifier_parameter.json", "r") as json_file:
+        modelParameter = json.load(json_file)
+    tf_model = tf.keras.models.load_model(RUN_NAME + "_classifier")
+    norm_x = np.load(RUN_NAME + "_classifier_norm_x.npy")
+    norm_e = np.load(RUN_NAME + "_classifier_norm_e.npy")
+
+    optimizer = tf.keras.optimizers.Adam(learning_rate=1e-3)
+    loss = "binary_crossentropy"
+    list_metrics = ["Precision", "Recall"]
+    tf_model.compile(optimizer=optimizer,
+                     loss=loss,
+                     metrics=list_metrics)
+
+    # predict test dataset
+    os.chdir(path + dataset_name + "/")
+
+    # load dataset
+    data = dataset.GraphCluster(name=dataset_name,
+                                edge_atr=True,
+                                adj_arg="binary",
+                                norm_x=norm_x,
+                                norm_e=norm_e)
+
+    # apply GCN filter, generate disjoint loaders from dataset
+    data.apply(GCNFilter())
+    loader_test = DisjointLoader(data,
+                                 batch_size=64,
+                                 epochs=1,
+                                 shuffle=False)
+
+    y_true = []
+    y_scores = []
+    for batch in loader_test:
+        inputs, target = batch
+        p = tf_model(inputs, training=False)
+        y_true.append(target)
+        y_scores.append(p.numpy())
+    y_true = np.vstack(y_true)
+    y_scores = np.vstack(y_scores)
+    y_true = np.reshape(y_true, newshape=(y_true.shape[0],)) * 1
+    y_scores = np.reshape(y_scores, newshape=(y_scores.shape[0],))
+
+    # evaluate model:
+    #   - ROC analysis
+    #   - Score distribution#
+    #   - Binary classifier metrics
+
+    _, theta_opt, (list_fpr, list_tpr) = fastROCAUC.fastROCAUC(y_scores,
+                                                               y_true,
+                                                               return_score=True)
+    plot_roc_curve(list_fpr, list_tpr, "rocauc_curve")
+    plot_score_distribution(y_scores, y_true, "score_dist")
+    metrics.write_metrics_classifier(y_scores, y_true)
+
+    plot_efficiencymap(y_pred=y_scores,
+                       y_true=y_true,
+                       y_sp=data.sp,
+                       figure_name="efficiencymap")
+    plot_sp_distribution(ary_sp=data.sp,
+                         ary_score=y_scores,
+                         ary_true=y_true,
+                         figure_name="sp_distribution")
+    plot_pe_distribution(ary_pe=data.pe,
+                         ary_score=y_scores,
+                         ary_true=y_true,
+                         figure_name="pe_distribution")
+    plot_2dhist_sp_score(sp=data.sp,
+                         y_score=y_scores,
+                         y_true=y_true,
+                         figure_name="2dhist_sp_score")
+    plot_2dhist_ep_score(pe=data.pe,
+                         y_score=y_scores,
+                         y_true=y_true,
+                         figure_name="2dhist_pe_score")
 
 
 if __name__ == "__main__":
