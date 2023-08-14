@@ -102,7 +102,7 @@ def main():
     trainsplit = 0.6
     valsplit = 0.2
 
-    RUN_NAME = "GCNCluster"
+    RUN_NAME = "TEST_GCNCluster"
     do_training = True
     do_evaluate = True
 
@@ -162,7 +162,6 @@ def training(dataset_name,
              modelParameter):
     # load graph dataset
     data = dataset.GraphCluster(name=dataset_name,
-                                edge_atr=True,
                                 adj_arg="binary")
     # build model from parameter
     tf_model = NNmodel(**modelParameter)
