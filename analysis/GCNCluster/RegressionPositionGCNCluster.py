@@ -72,113 +72,139 @@ def main():
             os.mkdir(path_results + "/" + file + "/")
 
     if do_training:
-        data = dataset.GraphCluster(name=DATASET_CONT,
-                                    edge_atr=True,
-                                    adj_arg="binary",
-                                    TPOnly=True,
-                                    regression="Position")
-        tf_model = GCNmodel(**modelParameter)
-
-        optimizer = tf.keras.optimizers.Adam(learning_rate=1e-3)
-        loss = "mean_absolute_error"
-        list_metrics = ["mean_absolute_error"]
-        tf_model.compile(optimizer=optimizer,
-                         loss=loss,
-                         metrics=list_metrics)
-        l_callbacks = [tf.keras.callbacks.LearningRateScheduler(lr_scheduler)]
-
-        # apply GCN filter
-        # generate disjoint loader from dataset
-        data.apply(GCNFilter())
-        idx1 = int(trainsplit * len(data))
-        idx2 = int((trainsplit + valsplit) * len(data))
-        dataset_tr = data[:idx1]
-        dataset_va = data[idx1:idx2]
-        dataset_te = data[idx2:]
-        loader_train = DisjointLoader(dataset_tr,
-                                      batch_size=batch_size,
-                                      epochs=nEpochs)
-        loader_valid = DisjointLoader(dataset_va,
-                                      batch_size=batch_size)
-
-        history = tf_model.fit(loader_train,
-                               epochs=nEpochs,
-                               steps_per_epoch=loader_train.steps_per_epoch,
-                               validation_data=loader_valid,
-                               validation_steps=loader_valid.steps_per_epoch,
-                               verbose=1,
-                               callbacks=[l_callbacks])
-
-        os.chdir(path_results)
-        # save model
-        print("Saving model at: ", RUN_NAME + "_regressionPosition" + ".h5")
-        tf_model.save(RUN_NAME + "_regressionPosition")
-        # save training history (not needed tbh)
-        with open(RUN_NAME + "_regressionPosition_history" + ".hst", 'wb') as f_hist:
-            pkl.dump(history.history, f_hist)
-        # save norm
-        np.save(RUN_NAME + "_regressionPosition" + "_norm_x", data.norm_x)
-        np.save(RUN_NAME + "_regressionPosition" + "_norm_e", data.norm_e)
-        # save model parameter as json
-        with open(RUN_NAME + "_regressionPosition_parameter.json", "w") as json_file:
-            json.dump(modelParameter, json_file)
-
-        # plot training history
-        plot_history_regression(history.history, RUN_NAME + "_history_regressionPosition")
+        training(dataset_name=DATASET_CONT,
+                 RUN_NAME=RUN_NAME,
+                 trainsplit=trainsplit,
+                 valsplit=valsplit,
+                 batch_size=batch_size,
+                 nEpochs=nEpochs,
+                 path=path_results,
+                 modelParameter=modelParameter)
 
     if do_evaluate:
-        os.chdir(path_results)
-        # load model, model parameter, norm, history
-        with open(RUN_NAME + "_regressionPosition_parameter.json", "r") as json_file:
-            modelParameter = json.load(json_file)
-        tf_model = tf.keras.models.load_model(RUN_NAME + "_regressionPosition")
-        norm_x = np.load(RUN_NAME + "_regressionPosition_norm_x.npy")
-        norm_e = np.load(RUN_NAME + "_regressionPosition_norm_e.npy")
-
-        optimizer = tf.keras.optimizers.Adam(learning_rate=1e-3)
-        loss = "mean_absolute_error"
-        list_metrics = ["mean_absolute_error"]
-        tf_model.compile(optimizer=optimizer,
-                         loss=loss,
-                         metrics=list_metrics)
-
         for file in [DATASET_CONT, DATASET_0MM, DATASET_5MM]:
-            # predict test dataset
-            os.chdir(path_results + file + "/")
+            evaluate(dataset_name=file,
+                     RUN_NAME=RUN_NAME,
+                     path=path_results)
 
-            # load dataset
-            data = dataset.GraphCluster(name=file,
-                                        edge_atr=True,
-                                        adj_arg="binary",
-                                        norm_x=norm_x,
-                                        norm_e=norm_e,
-                                        TPOnly=True,
-                                        regression="Position")
 
-            # apply GCN filter, generate disjoint loaders from dataset
-            data.apply(GCNFilter())
-            loader_test = DisjointLoader(data,
-                                         batch_size=batch_size,
-                                         epochs=1,
-                                         shuffle=False)
+def training(dataset_name,
+             RUN_NAME,
+             trainsplit,
+             valsplit,
+             batch_size,
+             nEpochs,
+             path,
+             modelParameter):
+    data = dataset.GraphCluster(name=dataset_name,
+                                edge_atr=True,
+                                adj_arg="binary",
+                                TPOnly=True,
+                                regression="Position")
+    tf_model = GCNmodel(**modelParameter)
 
-            y_true = []
-            y_pred = []
-            for batch in loader_test:
-                inputs, target = batch
-                p = tf_model(inputs, training=False)
-                y_true.append(target)
-                y_pred.append(p.numpy())
+    optimizer = tf.keras.optimizers.Adam(learning_rate=1e-3)
+    loss = "mean_absolute_error"
+    list_metrics = ["mean_absolute_error"]
+    tf_model.compile(optimizer=optimizer,
+                     loss=loss,
+                     metrics=list_metrics)
+    l_callbacks = [tf.keras.callbacks.LearningRateScheduler(lr_scheduler)]
 
-            y_true = np.vstack(y_true)
-            y_pred = np.vstack(y_pred)
-            y_true = np.array(y_true)
-            y_pred = np.array(y_pred)
-            y_true = np.reshape(y_true, newshape=(y_true.shape[0], 6))
-            y_pred = np.reshape(y_pred, newshape=(y_pred.shape[0], 6))
+    # apply GCN filter
+    # generate disjoint loader from dataset
+    data.apply(GCNFilter())
+    idx1 = int(trainsplit * len(data))
+    idx2 = int((trainsplit + valsplit) * len(data))
+    dataset_tr = data[:idx1]
+    dataset_va = data[idx1:idx2]
+    dataset_te = data[idx2:]
+    loader_train = DisjointLoader(dataset_tr,
+                                  batch_size=batch_size,
+                                  epochs=nEpochs)
+    loader_valid = DisjointLoader(dataset_va,
+                                  batch_size=batch_size)
 
-            # evaluate model:
-            plot_position_error(y_pred, y_true, "error_regression_position")
+    history = tf_model.fit(loader_train,
+                           epochs=nEpochs,
+                           steps_per_epoch=loader_train.steps_per_epoch,
+                           validation_data=loader_valid,
+                           validation_steps=loader_valid.steps_per_epoch,
+                           verbose=1,
+                           callbacks=[l_callbacks])
+
+    os.chdir(dataset_name)
+    # save model
+    print("Saving model at: ", RUN_NAME + "_regressionPosition" + ".h5")
+    tf_model.save(RUN_NAME + "_regressionPosition")
+    # save training history (not needed tbh)
+    with open(RUN_NAME + "_regressionPosition_history" + ".hst", 'wb') as f_hist:
+        pkl.dump(history.history, f_hist)
+    # save norm
+    np.save(RUN_NAME + "_regressionPosition" + "_norm_x", data.norm_x)
+    np.save(RUN_NAME + "_regressionPosition" + "_norm_e", data.norm_e)
+    # save model parameter as json
+    with open(RUN_NAME + "_regressionPosition_parameter.json", "w") as json_file:
+        json.dump(modelParameter, json_file)
+
+    # plot training history
+    plot_history_regression(history.history, RUN_NAME + "_history_regressionPosition")
+
+
+def evaluate(dataset_name,
+             RUN_NAME,
+             path):
+    os.chdir(path)
+    # load model, model parameter, norm, history
+    with open(RUN_NAME + "_regressionPosition_parameter.json", "r") as json_file:
+        modelParameter = json.load(json_file)
+    tf_model = tf.keras.models.load_model(RUN_NAME + "_regressionPosition")
+    norm_x = np.load(RUN_NAME + "_regressionPosition_norm_x.npy")
+    norm_e = np.load(RUN_NAME + "_regressionPosition_norm_e.npy")
+
+    optimizer = tf.keras.optimizers.Adam(learning_rate=1e-3)
+    loss = "mean_absolute_error"
+    list_metrics = ["mean_absolute_error"]
+    tf_model.compile(optimizer=optimizer,
+                     loss=loss,
+                     metrics=list_metrics)
+
+    # predict test dataset
+    os.chdir(path + dataset_name + "/")
+
+    # load dataset
+    data = dataset.GraphCluster(name=dataset_name,
+                                edge_atr=True,
+                                adj_arg="binary",
+                                norm_x=norm_x,
+                                norm_e=norm_e,
+                                TPOnly=True,
+                                regression="Position")
+
+    # apply GCN filter, generate disjoint loaders from dataset
+    data.apply(GCNFilter())
+    loader_test = DisjointLoader(data,
+                                 batch_size=64,
+                                 epochs=1,
+                                 shuffle=False)
+
+    y_true = []
+    y_pred = []
+    for batch in loader_test:
+        inputs, target = batch
+        p = tf_model(inputs, training=False)
+        y_true.append(target)
+        y_pred.append(p.numpy())
+
+    y_true = np.vstack(y_true)
+    y_pred = np.vstack(y_pred)
+    y_true = np.array(y_true)
+    y_pred = np.array(y_pred)
+    y_true = np.reshape(y_true, newshape=(y_true.shape[0], 6))
+    y_pred = np.reshape(y_pred, newshape=(y_pred.shape[0], 6))
+
+    # evaluate model:
+    plot_position_error(y_pred, y_true, "error_regression_position")
 
 
 if __name__ == "__main__":
