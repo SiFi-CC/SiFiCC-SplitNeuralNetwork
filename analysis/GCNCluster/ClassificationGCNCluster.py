@@ -13,6 +13,8 @@ from spektral.layers import GCNConv, ECCConv, GlobalSumPool
 from spektral.data.loaders import DisjointLoader
 from spektral.transforms import GCNFilter
 
+from resNetBlocks import GCNConvResNetBlock, ECCConvResNetBlock
+
 from SiFiCCNN.analysis import fastROCAUC, metrics
 from SiFiCCNN.utils.plotter import plot_history_classifier, \
     plot_score_distribution, \
@@ -64,22 +66,42 @@ class NNmodel(Model):
         out10 = self.dropout(out9)
         out_final = self.dense_out(out10)
 
-        """
-        xIn, aIn, eIn, iIn = inputs
-        out1 = self.graph_gcnconv1([xIn, aIn])
-        out2 = self.graph_gcnconv2([out1, aIn])
-        out3 = self.graph_eccconv1([xIn, aIn, eIn])
-        out4 = self.graph_eccconv2([out3, aIn, eIn])
-        out5 = self.pool([out2, iIn])
-        out6 = self.pool([out4, iIn])
-
-        out7 = self.concatenate([out5, out6])
-        out8 = self.dense1(out7)
-        out9 = self.dropout(out8)
-        out_final = self.dense_out(out9)
-        """
-
         return out_final
+
+
+class ResNetModel(Model):
+
+    def __init__(self,
+                 nOutput,
+                 OutputActivation,
+                 nNodes,
+                 dropout=0.0):
+        super().__init__()
+
+        self.nOutput = nOutput
+        self.OutputActivation = OutputActivation
+        self.dropout_val = dropout
+        self.nNodes = nNodes
+
+    def call(self, inputs):
+        xIn, aIn, eIn, iIn = inputs
+        out1 = GCNConv(channels=self.nNodes)([xIn, aIn])
+        out1 = GCNConvResNetBlock(*[out1, aIn], n_filter=self.nNodes)
+        out1 = GCNConvResNetBlock(*[out1, aIn], n_filter=self.nNodes * 2)
+        out2 = ECCConv(channels=self.nNodes)([xIn, aIn, eIn])
+        out2 = ECCConvResNetBlock(*[out2, aIn, eIn], n_filter=self.nNodes)
+        out2 = ECCConvResNetBlock(*[out2, aIn, eIn], n_filter=self.nNodes * 2)
+
+        out1 = GlobalSumPool()([out1, iIn])
+        out2 = GlobalSumPool()([out2, iIn])
+
+        out = Concatenate()([out1, out2])
+        out = Dense(self.nNodes, activation="relu")(out)
+        out = Dense(int(self.nNodes / 2), activation="relu")(out)
+        out = Dropout(self.dropout)(out)
+        out = Dense(self.nOutput, self.OutputActivation)(out)
+
+        return out
 
 
 def lr_scheduler(epoch):
