@@ -9,7 +9,7 @@ def get_classifier_metrics(y_scores, y_true, theta=0.5, weighted=False):
     efficiency for given sample.
 
     Args:
-        y_scores (List or array): List of prediction scaores
+        y_scores (List or array): List of prediction scores
         y_true (List or array): List of true labels
         theta (Float): Decision threshold for classification
         weighted (Boolean): If true, all metrics are weighted in calculation by
@@ -63,6 +63,50 @@ def get_classifier_metrics(y_scores, y_true, theta=0.5, weighted=False):
         accuracy = (tp + tn) / (tp + tn + fp + fn)
 
     return accuracy, efficiency, purity, (tp, fp, tn, fn)
+
+
+def reco_match(y_reco, y_true):
+    # energy e
+    if abs(y_reco[0] - y_true[0]) > y_true[0] * 0.06 * 2:
+        return False
+    # energy p
+    if abs(y_reco[1] - y_true[1]) > y_true[1] * 0.06 * 2:
+        return False
+    # position e
+    if abs(y_reco[2] - y_true[2]) > 1.3 * 2:
+        return False
+    if abs(y_reco[3] - y_true[3]) > 10 * 2:
+        return False
+    if abs(y_reco[4] - y_true[4]) > 1.3 * 2:
+        return False
+    # position p
+    if abs(y_reco[5] - y_true[5]) > 1.3 * 2:
+        return False
+    if abs(y_reco[6] - y_true[6]) > 10 * 2:
+        return False
+    if abs(y_reco[7] - y_reco[7]) > 1.3 * 2:
+        return False
+    return True
+
+
+def global_metrics(y_reco, y_true, theta=0.5):
+    # pre-define
+    y_pred = np.zeros(shape=(len(y_true, )))
+
+    n_distcompton = np.sum(y_true)
+    n_tag_match = 0
+    n_reco_match = 0
+
+    for i in range(len(y_pred)):
+        if y_pred[i, 0] > theta and y_true[i, 0] == 1:
+            n_tag_match += 1
+            if reco_match(y_reco[i, 1:], y_true[i, 1:]):
+                n_reco_match += 1
+
+    # the percentage of positively classified
+    eff_match = 0
+
+    return accuracy, efficiency, purity
 
 
 def write_metrics_classifier(y_scores, y_true):
