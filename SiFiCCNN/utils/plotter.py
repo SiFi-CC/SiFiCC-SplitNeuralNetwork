@@ -238,7 +238,7 @@ def max_super_function(x):
 def plot_energy_error(y_pred, y_true, figure_name):
     plt.rcParams.update({'font.size': 16})
     width = 0.1
-    bins_err = np.arange(-1.0, 1.0, width)
+    bins_err = np.arange(-2.0, 2.0, width)
     bins_energy = np.arange(0.0, 10.0, width)
 
     bins_err_center = bins_err[:-1] + (width / 2)
@@ -310,6 +310,26 @@ def plot_energy_error(y_pred, y_true, figure_name):
     plt.tight_layout()
     plt.savefig(figure_name + "_photon_relative.png")
     plt.close()
+
+    # added new combined plot for better visibility
+    plt.figure(figsize=(8, 5))
+    plt.xlabel(r"$\frac{E_{Pred} - E_{True}}{E_{True}}$")
+    plt.ylabel("counts")
+    plt.xlim(-2, 2)
+    plt.hist((y_pred[:, 0] - y_true[:, 0]) / y_true[:, 0], bins=bins_err,
+             histtype=u"step", color="blue", label=r"$e^{-}$")
+    plt.plot(ary_x, gaussian(ary_x, *popt0), color="blue", linestyle="--",
+             label=r"$\mu$ = {:.2f}""\n"r"$\sigma$ = {:.2f}".format(popt0[0],
+                                                                    popt0[1]))
+    plt.hist((y_pred[:, 1] - y_true[:, 1]) / y_true[:, 0], bins=bins_err,
+             histtype=u"step", color="green", label=r"$\gamma$")
+    plt.plot(ary_x, gaussian(ary_x, *popt1), color="green", linestyle="--",
+             label=r"$\mu$ = {:.2f}""\n"r"$FWHM$ = {:.2f}".format(popt1[0],
+                                                                  popt1[1] / 2))
+    plt.legend()
+    plt.grid()
+    plt.tight_layout()
+    plt.savefig(figure_name + ".png")
 
 
 def plot_position_error(y_pred, y_true, figure_name):
