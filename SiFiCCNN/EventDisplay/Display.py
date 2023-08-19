@@ -1,7 +1,8 @@
 import matplotlib.pyplot as plt
+import numpy as np
 
 from uproot_methods import TVector3
-from ..utils.physics import compton_scattering_angle
+from ..utils.physics import compton_scattering_angle, vector_angle
 
 from SiFiCCNN.root import RootParser
 from SiFiCCNN.EventDisplay import Utils
@@ -20,12 +21,12 @@ class Display:
         self.show_reference_axis = True
         self.show_gamma_trajectory = True
         self.show_targets = True
-        self.show_interaction_e = True
-        self.show_interaction_p = True
+        self.show_interaction_e = False
+        self.show_interaction_p = False
 
-        self.show_true_cone = True
-        self.show_cbreco_cone = True
-        self.show_added_cone = True
+        self.show_true_cone = False
+        self.show_cbreco_cone = False
+        self.show_added_cone = False
 
         self.show_cluster_hits = False
         self.show_sipm_hits = False
@@ -144,7 +145,7 @@ class Display:
             vec_ax1 = target_position_e
             vec_ax2 = target_position_p - target_position_e
             vec_src = self.event.MCPosition_source
-            theta = compton_scattering_angle(target_energy_e, target_energy_p)
+            theta = vector_angle(vec_ax1 - vec_src, vec_ax2)
 
             list_cone = Utils.get_compton_cone(vec_ax1, vec_ax2, vec_src, theta, sr=128)
             for i in range(1, len(list_cone)):
@@ -208,4 +209,39 @@ class Display:
                           markersize=b)
 
         # ----------------------------------------------
+        # sipm and fibre hits
+
+        if self.show_sipm_hits:
+            # fibre hits plus boxes
+            for i in range(len(self.event.fibre_position)):
+                ax.plot3D(self.event.fibre_position.x[i],
+                          self.event.fibre_position.y[i],
+                          self.event.fibre_position.z[i],
+                          "o",
+                          color="lime")
+                list_fibre_edges = Utils.get_edges(self.event.fibre_position.x[i],
+                                                   0,
+                                                   self.event.fibre_position.z[i],
+                                                   1.94,
+                                                   100,
+                                                   1.94)
+                for j in range(len(list_fibre_edges)):
+                    ax.plot3D(list_fibre_edges[j][0],
+                              list_fibre_edges[j][1],
+                              list_fibre_edges[j][2],
+                              color="lime")
+
+            for i in range(len(self.event.SiPM_position)):
+                list_sipm_edges = Utils.get_edges(self.event.SiPM_position.x[i],
+                                                  self.event.SiPM_position.y[i],
+                                                  self.event.SiPM_position.z[i],
+                                                  4.0,
+                                                  0,
+                                                  4.0)
+                for j in range(len(list_sipm_edges)):
+                    ax.plot3D(list_sipm_edges[j][0],
+                              list_sipm_edges[j][1],
+                              list_sipm_edges[j][2],
+                              color="darkgreen")
+
         plt.show()
