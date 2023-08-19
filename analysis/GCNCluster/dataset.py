@@ -70,15 +70,12 @@ class GraphCluster(Dataset):
         e_list = self._get_e_list(n_edges_cum=n_edges_cum)
 
         # Create sparse adjacency matrices and re-sort edge attributes in lexicographic order
-        a_e_list = [
-            sparse.edge_index_to_matrix(
-                edge_index=el,
-                edge_weight=np.ones(el.shape[0]),
-                edge_features=e,
-                shape=(n, n),
-            )
-            for el, e, n in zip(el_list, e_list, n_nodes)
-        ]
+        a_e_list = [sparse.edge_index_to_matrix(edge_index=el,
+                                                edge_weight=np.ones(el.shape[0]),
+                                                edge_features=e,
+                                                shape=(n, n), )
+                    for el, e, n in zip(el_list, e_list, n_nodes)
+                    ]
         a_list, e_list = list(zip(*a_e_list))
 
         # set dataset target (classification / regression)

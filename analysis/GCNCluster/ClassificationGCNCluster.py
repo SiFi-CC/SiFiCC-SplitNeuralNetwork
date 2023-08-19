@@ -13,7 +13,7 @@ from spektral.layers import GCNConv, ECCConv, GlobalSumPool
 from spektral.data.loaders import DisjointLoader
 from spektral.transforms import GCNFilter
 
-from resNetBlocks import GCNConvResNetBlock, ECCConvResNetBlock
+from .resNetBlocks import GCNConvResNetBlock, ECCConvResNetBlock
 
 from SiFiCCNN.analysis import fastROCAUC, metrics
 from SiFiCCNN.utils.plotter import plot_history_classifier, \
