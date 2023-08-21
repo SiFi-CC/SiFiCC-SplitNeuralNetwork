@@ -7,13 +7,13 @@ import tensorflow as tf
 import dataset
 
 from tensorflow.keras.models import Model
-from tensorflow.keras.layers import Dense, Dropout, Concatenate
+from tensorflow.keras.layers import Dense, Dropout, Concatenate, Input
 
-from spektral.layers import GCNConv, ECCConv, GlobalSumPool
+from spektral.layers import GCNConv, ECCConv, GlobalSumPool, GATConv
 from spektral.data.loaders import DisjointLoader
 from spektral.transforms import GCNFilter
 
-from .resNetBlocks import GCNConvResNetBlock, ECCConvResNetBlock
+# from .resNetBlocks import GCNConvResNetBlock, ECCConvResNetBlock
 
 from SiFiCCNN.analysis import fastROCAUC, metrics
 from SiFiCCNN.utils.plotter import plot_history_classifier, \
@@ -69,39 +69,31 @@ class NNmodel(Model):
         return out_final
 
 
-class ResNetModel(Model):
+def setupModel():
+    x_In = Input(shape=(10,))
+    a_In = Input(shape=(None,), sparse=True)
 
-    def __init__(self,
-                 nOutput,
-                 OutputActivation,
-                 nNodes,
-                 dropout=0.0):
-        super().__init__()
+    gc_1 = GATConv(channels=32,
+                   attn_heads=8,
+                   activation="relu",
+                   concat_heads=True)([x_In, a_In])
+    gc_2 = GATConv(channels=32,
+                   attn_heads=8,
+                   activation="relu",
+                   concat_heads=True)([gc_1, a_In])
+    gsp_1 = GlobalSumPool()(gc_2)
+    d1 = Dense(32, activation="relu")(gsp_1)
+    out = Dense(1, activation="sigmoid")(d1)
 
-        self.nOutput = nOutput
-        self.OutputActivation = OutputActivation
-        self.dropout_val = dropout
-        self.nNodes = nNodes
+    model = Model(inputs=x_In, outputs=out)
+    optimizer = tf.keras.optimizers.Adam(learning_rate=1e-3)
+    loss = "binary_crossentropy"
+    list_metrics = ["Precision", "Recall"]
+    model.compile(optimizer=optimizer,
+                  loss=loss,
+                  metrics=list_metrics)
 
-    def call(self, inputs):
-        xIn, aIn, eIn, iIn = inputs
-        out1 = GCNConv(channels=self.nNodes)([xIn, aIn])
-        out1 = GCNConvResNetBlock(*[out1, aIn], n_filter=self.nNodes)
-        out1 = GCNConvResNetBlock(*[out1, aIn], n_filter=self.nNodes * 2)
-        out2 = ECCConv(channels=self.nNodes)([xIn, aIn, eIn])
-        out2 = ECCConvResNetBlock(*[out2, aIn, eIn], n_filter=self.nNodes)
-        out2 = ECCConvResNetBlock(*[out2, aIn, eIn], n_filter=self.nNodes * 2)
-
-        out1 = GlobalSumPool()([out1, iIn])
-        out2 = GlobalSumPool()([out2, iIn])
-
-        out = Concatenate()([out1, out2])
-        out = Dense(self.nNodes, activation="relu")(out)
-        out = Dense(int(self.nNodes / 2), activation="relu")(out)
-        out = Dropout(self.dropout)(out)
-        out = Dense(self.nOutput, self.OutputActivation)(out)
-
-        return out
+    return model
 
 
 def lr_scheduler(epoch):
@@ -119,12 +111,12 @@ def main():
     dropout = 0.2
     nNodes = 64
     batch_size = 64
-    nEpochs = 20
+    nEpochs = 10
 
     trainsplit = 0.6
     valsplit = 0.2
 
-    RUN_NAME = "TEST_GCNCluster"
+    RUN_NAME = "GATCluster"
     do_training = True
     do_evaluate = True
 
@@ -185,6 +177,8 @@ def training(dataset_name,
     # load graph dataset
     data = dataset.GraphCluster(name=dataset_name,
                                 adj_arg="binary")
+
+    """    
     # build model from parameter
     tf_model = NNmodel(**modelParameter)
     optimizer = tf.keras.optimizers.Adam(learning_rate=1e-3)
@@ -193,6 +187,8 @@ def training(dataset_name,
     tf_model.compile(optimizer=optimizer,
                      loss=loss,
                      metrics=list_metrics)
+    """
+    tf_model = setupModel()
     l_callbacks = [tf.keras.callbacks.LearningRateScheduler(lr_scheduler)]
 
     # set normalization from training dataset
@@ -201,7 +197,7 @@ def training(dataset_name,
 
     # apply GCN filter
     # generate disjoint loader from dataset
-    data.apply(GCNFilter())
+    # data.apply(GCNFilter())
     idx1 = int(trainsplit * len(data))
     idx2 = int((trainsplit + valsplit) * len(data))
     dataset_tr = data[:idx1]
@@ -269,7 +265,7 @@ def evaluate(dataset_name,
                                 norm_e=norm_e)
 
     # apply GCN filter, generate disjoint loaders from dataset
-    data.apply(GCNFilter())
+    # data.apply(GCNFilter())
     loader_test = DisjointLoader(data,
                                  batch_size=64,
                                  epochs=1,
