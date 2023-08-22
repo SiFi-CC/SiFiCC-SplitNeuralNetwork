@@ -9,11 +9,11 @@ import dataset
 from tensorflow.keras.models import Model
 from tensorflow.keras.layers import Dense, Dropout, Concatenate, Input
 
-from spektral.layers import GCNConv, ECCConv, GlobalSumPool, GATConv
+from spektral.layers import GCNConv, GlobalMaxPool
 from spektral.data.loaders import DisjointLoader
 from spektral.transforms import GCNFilter
 
-# from .resNetBlocks import GCNConvResNetBlock, ECCConvResNetBlock
+from SiFiCCNN.utils.layers import GCNConvResNetBlock, ReZero
 
 from SiFiCCNN.analysis import fastROCAUC, metrics
 from SiFiCCNN.utils.plotter import plot_history_classifier, \
@@ -26,72 +26,51 @@ from SiFiCCNN.utils.plotter import plot_history_classifier, \
     plot_2dhist_sp_score
 
 
-class NNmodel(Model):
+def setupModel(F=10,
+               S=6,
+               nFilter=16,
+               activation="relu",
+               n_out=1,
+               activation_out="sigmoid",
+               dropout=0.0):
+    X_in = Input(shape=(F,))
+    A_in = Input(shape=(None,), sparse=True)
+    E_in = Input(shape=(S,))
+    I_in = Input(shape=(), dtype=tf.int64)
 
-    def __init__(self,
-                 nOutput,
-                 OutputActivation,
-                 nNodes,
-                 dropout=0.0):
-        super().__init__()
+    x = GCNConv(nFilter, activation=activation, use_bias=True)([X_in, A_in])
 
-        self.nOutput = nOutput
-        self.OutputActivation = OutputActivation
-        self.dropout_val = dropout
-        self.nNodes = nNodes
+    x = GCNConvResNetBlock(*[x, A_in], nFilter, activation)
+    x = GCNConvResNetBlock(*[x, A_in], nFilter, activation)
 
-        self.graph_gcnconv1 = GCNConv(nNodes, activation="relu")
-        self.graph_gcnconv2 = GCNConv(int(nNodes * 2), activation="relu")
-        self.graph_eccconv1 = ECCConv(nNodes, activation="relu")
-        self.graph_eccconv2 = ECCConv(int(nNodes * 2), activation="relu")
-        self.pool = GlobalSumPool()
-        self.dropout = Dropout(dropout)
-        self.dense1 = Dense(nNodes, activation="relu")
-        self.dense2 = Dense(int(nNodes / 2), activation="relu")
-        self.dense_out = Dense(nOutput, OutputActivation)
-        self.concatenate = Concatenate()
+    x = GCNConvResNetBlock(*[x, A_in], nFilter, activation)
+    x = GCNConvResNetBlock(*[x, A_in], nFilter, activation)
 
-    def call(self, inputs):
-        xIn, aIn, eIn, iIn = inputs
-        out1 = self.graph_gcnconv1([xIn, aIn])
-        out2 = self.graph_gcnconv2([out1, aIn])
-        out3 = self.graph_eccconv1([xIn, aIn, eIn])
-        out4 = self.graph_eccconv2([out3, aIn, eIn])
-        out5 = self.pool([out2, iIn])
-        out6 = self.pool([out4, iIn])
+    x = GCNConvResNetBlock(*[x, A_in], nFilter, activation)
+    x = GCNConvResNetBlock(*[x, A_in], nFilter, activation)
 
-        out7 = self.concatenate([out5, out6])
-        out8 = self.dense1(out7)
-        out9 = self.dense2(out8)
-        out10 = self.dropout(out9)
-        out_final = self.dense_out(out10)
+    x = GCNConvResNetBlock(*[x, A_in], nFilter, activation)
+    x = GCNConvResNetBlock(*[x, A_in], nFilter, activation)
 
-        return out_final
+    x = GlobalMaxPool()([x, I_in])
 
+    if dropout > 0:
+        x = Dropout(dropout)(x)
 
-def setupModel():
-    x_In = Input(shape=(10,))
-    a_In = Input(shape=(None,), sparse=True)
+    x = Dense(nFilter * 16, activation=activation)(x)
 
-    gc_1 = GATConv(channels=32,
-                   attn_heads=8,
-                   activation="relu",
-                   concat_heads=True)([x_In, a_In])
-    gc_2 = GATConv(channels=32,
-                   attn_heads=8,
-                   activation="relu",
-                   concat_heads=True)([gc_1, a_In])
-    gsp_1 = GlobalSumPool()(gc_2)
-    d1 = Dense(32, activation="relu")(gsp_1)
-    out = Dense(1, activation="sigmoid")(d1)
+    out = Dense(n_out, activation=activation_out)(x)
 
-    model = Model(inputs=x_In, outputs=out)
+    model = Model(inputs=[X_in, A_in, E_in, I_in], outputs=out)
+
     optimizer = tf.keras.optimizers.Adam(learning_rate=1e-3)
-    loss = "binary_crossentropy"
-    list_metrics = ["Precision", "Recall"]
-    model.compile(optimizer=optimizer,
-                  loss=loss,
-                  metrics=list_metrics)
+    if n_out == 1:
+        loss = "binary_crossentropy"
+        list_metrics = ["Precision", "Recall"]
+    else:
+        loss = "mean_absolute_error"
+        list_metrics = ["mean_absolute_error"]
+    model.compile(optimizer=optimizer, loss=loss, metrics=list_metrics)
 
     return model
 
@@ -108,23 +87,28 @@ def lr_scheduler(epoch):
 
 def main():
     # defining hyper parameters
+    nFilter = 16
+    activation = "relu"
+    n_out = 1
+    activation_out = "sigmoid"
     dropout = 0.2
-    nNodes = 64
+
     batch_size = 64
     nEpochs = 10
 
     trainsplit = 0.6
     valsplit = 0.2
 
-    RUN_NAME = "GATCluster"
+    RUN_NAME = "GCNResNetCluster"
     do_training = True
     do_evaluate = True
 
     # create dictionary for model and training parameter
-    modelParameter = {"nOutput": 1,
-                      "OutputActivation": "sigmoid",
-                      "dropout": dropout,
-                      "nNodes": nNodes}
+    modelParameter = {"nFilter": nFilter,
+                      "activation": activation,
+                      "n_out": n_out,
+                      "activation_out": activation_out,
+                      "dropout": dropout}
 
     # Datasets used
     # Training file used for classification and regression training
@@ -175,34 +159,25 @@ def training(dataset_name,
              path,
              modelParameter):
     # load graph dataset
-    data = dataset.GraphCluster(name=dataset_name,
-                                adj_arg="binary")
+    data = dataset.GraphCluster(name=dataset_name, adj_arg="binary")
 
-    """    
-    # build model from parameter
-    tf_model = NNmodel(**modelParameter)
-    optimizer = tf.keras.optimizers.Adam(learning_rate=1e-3)
-    loss = "binary_crossentropy"
-    list_metrics = ["Precision", "Recall"]
-    tf_model.compile(optimizer=optimizer,
-                     loss=loss,
-                     metrics=list_metrics)
-    """
-    tf_model = setupModel()
+    # build tensorflow model
+    tf_model = setupModel(**modelParameter)
+
+    # callbacks
     l_callbacks = [tf.keras.callbacks.LearningRateScheduler(lr_scheduler)]
 
-    # set normalization from training dataset
-    # dataset is initialized standardized
+    # set class-weights
     class_weights = data.get_classweight_dict()
 
-    # apply GCN filter
+    # apply GCN filter (Only needed if GCN layers are used)
+    data.apply(GCNFilter())
+
     # generate disjoint loader from dataset
-    # data.apply(GCNFilter())
     idx1 = int(trainsplit * len(data))
     idx2 = int((trainsplit + valsplit) * len(data))
     dataset_tr = data[:idx1]
     dataset_va = data[idx1:idx2]
-    dataset_te = data[idx2:]
     loader_train = DisjointLoader(dataset_tr,
                                   batch_size=batch_size,
                                   epochs=nEpochs)
@@ -220,8 +195,8 @@ def training(dataset_name,
 
     os.chdir(path)
     # save model
-    print("Saving model at: ", RUN_NAME + "_classifier" + ".h5")
-    tf_model.save(RUN_NAME + "_classifier")
+    print("Saving model at: ", RUN_NAME + "_classifier.keras")
+    tf_model.save(RUN_NAME + "_classifier.keras")
     # save training history (not needed tbh)
     with open(RUN_NAME + "_classifier_history" + ".hst", 'wb') as f_hist:
         pkl.dump(history.history, f_hist)
@@ -243,7 +218,14 @@ def evaluate(dataset_name,
     # load model, model parameter, norm, history
     with open(RUN_NAME + "_classifier_parameter.json", "r") as json_file:
         modelParameter = json.load(json_file)
-    tf_model = tf.keras.models.load_model(RUN_NAME + "_classifier")
+
+    # load tensorflow model
+    # Custom layers have to be stated to load accordingly
+    tf_model = tf.keras.models.load_model(RUN_NAME + "_classifier.keras",
+                                          custom_objects={"GCNConv": GCNConv,
+                                                          "GlobalMaxPool": GlobalMaxPool,
+                                                          "ReZero": ReZero})
+
     norm_x = np.load(RUN_NAME + "_classifier_norm_x.npy")
     norm_e = np.load(RUN_NAME + "_classifier_norm_e.npy")
 
@@ -264,8 +246,9 @@ def evaluate(dataset_name,
                                 norm_x=norm_x,
                                 norm_e=norm_e)
 
-    # apply GCN filter, generate disjoint loaders from dataset
-    # data.apply(GCNFilter())
+    # apply GCN filter (Only needed if GCN layers are used)
+    data.apply(GCNFilter())
+
     loader_test = DisjointLoader(data,
                                  batch_size=64,
                                  epochs=1,

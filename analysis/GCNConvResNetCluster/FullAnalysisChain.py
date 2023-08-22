@@ -11,7 +11,7 @@ from SiFiCCNN.ImageReconstruction import IRExport
 
 def main():
     # defining hyper parameters
-    RUN_NAME = "GCNCluster"
+    RUN_NAME = "GCNConvResNetCluster"
     threshold = 0.5
 
     # Datasets used

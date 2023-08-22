@@ -7,7 +7,7 @@ import tensorflow as tf
 import dataset
 import downloader
 
-from ClassificationGCNCluster import GCNmodel
+from ClassificationGCNConvResNetCluster import GCNmodel
 
 from spektral.layers import GCNConv, ECCConv, GlobalSumPool
 from spektral.data.loaders import DisjointLoader
@@ -37,7 +37,7 @@ def main():
     trainsplit = 0.7
     valsplit = 0.1
 
-    RUN_NAME = "GCNCluster"
+    RUN_NAME = "GCNConvResNetCluster"
     do_training = True
     do_evaluate = True
 
