@@ -1,6 +1,8 @@
 import tensorflow as tf
 import spektral as sp
 
+from sklearn.neighbors import kneighbors_graph
+
 
 class ReZero(tf.keras.layers.Layer):
     r"""ReZero layer based on the paper
@@ -81,6 +83,29 @@ def adjustChannelSize(xInput, fxInput):
         return x
     else:
         return xInput
+
+
+class DynamicGraphUpdate(tf.keras.layers.Layer):
+    def __init__(self, k=3, mode="connectivity", metric="minkowski", **kwargs):
+        self.k = k
+        self.mode = mode
+        self.metric = metric
+        super(DynamicGraphUpdate, self).__init__(**kwargs)
+
+    def call(self, inputs):
+        assert isinstance(inputs, list)
+        X, A = inputs
+        return kneighbors_graph(X=X,
+                                n_neighbors=self.k,
+                                mode=self.mode,
+                                metric=self.metric)
+
+    def get_config(self):
+        base_config = super().get_config()
+        return {**base_config,
+                "k": self.k,
+                "mode": self.mode,
+                "metric": self.metric}
 
 
 def GCNConvResNetBlock(x,
