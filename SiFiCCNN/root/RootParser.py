@@ -81,6 +81,7 @@ class RootParser:
         self.ifcluster = False
         self.ifreco = False
         self.ifsipm = False
+        self.ifenergydepo = False
         self.list_leaves_final = []
         if set(self.leaves_global).issubset(self.events_keys):
             self.ifglobal = True
@@ -101,6 +102,13 @@ class RootParser:
         if set(self.leaves_sipm_keys).issubset(self.events_keys):
             self.ifsipm = True
             self.list_leaves_final += self.leaves_sipm
+
+        # check if MCEnergyDeps_e and MCEnergyDeps_p are stored in the root file
+        # These are leaves added later in the analysis, therefore older datasets won't contain them.
+        # To further support older datasets these root leaves need an exception
+        if {b'MCEnergyDeps_e', b'MCEnergyDeps_p'}.issubset(self.events_keys):
+            self.list_leaves_final += [b'MCEnergyDeps_e', b'MCEnergyDeps_p']
+            self.ifenergydepo = True
 
         # create SIFICC-Module objects for scatterer and absorber
         self.scatterer = Detector(self.setup["ScattererPosition"].array()[0],
@@ -176,6 +184,10 @@ class RootParser:
                                  MCInteractions_e=basket['MCInteractions_e'][idx],
                                  MCPosition_p=basket['MCPosition_p'][idx],
                                  MCInteractions_p=basket['MCInteractions_p'][idx],
+                                 MCEnergyDeps_e=basket["MCEnergyDeps_e"][
+                                     idx] if self.ifenergydepo else None,
+                                 MCEnergyDeps_p=basket["MCEnergyDeps_p"][
+                                     idx] if self.ifenergydepo else None,
                                  MCPosition_source=basket['MCPosition_source'][idx],
                                  MCDirection_source=basket['MCDirection_source'][idx],
                                  MCComptonPosition=basket['MCComptonPosition'][idx],
@@ -203,6 +215,10 @@ class RootParser:
                               MCInteractions_e=basket['MCInteractions_e'][idx],
                               MCPosition_p=basket['MCPosition_p'][idx],
                               MCInteractions_p=basket['MCInteractions_p'][idx],
+                              MCEnergyDeps_e=basket["MCEnergyDeps_e"][
+                                  idx] if self.ifenergydepo else None,
+                              MCEnergyDeps_p=basket["MCEnergyDeps_p"][
+                                  idx] if self.ifenergydepo else None,
                               MCPosition_source=basket['MCPosition_source'][idx],
                               MCDirection_source=basket['MCDirection_source'][idx],
                               MCComptonPosition=basket['MCComptonPosition'][idx],
@@ -228,6 +244,10 @@ class RootParser:
                           MCInteractions_e=basket['MCInteractions_e'][idx],
                           MCPosition_p=basket['MCPosition_p'][idx],
                           MCInteractions_p=basket['MCInteractions_p'][idx],
+                          MCEnergyDeps_e=basket["MCEnergyDeps_e"][
+                              idx] if self.ifenergydepo else None,
+                          MCEnergyDeps_p=basket["MCEnergyDeps_p"][
+                              idx] if self.ifenergydepo else None,
                           MCPosition_source=basket['MCPosition_source'][idx],
                           MCDirection_source=basket['MCDirection_source'][idx],
                           MCComptonPosition=basket['MCComptonPosition'][idx],

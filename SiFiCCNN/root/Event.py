@@ -59,7 +59,10 @@ class Event:
                  MCPosition_p,
                  MCInteractions_p,
                  module_scatterer,
-                 module_absorber):
+                 module_absorber,
+                 MCEnergyDeps_e=None,
+                 MCEnergyDeps_p=None):
+
         # Global information
         self.EventNumber = EventNumber
         self.MCSimulatedEventType = MCSimulatedEventType
@@ -74,6 +77,9 @@ class Event:
         self.MCInteractions_e = MCInteractions_e
         self.MCPosition_p = MCPosition_p
         self.MCInteractions_p = MCInteractions_p
+        # additional attributes, may not be present in every file
+        self.MCEnergyDeps_e = MCEnergyDeps_e
+        self.MCEnergyDeps_p = MCEnergyDeps_p
 
         # Detector modules
         self.scatterer = module_scatterer
@@ -95,7 +101,8 @@ class Event:
 
     def set_interaction_list(self):
         """
-        Setter method for MCInteraction_e_uni and MCInteraction_p_uni. Legacy variants of
+        Setter method for MCInteraction_e_uni and MCInteraction_p_uni. If MCEnergyDeps_x entries
+        exist, these will be used as a mask. Update on this needed. Legacy variants of
         interactions lists include:
             - 2 length or lower:    First legacy variant. Used in all old root files. Interactions
                                     encoded in two digits numbers. First describing the secondary
@@ -137,11 +144,24 @@ class Event:
                         interact // 10 ** 2 % 10 + 10 * (interact // 10 ** 3 % 10),
                         interact // 10 ** 1 % 10,
                         interact // 10 ** 0 % 10]
+
+                # This exception is only present in the 5 digit decoded interaction list as it is
+                # a new feature only present in root-files upwards generation 4
+                if self.MCEnergyDeps_e is not None:
+                    int_mask_e = self.MCEnergyDeps_e > 0.0
+                    self.MCInteractions_e_uni = self.MCInteractions_e_uni[int_mask_e, :]
+
                 for i, interact in enumerate(self.MCInteractions_p):
                     self.MCInteractions_p_uni[i, :3] = [
                         interact // 10 ** 2 % 10 + 10 * (interact // 10 ** 3 % 10),
                         interact // 10 ** 1 % 10,
                         interact // 10 ** 0 % 10]
+
+                # This exception is only present in the 5 digit decoded interaction list as it is
+                # a new feature only present in root-files upwards generation 4
+                if self.MCEnergyDeps_p is not None:
+                    int_mask_p = self.MCEnergyDeps_p > 0.0
+                    self.MCInteractions_p_uni = self.MCInteractions_p_uni[int_mask_p, :]
 
     # neural network target getter methods
     def get_target_position(self):
