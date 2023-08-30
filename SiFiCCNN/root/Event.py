@@ -411,8 +411,9 @@ class Event:
         print("\n##################################################")
         print("##### Event Summary (ID: {:18}) #####".format(self.EventNumber))
         print("##################################################\n")
+        print("Event class      : {}".format(self.__class__.__name__))
         print("Event number (ID): {}".format(self.EventNumber))
-        print("Event type: {}".format(self.MCSimulatedEventType))
+        print("Event type       : {}".format(self.MCSimulatedEventType))
 
         # Neural network targets + additional tagging
         print("\n### Event tagging: ###")
@@ -465,22 +466,35 @@ class Event:
                     self.MCInteractions_p_uni[i, 0],
                     self.MCInteractions_p_uni[i, 1]))
         else:
-            print("Position [mm] | Interaction: (Ptype, Itype, level) | Direction difference")
+            if self.MCEnergyDeps_e is not None:
+                print(
+                    "Position [mm] | Interaction: (Ptype, Itype, level) | Direction diff. | Energy dep.")
+            else:
+                print("Position [mm] | Interaction: (Ptype, Itype, level) | Direction diff.")
+
             for i in range(self.MCInteractions_p_uni.shape[0]):
                 tmp_vec = self.MCPosition_p[i] - self.MCComptonPosition
                 r = tmp_vec.mag
-                tmp_vec /= tmp_vec.mag
                 tmp_angle = vector_angle(tmp_vec, self.MCDirection_scatter)
-                print(
-                    "({:7.3f}, {:7.3f}, {:7.3f}) | ({:3}, {:3}, {:3}) | {:.5f} [rad] ({:7.5f} [mm])".format(
-                        self.MCPosition_p.x[i],
-                        self.MCPosition_p.y[i],
-                        self.MCPosition_p.z[i],
-                        self.MCInteractions_p_uni[i, 2],
-                        self.MCInteractions_p_uni[i, 0],
-                        self.MCInteractions_p_uni[i, 1],
-                        tmp_angle,
-                        np.sin(tmp_angle) * r))
+
+                list_params = [self.MCPosition_p.x[i],
+                               self.MCPosition_p.y[i],
+                               self.MCPosition_p.z[i],
+                               self.MCInteractions_p_uni[i, 2],
+                               self.MCInteractions_p_uni[i, 0],
+                               self.MCInteractions_p_uni[i, 1],
+                               tmp_angle,
+                               np.sin(tmp_angle) * r]
+
+                if self.MCEnergyDeps_p is not None:
+                    list_params.append(self.MCEnergyDeps_p[i] > 0.0)
+                    print(
+                        "({:7.3f}, {:7.3f}, {:7.3f}) | ({:3}, {:3}, {:3}) | {:.5f} [rad] ({:7.5f} [mm]) | {}".format(
+                            *list_params))
+                else:
+                    print(
+                        "({:7.3f}, {:7.3f}, {:7.3f}) | ({:3}, {:3}, {:3}) | {:.5f} [rad] ({:7.5f} [mm])".format(
+                            *list_params))
 
     def summary(self, debug=False):
         """
