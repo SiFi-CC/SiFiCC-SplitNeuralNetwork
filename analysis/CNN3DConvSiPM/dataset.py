@@ -12,7 +12,7 @@ class SiPMSample:
         self.a = a
 
 
-class DenseSiPM(tf.keras.utils.Sequence):
+class ConvSiPM(tf.keras.utils.Sequence):
     def __init__(self,
                  name,
                  batch_size=64,
@@ -52,6 +52,18 @@ class DenseSiPM(tf.keras.utils.Sequence):
         # normalization factors
         self.norm_qdc = 4105
         self.norm_tt = 3.125
+
+    @property
+    def path(self):
+        # get current path, go two subdirectories higher
+        path = os.getcwd()
+        while True:
+            if os.path.basename(path) == "SiFiCC-SplitNeuralNetwork":
+                break
+            path = os.path.abspath(os.path.join(path, os.pardir))
+        path = os.path.join(path, "datasets", "SiFiCCNN_ConvSiPM", self.name)
+
+        return path
 
     def __read(self):
         # Batch index
@@ -138,18 +150,6 @@ class DenseSiPM(tf.keras.utils.Sequence):
             # return class labels
             y_list = np.load(self.path + "/" + self.name + "_graph_labels.npy")
         return y_list
-
-    @property
-    def path(self):
-        # get current path, go two subdirectories higher
-        path = os.getcwd()
-        while True:
-            if os.path.basename(path) == "SiFiCC-SplitNeuralNetwork":
-                break
-            path = os.path.abspath(os.path.join(path, os.pardir))
-        path = os.path.join(path, "datasets", "SiFiCCNN_GraphSiPM", self.name)
-
-        return path
 
     def __len__(self):
         return self.steps_per_epoch

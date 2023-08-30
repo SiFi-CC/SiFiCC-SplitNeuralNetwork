@@ -24,13 +24,13 @@ def load(RootParser,
     """
 
     # define dataset name
-    dataset_name = "GraphSiPM"
+    dataset_name = "ConvSiPM"
     dataset_name += "_" + RootParser.file_name
 
     # grab correct filepath, generate dataset in target directory.
     if path == "":
         path = "/net/scratch_g4rt1/fenger/datasets/"
-    path = os.path.join(path, "SiFiCCNN_GraphSiPM", dataset_name)
+    path = os.path.join(path, "SiFiCCNN_ConvSiPM", dataset_name)
     if not os.path.isdir(path):
         os.makedirs(path, exist_ok=True)
 

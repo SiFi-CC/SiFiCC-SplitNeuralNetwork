@@ -150,12 +150,12 @@ def training(dataset_name,
              path,
              modelParameter):
     # setup generator for training
-    loader_train = dataset.DenseSiPM(name=dataset_name,
+    loader_train = dataset.ConvSiPM(name=dataset_name,
                                      batch_size=batch_size,
                                      slicing="train",
                                      shuffle=True)
 
-    loader_valid = dataset.DenseSiPM(name=dataset_name,
+    loader_valid = dataset.ConvSiPM(name=dataset_name,
                                      batch_size=batch_size,
                                      slicing="valid",
                                      shuffle=True)
@@ -209,7 +209,7 @@ def evaluate(dataset_name,
     os.chdir(path + dataset_name + "/")
 
     # load dataset
-    loader_eval = dataset.DenseSiPM(name=dataset_name,
+    loader_eval = dataset.ConvSiPM(name=dataset_name,
                                     batch_size=32,
                                     slicing="",
                                     shuffle=False)
