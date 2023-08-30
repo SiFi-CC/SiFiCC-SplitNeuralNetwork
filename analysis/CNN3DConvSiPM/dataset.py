@@ -18,19 +18,21 @@ class DenseSiPM(tf.keras.utils.Sequence):
                  batch_size=64,
                  slicing="train",
                  shuffle=False,
+                 p_only=False,
+                 reg_type=None,
                  seed=42):
+
         # get current path, go two subdirectories higher
         self.name = name
-        path = os.path.dirname(os.path.abspath(__file__))
-        for i in range(3):
-            path = os.path.dirname(path)
-        self.path = os.path.join(path, "datasets", "SiFiCCNN", name)
 
         # determine train test split
-        self.p_train = 0.7
-        self.p_test = 0.1
+        self.p_train = 0.6
+        self.p_test = 0.2
         self.p_valid = 0.2
         self.slicing = slicing
+
+        self.p_only = p_only
+        self.reg_type = reg_type
 
         # read the dataset
         self.samples = self.__read()
@@ -47,12 +49,13 @@ class DenseSiPM(tf.keras.utils.Sequence):
         # class weighting
         self.class_weights = self.get_classweights()
 
+        # normalization factors
+        self.norm_qdc = 4105
+        self.norm_tt = 3.125
+
     def __read(self):
         # Batch index
-        node_batch_index = (
-            io.load_txt(
-                self.path + "/" + self.name + "_graph_indicator" + ".txt").astype(
-                int))
+        node_batch_index = np.load(self.path + "/" + self.name + "_graph_indicator.npy")
         # nodes == hit sipm
         n_nodes = np.bincount(node_batch_index)
         n_nodes_cum = np.concatenate(([0], np.cumsum(n_nodes)[:-1]))
@@ -74,25 +77,17 @@ class DenseSiPM(tf.keras.utils.Sequence):
         # TODO: slicing it
 
         # Read edge lists
-        edges = io.load_txt(self.path + "/" + self.name + "_A" + ".txt",
-                            delimiter=",").astype(int)
+        edges = np.load(self.path + "/" + self.name + "_A.npy")
 
         # Split edges into separate edge lists
         a_list = np.split(edges, n_nodes_cum[1:])
 
-        # Node features
-        x_list = []
-        x_attr = io.load_txt(
-            self.path + "/" + self.name + "_node_attributes" + ".txt",
-            delimiter=",")
-        x_list.append(x_attr)
-        x_list = np.concatenate(x_list, -1)
-        x_list = np.split(x_list, n_nodes_cum[1:])
+        # get node attributes (x_list)
+        x_list = self._get_x_list(n_nodes_cum=n_nodes_cum)
 
-        # Labels
-        labels = io.load_txt(
-            self.path + "/" + self.name + "_graph_labels" + ".txt").astype(
-            np.float32)
+        # set dataset target (classification / regression)
+        y_list = self._get_y_list()
+        labels = np.load(self.path + "/" + self.name + "_graph_labels.npy")
 
         x_list = np.array(x_list)[indices]
         a_list = np.array(a_list)[indices]
@@ -101,11 +96,60 @@ class DenseSiPM(tf.keras.utils.Sequence):
         # Convert to Graph
         print("Successfully loaded {}.".format(self.name))
 
+        # limited to True positives only if needed
+        if self.p_only:
+            # Convert to Graph
+            print("Successfully loaded {}.".format(self.name))
+            return [
+                SiPMSample(x=x, a=a, y=y)
+                for x, a, y, label in zip(x_list, a_list, y_list, labels) if label
+            ]
+
+        # Convert to Graph
+        print("Successfully loaded {}.".format(self.name))
         return [
             SiPMSample(x=x, a=a, y=y)
-            for x, a, y in
-            zip(x_list, a_list, labels)
+            for x, a, y in zip(x_list, a_list, labels)
         ]
+
+    def _get_x_list(self, n_nodes_cum):
+        # Node features
+        x_attr = np.load(self.path + "/" + self.name + "_node_attributes.npy")
+        x_list = np.split(x_attr, n_nodes_cum[1:])
+        return x_list
+
+    def _get_e_list(self, n_edges_cum):
+        e_attr = np.load(self.path + "/" + self.name + "_edge_attributes.npy")  # ["arr_0"]
+        e_list = np.split(e_attr, n_edges_cum)
+        return e_list
+
+    def _get_y_list(self):
+        if self.reg_type is not None:
+            graph_attributes = np.load(self.path + "/" + self.name + "_graph_attributes.npy")
+            if self.reg_type == "Energy":
+                y_list = graph_attributes[:, :2]
+            elif self.reg_type == "Position":
+                y_list = graph_attributes[:, 2:]
+            else:
+                print("Warning: Regression type not set correctly")
+                return None
+
+        else:
+            # return class labels
+            y_list = np.load(self.path + "/" + self.name + "_graph_labels.npy")
+        return y_list
+
+    @property
+    def path(self):
+        # get current path, go two subdirectories higher
+        path = os.getcwd()
+        while True:
+            if os.path.basename(path) == "SiFiCC-SplitNeuralNetwork":
+                break
+            path = os.path.abspath(os.path.join(path, os.pardir))
+        path = os.path.join(path, "datasets", "SiFiCCNN_GraphSiPM", self.name)
+
+        return path
 
     def __len__(self):
         return self.steps_per_epoch
@@ -156,8 +200,8 @@ class DenseSiPM(tf.keras.utils.Sequence):
         dimy = 2
         dimz = 32
 
-        norm_qdc = 4105
-        norm_tt = 3.125
+        norm_qdc = self.norm_qdc
+        norm_tt = self.norm_tt
 
         f_batch = np.ones(shape=(self.batch_size,
                                  dimx + 2 * padding + gap_padding,

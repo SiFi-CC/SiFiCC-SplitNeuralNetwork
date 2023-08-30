@@ -2,84 +2,99 @@ import numpy as np
 import os
 
 
-def load(Root,
+def load(RootParser,
+         path="",
          n=None):
+    """
+    Script to generate a dataset in graph basis.
+
+    Inspired by the TUdataset "PROTEIN"
+
+    Two iterations over the root file are needed: one to determine the array size, one to read the
+    data. Final data is stored as npy files, separated by their usage.
+
+    Args:
+        RootParser  (root Object): root object containing root file
+        path        (str): destination path, if not given it will default to
+                           scratch_g4rt1
+        n           (int or None): Number of events sampled from root file
+
+    Return:
+         None
+    """
+
     # define dataset name
-    dataset_name = "DenseSiPM"
-    dataset_name += "_" + Root.file_name
+    dataset_name = "GraphSiPM"
+    dataset_name += "_" + RootParser.file_name
 
     # grab correct filepath, generate dataset in target directory.
-    # If directory doesn't exist, it will be created.
-    # "MAIN/dataset/$dataset_name$/"
-
-    # get current path, go two subdirectories higher
-    path = os.path.dirname(os.path.abspath(__file__))
-    for i in range(3):
-        path = os.path.dirname(path)
-    path = os.path.join(path, "datasets", "SiFiCCNN", dataset_name)
-
+    if path == "":
+        path = "/net/scratch_g4rt1/fenger/datasets/"
+    path = os.path.join(path, "SiFiCCNN_GraphSiPM", dataset_name)
     if not os.path.isdir(path):
         os.makedirs(path, exist_ok=True)
 
-    # Input feature shape
+    # Pre-determine the final array size.
+    # Total number of graphs is needed (n samples)
+    # Total number of nodes (Iteration over root file needed)
+    print("Counting number of graphs to be created")
     if n is None:
-        n_samples = Root.events_entries
+        n_graphs = RootParser.events_entries
     else:
-        n_samples = n
+        n_graphs = n
+    n_nodes = 0
+    m_edges = 0
+    for i, event in enumerate(RootParser.iterate_events(n=n_graphs)):
+        n_nodes += len(event.SiPM_id)
+        m_edges += len(event.SiPM_id) * len(event.SiPM_id)
+    print("Number of Graphs to be created: ", n_graphs)
+    print("Total number of nodes to be created: ", n_nodes)
 
-    # write files for storage
-    file_A = open(path + "/" + dataset_name + "_A.txt", "w")
-    file_graph_indicator = open(
-        path + "/" + dataset_name + "_graph_indicator.txt", "w")
-    file_graph_labels = open(path + "/" + dataset_name + "_graph_labels.txt",
-                             "w")
-    file_node_attributes = open(
-        path + "/" + dataset_name + "_node_attributes.txt", "w")
-    file_graph_attributes = open(
-        path + "/" + dataset_name + "_graph_attributes.txt", "w")
+    # creating final arrays
+    # datatypes are chosen for minimal size possible (duh)
+    ary_A = np.zeros(shape=(n_nodes, 3), dtype=np.int)
+    ary_graph_indicator = np.zeros(shape=(n_nodes,), dtype=np.int)
+    ary_graph_labels = np.zeros(shape=(n_graphs,), dtype=np.bool)
+    ary_node_attributes = np.zeros(shape=(n_nodes, 2), dtype=np.float32)
+    ary_graph_attributes = np.zeros(shape=(n_graphs, 8), dtype=np.float32)
+    # meta data
+    ary_ep = np.zeros(shape=(n_graphs,), dtype=np.float32)
+    ary_sp = np.zeros(shape=(n_graphs,), dtype=np.float32)
 
-    # main iteration over root file
-    idx = 0
-    for i, event in enumerate(Root.iterate_events(n=n)):
-        # coincidence check
-        n_scatterer = 0
-        n_absorber = 0
-        for j in range(len(event.SiPM_id)):
-            if 150.0 - 14.0 / 2.0 < event.SiPM_position[j].x < 150.0 + 14.0 / 2.0:
-                n_scatterer += 1
-            if 270.0 - 30.0 / 2.0 < event.SiPM_position[j].x < 270.0 + 30.0 / 2.0:
-                n_absorber += 1
-
-        if n_scatterer == 0 or n_absorber == 0:
-            continue
-
-        # get the number of triggered sipms
-        n_sipm = len(event.SiPM_id)
+    node_id = 0
+    for i, event in enumerate(RootParser.iterate_events(n=n_graphs)):
+        # get number of triggered SiPMs
+        n_sipm = int(len(event.SiPM_id))
         for j in range(n_sipm):
             x, y, z = event.sipm_id_to_position(event.SiPM_id[j])
-            file_A.write(str(x) + "," + str(y) + "," + str(z) + "\n")
+            ary_A[node_id, :] = [x, y, z]
 
-            file_graph_indicator.write(str(idx) + "\n")
-            file_node_attributes.write(str(int(event.SiPM_qdc[j])) + "," +
-                                       str(event.SiPM_triggertime[j]) + "\n")
+            ary_graph_indicator[node_id] = i
+            ary_node_attributes[node_id, :] = [event.SiPM_qdc[j],
+                                               event.SiPM_triggertime[j]]
+            node_id += 1
 
-        file_graph_labels.write(str(event.compton_tag * 1) + "\n")
-        file_graph_attributes.write(str(event.target_energy_e) + "," +
-                                    str(event.target_energy_p) + "," +
-                                    str(event.target_position_e.x) + "," +
-                                    str(event.target_position_e.y) + "," +
-                                    str(event.target_position_e.z) + "," +
-                                    str(event.target_position_p.x) + "," +
-                                    str(event.target_position_p.y) + "," +
-                                    str(event.target_position_p.z) + "\n")
-        idx += 1
-    file_A.close()
-    file_graph_labels.close()
-    file_graph_indicator.close()
-    file_node_attributes.close()
-    file_graph_attributes.close()
+        # grab target labels and attributes
+        distcompton_tag = event.get_distcompton_tag()
+        target_energy_e, target_energy_p = event.get_target_energy()
+        target_position_e, target_position_p = event.get_target_position()
+        ary_graph_labels[i] = distcompton_tag * 1
+        ary_graph_attributes[i, :] = [target_energy_e,
+                                      target_energy_p,
+                                      target_position_e.x,
+                                      target_position_e.y,
+                                      target_position_e.z,
+                                      target_position_p.x,
+                                      target_position_p.y,
+                                      target_position_p.z]
 
-    # verbose
-    print("Dataset generated at: " + path)
-    print("Name: ", dataset_name)
-    print("Events: ", n_samples)
+        ary_ep[i] = event.MCEnergy_Primary
+        ary_sp[i] = event.MCPosition_source.z
+
+    np.save(path + "/" + dataset_name + "_A.npy", ary_A)
+    np.save(path + "/" + dataset_name + "_graph_indicator.npy", ary_graph_indicator)
+    np.save(path + "/" + dataset_name + "_graph_labels.npy", ary_graph_labels)
+    np.save(path + "/" + dataset_name + "_node_attributes.npy", ary_node_attributes)
+    np.save(path + "/" + dataset_name + "_graph_attributes.npy", ary_graph_attributes)
+    np.save(path + "/" + dataset_name + "_graph_pe.npy", ary_ep)
+    np.save(path + "/" + dataset_name + "_graph_sp.npy", ary_sp)
