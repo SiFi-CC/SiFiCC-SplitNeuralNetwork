@@ -4,7 +4,6 @@ import os
 
 def load(RootParser,
          path="",
-         energy_cut=None,
          n=None):
     """
     Script to generate a dataset in graph basis.
@@ -18,8 +17,7 @@ def load(RootParser,
         RootParser  (root Object): root object containing root file
         path        (str): destination path, if not given it will default to
                            scratch_g4rt1
-        energy_cut  (float): energy cut applied to deposited energy
-        n           (int): Number of events sampled from root file
+        n           (int or None): Number of events sampled from root file
 
     Return:
          None
@@ -27,57 +25,45 @@ def load(RootParser,
 
     # define dataset name
     dataset_name = "GraphSiPM"
-    if energy_cut is not None:
-        dataset_name += "_ECUT" + str(energy_cut).replace(".", "DOT") + "MEV"
     dataset_name += "_" + RootParser.file_name
 
     # grab correct filepath, generate dataset in target directory.
     if path == "":
         path = "/net/scratch_g4rt1/fenger/datasets/"
-    path = os.path.join(path, "SiFiCCNN_GraphCluster", dataset_name)
+    path = os.path.join(path, "SiFiCCNN_GraphSiPM", dataset_name)
     if not os.path.isdir(path):
         os.makedirs(path, exist_ok=True)
 
     # Pre-determine the final array size.
     # Total number of graphs is needed (n samples)
     # Total number of nodes (Iteration over root file needed)
-    # Energy cut (if needed) applied
     print("Counting number of graphs to be created")
     if n is None:
-        n_samples = RootParser.events_entries
+        n_graphs = RootParser.events_entries
     else:
-        n_samples = n
-
-    if energy_cut is not None:
-        n_graphs = 0
-        n_nodes = 0
-        for i, event in enumerate(RootParser.iterate_events(n=n_samples)):
-            if np.sum(event.event.SiPM_qdc) > energy_cut:
-                n_graphs += 1
-                n_nodes += len(event.SiPM_id)
-    else:
-        if n is None:
-            n_graphs = RootParser.events_entries
-        else:
-            n_graphs = n
-        n_nodes = 0
-        for i, event in enumerate(RootParser.iterate_events(n=n_graphs)):
-            n_nodes += len(event.SiPM_id)
+        n_graphs = n
+    n_nodes = 0
+    m_edges = 0
+    for i, event in enumerate(RootParser.iterate_events(n=n_graphs)):
+        n_nodes += len(event.SiPM_id)
+        m_edges += len(event.SiPM_id) * len(event.SiPM_id)
     print("Number of Graphs to be created: ", n_graphs)
     print("Total number of nodes to be created: ", n_nodes)
-    print("Node features: ", 2)
+    print("Total number of edges to be created: ", m_edges)
 
     # creating final arrays
     # datatypes are chosen for minimal size possible (duh)
     ary_graph_indicator = np.zeros(shape=(n_nodes,), dtype=np.int)
     ary_graph_labels = np.zeros(shape=(n_graphs,), dtype=np.bool)
-    ary_node_attributes = np.zeros(shape=(n_nodes, 3), dtype=np.float32)
+    ary_node_attributes = np.zeros(shape=(n_nodes, 5), dtype=np.float32)
+    ary_edge_attributes = np.zeros(shape=(m_edges, 5), dtype=np.float32)
     ary_graph_attributes = np.zeros(shape=(n_graphs, 8), dtype=np.float32)
     # meta data
-    ary_ep = np.zeros(shape=(n_graphs,), dtype=np.float32)
+    ary_pe = np.zeros(shape=(n_graphs,), dtype=np.float32)
     ary_sp = np.zeros(shape=(n_graphs,), dtype=np.float32)
 
     idx_node = 0
+    idx_edge = 0
     for i, event in enumerate(RootParser.iterate_events(n=n_graphs)):
         # get the number of triggered sipms
         n_sipm = len(event.SiPM_id)
