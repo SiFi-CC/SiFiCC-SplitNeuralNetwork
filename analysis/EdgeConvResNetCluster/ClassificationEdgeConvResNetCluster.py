@@ -12,7 +12,7 @@ from tensorflow.keras.layers import Dense, Dropout, Concatenate, Input
 from spektral.layers import EdgeConv, GlobalMaxPool
 from spektral.data.loaders import DisjointLoader
 
-from SiFiCCNN.utils.layers import EdgeConvResNetBlock, ReZero
+from SiFiCCNN.utils.layers import EdgeConvResNetBlock, ReZero, DynamicGraphUpdate
 
 from SiFiCCNN.analysis import fastROCAUC, metrics
 from SiFiCCNN.utils.plotter import plot_history_classifier, \
@@ -27,7 +27,7 @@ from SiFiCCNN.utils.plotter import plot_history_classifier, \
 
 def setupModel(F=10,
                S=6,
-               nFilter=16,
+               nFilter=32,
                activation="relu",
                n_out=1,
                activation_out="sigmoid",
@@ -37,23 +37,20 @@ def setupModel(F=10,
     E_in = Input(shape=(S,))
     I_in = Input(shape=(), dtype=tf.int64)
 
-    x = EdgeConv(channels=nFilter, activation=activation, use_bias=True)([X_in, A_in])
+    x = EdgeConv(channels=nFilter)([X_in, A_in])
 
-    x = EdgeConvResNetBlock(*[x, A_in], nFilter, activation)
-    x = EdgeConvResNetBlock(*[x, A_in], nFilter, activation)
+    # additional layer with skip connections
+    x1 = EdgeConv(channels=nFilter)([x, A_in])
+    x2 = EdgeConv(channels=nFilter)([x1, A_in])
+    x3 = EdgeConv(channels=nFilter * 2)([x2, A_in])
+    x_concat = Concatenate()([x1, x2, x3])
 
-    x = EdgeConvResNetBlock(*[x, A_in], nFilter, activation)
-    x = EdgeConvResNetBlock(*[x, A_in], nFilter, activation)
-
-    x = EdgeConvResNetBlock(*[x, A_in], nFilter, activation)
-    x = EdgeConvResNetBlock(*[x, A_in], nFilter, activation)
-
-    x = GlobalMaxPool()([x, I_in])
+    x = GlobalMaxPool()([x_concat, I_in])
 
     if dropout > 0:
         x = Dropout(dropout)(x)
 
-    x = Dense(nFilter * 16, activation=activation)(x)
+    x = Dense(nFilter * 8, activation=activation)(x)
 
     out = Dense(n_out, activation=activation_out)(x)
 
@@ -90,7 +87,7 @@ def main():
     dropout = 0.0
 
     batch_size = 64
-    nEpochs = 10
+    nEpochs = 50
 
     trainsplit = 0.6
     valsplit = 0.2
