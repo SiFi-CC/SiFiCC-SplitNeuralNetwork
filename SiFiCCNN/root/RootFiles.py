@@ -14,10 +14,12 @@ onetoone_CONT_taggingv1 = "OptimisedGeometry_Continuous_2e10protons.root"
 # Four-to-one coupling (old tagging)
 fourtoone_BP0mm_taggingv1 = "FinalDetectorVersion_RasterCoupling_OPM_38e8protons.root"
 
-# One-to-one coupling (new Ttgging)
-onetoone_BP0mm_taggingv2 = "OptimisedGeometry_BP0mm_2e10protons_taggingv3.root"
-onetoone_BP5mm_taggingv2 = "OptimisedGeometry_BP5mm_4e9protons_taggingv3.root"
-onetoone_cont_taggingv2 = "OptimisedGeometry_Continuous_2e10protons_taggingv3.root"
+# 1-to-1 coupling
+# updated simulation (version 3)
+onetoone_BP0mm_simV2 = "OptimisedGeometry_BP0mm_2e10protons_taggingv3.root"
+onetoone_BP5mm_simV2 = "OptimisedGeometry_BP5mm_4e9protons_taggingv3.root"
+onetoone_CONT_simV2 = "OptimisedGeometry_Continuous_2e10protons_taggingv3.root"
+onetoone_BPminus5mm_simV2 = "OptimisedGeometry_BPminus5mm_4e9_protons_taggingv3.root"
 
 # Four-to-one coupling (new tagging)
 fourtoone_CONT_taggingv2 = "OptimisedGeometry_4to1_Continuous_2e10protons_simv4.root"
