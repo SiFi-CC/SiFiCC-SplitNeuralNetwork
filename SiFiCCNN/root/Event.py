@@ -96,6 +96,12 @@ class Event:
         self.MCInteractions_p_uni = np.zeros(shape=(len(self.MCInteractions_p), 4))
         self.set_interaction_list()
 
+        # create mask to mask of zero energy deposition interactions if available
+        if self.MCEnergyDeps_p is not None:
+            self.mask_interactions_p = (self.MCEnergyDeps_p > 0.0) * 1
+        else:
+            self.mask_interactions_p = np.ones(shape=(len(self.MCInteractions_p),))
+
         # Control labels (might be disabled later, are mostly for analysis/debugging)
         self.b_phantom_hit = False
 
@@ -145,11 +151,13 @@ class Event:
                         interact // 10 ** 1 % 10,
                         interact // 10 ** 0 % 10]
 
+                """
                 # This exception is only present in the 5 digit decoded interaction list as it is
                 # a new feature only present in root-files upwards generation 4
                 if self.MCEnergyDeps_e is not None:
                     int_mask_e = self.MCEnergyDeps_e > 0.0
                     self.MCInteractions_e_uni = self.MCInteractions_e_uni[int_mask_e, :]
+                """
 
                 for i, interact in enumerate(self.MCInteractions_p):
                     self.MCInteractions_p_uni[i, :3] = [
@@ -157,14 +165,16 @@ class Event:
                         interact // 10 ** 1 % 10,
                         interact // 10 ** 0 % 10]
 
+                """
                 # This exception is only present in the 5 digit decoded interaction list as it is
                 # a new feature only present in root-files upwards generation 4
                 if self.MCEnergyDeps_p is not None:
                     int_mask_p = self.MCEnergyDeps_p > 0.0
                     self.MCInteractions_p_uni = self.MCInteractions_p_uni[int_mask_p, :]
+                """
 
     # neural network target getter methods
-    def get_target_position(self):
+    def get_target_position(self, acceptance=1e-1):
         """
         Get Monte-Carlo Truth position for scatterer and absorber Compton interactions.
         The scatterer interaction is defined by the Compton scattering position of the initial
@@ -181,29 +191,47 @@ class Event:
         target_position_e = self.MCComptonPosition
         target_position_p = TVector3(0, 0, 0)
 
-        # scan for first absorber interaction that has the correct scattering
-        # direction
-        for i in range(len(self.MCInteractions_p_uni)):
-            # grab interaction type and level from list
-            int_type = self.MCInteractions_p_uni[i, 0]
-            int_level = self.MCInteractions_p_uni[i, 1]
-            # check if additional scattering happens in the scatterer
+        # exceptions
+        if len(self.MCPosition_p) <= 1:
+            return target_position_e, target_position_p
+
+        # check if the first interaction is compton scattering in the scatterer
+        if self.MCInteractions_p_uni[0, 0] == 1 and self.MCPosition_p[0].x < 200.0:
+            # check if the next interaction is not additional scattering in the scatterer
+            # by checking the interaction type of the next interaction and its x-position
             # if true, break as compton cone is not reproducible
-            if int_type == 1 and self.MCPosition_p[i].x < 200.0 and i > 0:
-                break
+            if self.MCInteractions_p_uni[1, 0] == 1 and self.MCPosition_p[1].x < 200.0:
+                return target_position_e, target_position_p
+            else:
+                # check if the next interaction is energy deposition in the absorber
+                if (self.MCInteractions_p_uni[1, 1] == 0 and
+                        self.absorber.is_vec_in_module(self.MCPosition_p[1]) and
+                        self.mask_interactions_p[1] == 1):
+                    # set correct targets
+                    target_position_p = self.MCPosition_p[1]
+                    return target_position_e, target_position_p
+                else:
+                    # check if a secondary interaction can substitute a missing primary interaction
+                    # zero energy deposition interactions are excluded from that
+                    for i in range(1, len(self.MCInteractions_p_uni)):
+                        # skip zero energy deposition interactions
+                        if self.mask_interactions_p[i] == 0:
+                            continue
+                        if (self.MCInteractions_p_uni[i, 1] <= 2 and
+                                self.absorber.is_vec_in_module(self.MCPosition_p[i])):
+                            # check additionally if the interaction is in the scattering direction
+                            tmp_angle = vector_angle(self.MCPosition_p[i] - self.MCComptonPosition,
+                                                     self.MCDirection_scatter)
+                            r = (self.MCPosition_p[i] - self.MCComptonPosition).mag
+                            tmp_dist = np.sin(tmp_angle) * r
+                            if tmp_dist < acceptance:
+                                self.b_phantom_hit = True
+                                target_position_p = self.MCPosition_p[i]
+                                return target_position_e, target_position_p
+                    return target_position_e, target_position_p
 
-            # check for primary compton interaction in the absorber
-            if int_level <= 2 and self.absorber.is_vec_in_module(self.MCPosition_p[i]):
-                # check additionally if the interaction is in the scattering direction
-                tmp_angle = vector_angle(self.MCPosition_p[i] - self.MCComptonPosition,
-                                         self.MCDirection_scatter)
-                if tmp_angle < 1e-3:
-                    if int_level > 0:
-                        self.b_phantom_hit = True
-                    target_position_p = self.MCPosition_p[i]
-                    break
-
-        return target_position_e, target_position_p
+        else:
+            return target_position_e, target_position_p
 
     def get_target_energy(self):
         """
@@ -334,6 +362,32 @@ class Event:
             return True
         return False
 
+    def get_phantomhit_tag(self, acceptance=1e-3):
+        """
+        Checks if the event is a phantom hit. This part is left as a stand-alone method for furhter
+        usage in the future.
+
+        Args:
+            acceptance: accepted difference in angle
+
+        Returns:
+            Boolean, true if event is a phantom hit
+        """
+        self.b_phantom_hit = False
+        target_position_e, target_position_p = self.get_target_position(acceptance=acceptance)
+
+        # check for electron energy (compton event took place)
+        if self.MCEnergy_e > 0.0:
+            # check if primary gamma interacted at least 2 times
+            if len(self.MCPosition_p) >= 2:
+                if (self.scatterer.is_vec_in_module(target_position_e)
+                        and self.absorber.is_vec_in_module(target_position_p)):
+                    if self.b_phantom_hit:
+                        return True
+                    else:
+                        return False
+        return False
+
     @property
     def scatter_angle_energy(self):
         """
@@ -451,8 +505,8 @@ class Event:
                 self.MCPosition_e.x[i],
                 self.MCPosition_e.y[i],
                 self.MCPosition_e.z[i],
-                self.MCInteractions_e_uni[i, 0],
-                self.MCInteractions_e_uni[i, 1]))
+                int(str(self.MCInteractions_e[i])[0]),
+                int(str(self.MCInteractions_e[i])[1])))
 
         # Interaction list photon
         print("\n# Photon interaction chain #")
@@ -463,8 +517,8 @@ class Event:
                     self.MCPosition_p.x[i],
                     self.MCPosition_p.y[i],
                     self.MCPosition_p.z[i],
-                    self.MCInteractions_p_uni[i, 0],
-                    self.MCInteractions_p_uni[i, 1]))
+                    int(str(self.MCInteractions_p[i])[0]),
+                    int(str(self.MCInteractions_p[i])[1])))
         else:
             if self.MCEnergyDeps_e is not None:
                 print(
@@ -480,9 +534,9 @@ class Event:
                 list_params = [self.MCPosition_p.x[i],
                                self.MCPosition_p.y[i],
                                self.MCPosition_p.z[i],
-                               self.MCInteractions_p_uni[i, 2],
-                               self.MCInteractions_p_uni[i, 0],
-                               self.MCInteractions_p_uni[i, 1],
+                               int(str(self.MCInteractions_p[i])[4]),
+                               int(str(self.MCInteractions_p[i])[1:3]),
+                               int(str(self.MCInteractions_p[i])[3]),
                                tmp_angle,
                                np.sin(tmp_angle) * r]
 
