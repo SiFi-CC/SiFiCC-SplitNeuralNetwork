@@ -227,6 +227,11 @@ def evaluate(dataset_name,
                      loss=loss,
                      metrics=list_metrics)
 
+    # load model history and plot
+    with open(RUN_NAME + "_classifier_history" + ".hst", 'wb') as f_hist:
+        history = pkl.load(f_hist)
+    plot_history_classifier(history, RUN_NAME + "_history_classifier")
+
     # predict test dataset
     os.chdir(path + dataset_name + "/")
 
