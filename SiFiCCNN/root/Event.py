@@ -151,13 +151,11 @@ class Event:
                         interact // 10 ** 1 % 10,
                         interact // 10 ** 0 % 10]
 
-                """
                 # This exception is only present in the 5 digit decoded interaction list as it is
                 # a new feature only present in root-files upwards generation 4
                 if self.MCEnergyDeps_e is not None:
                     int_mask_e = self.MCEnergyDeps_e > 0.0
                     self.MCInteractions_e_uni = self.MCInteractions_e_uni[int_mask_e, :]
-                """
 
                 for i, interact in enumerate(self.MCInteractions_p):
                     self.MCInteractions_p_uni[i, :3] = [
@@ -165,13 +163,12 @@ class Event:
                         interact // 10 ** 1 % 10,
                         interact // 10 ** 0 % 10]
 
-                """
                 # This exception is only present in the 5 digit decoded interaction list as it is
                 # a new feature only present in root-files upwards generation 4
                 if self.MCEnergyDeps_p is not None:
                     int_mask_p = self.MCEnergyDeps_p > 0.0
                     self.MCInteractions_p_uni = self.MCInteractions_p_uni[int_mask_p, :]
-                """
+
 
     # neural network target getter methods
     def get_target_position(self, acceptance=1e-1):

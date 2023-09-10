@@ -22,7 +22,11 @@ onetoone_CONT_simV2 = "OptimisedGeometry_Continuous_2e10protons_taggingv3.root"
 onetoone_BPminus5mm_simV2 = "OptimisedGeometry_BPminus5mm_4e9_protons_taggingv3.root"
 
 # Four-to-one coupling (new tagging)
-fourtoone_CONT_taggingv2 = "OptimisedGeometry_4to1_Continuous_2e10protons_simv4.root"
+fourtoone_CONT_simv4 = "OptimisedGeometry_4to1_Continuous_2e10protons_simv4.root"
+fourtoone_BP0mm_simv4 = "OptimisedGeometry_4to1_BP0mm_4e9protons_simv4.root"
+fourtoone_BP5mm_simv4 = "OptimisedGeometry_4to1_BP5mm_4e9protons_simv4.root"
+fourtoone_BPm5mm_simv4 = "OptimisedGeometry_4to1_BPm5mm_4e9protons_simv4.root"
+fourtoone_BP10mm_simv4 = "OptimisedGeometry_4to1_BP10mm_4e9protons_simv4.root"
 
 """
 # files available on the cluster
