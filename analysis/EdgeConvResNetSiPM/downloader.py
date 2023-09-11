@@ -27,6 +27,9 @@ def load(RootParser,
     dataset_name = "GraphSiPM"
     dataset_name += "_" + RootParser.file_name
 
+    # the minimum amount of sipm that need to be triggered per event
+    min_n_sipm = 2
+
     # grab correct filepath, generate dataset in target directory.
     if path == "":
         path = "/net/scratch_g4rt1/fenger/datasets/"
@@ -39,53 +42,48 @@ def load(RootParser,
     # Total number of nodes (Iteration over root file needed)
     print("Counting number of graphs to be created")
     if n is None:
-        n_graphs = RootParser.events_entries
-    else:
-        n_graphs = n
+        n = RootParser.events_entries
+
+    k_graphs = n
     n_nodes = 0
     m_edges = 0
-    for i, event in enumerate(RootParser.iterate_events(n=n_graphs)):
+    for i, event in enumerate(RootParser.iterate_events(n=n)):
+        if len(event.SiPM_id) < min_n_sipm:
+            k_graphs -= 1
+            continue
         n_nodes += len(event.SiPM_id)
         m_edges += len(event.SiPM_id) * len(event.SiPM_id)
-    print("Number of Graphs to be created: ", n_graphs)
+    print("Number of Graphs to be created: ", k_graphs)
     print("Total number of nodes to be created: ", n_nodes)
 
     # creating final arrays
     # datatypes are chosen for minimal size possible (duh)
     ary_A = np.zeros(shape=(m_edges, 2), dtype=np.int)
     ary_graph_indicator = np.zeros(shape=(n_nodes,), dtype=np.int)
-    ary_graph_labels = np.zeros(shape=(n_graphs,), dtype=np.bool)
+    ary_graph_labels = np.zeros(shape=(k_graphs,), dtype=np.bool)
     ary_node_attributes = np.zeros(shape=(n_nodes, 5), dtype=np.float32)
-    ary_graph_attributes = np.zeros(shape=(n_graphs, 8), dtype=np.float32)
-    ary_edge_attributes = np.zeros(shape=(m_edges, 5), dtype=np.float32)
+    ary_graph_attributes = np.zeros(shape=(k_graphs, 8), dtype=np.float32)
     # meta data
-    ary_pe = np.zeros(shape=(n_graphs,), dtype=np.float32)
-    ary_sp = np.zeros(shape=(n_graphs,), dtype=np.float32)
+    ary_pe = np.zeros(shape=(k_graphs,), dtype=np.float32)
+    ary_sp = np.zeros(shape=(k_graphs,), dtype=np.float32)
 
+    graph_id = 0
     node_id = 0
     edge_id = 0
-    for i, event in enumerate(RootParser.iterate_events(n=n_graphs)):
+    for i, event in enumerate(RootParser.iterate_events(n=n)):
         # get number of cluster
         n_sipm = int(len(event.SiPM_id))
-        # idx_scat, idx_abs = event.sort_clusters_by_module()
+
+        # exception
+        if n_sipm < min_n_sipm:
+            continue
+
         for j in range(n_sipm):
             for k in range(n_sipm):
                 ary_A[edge_id, :] = [node_id, node_id - j + k]
-
-                # exception for self loops
-                if j != k:
-                    dx = event.SiPM_position[j].x - event.SiPM_position.x[k]
-                    dy = event.SiPM_position[j].y - event.SiPM_position.y[k]
-                    dz = event.SiPM_position[j].z - event.SiPM_position.z[k]
-                    dt = event.SiPM_triggertime[j] - event.SiPM_triggertime[k]
-                    dqdc = event.SiPM_qdc[j] - event.SiPM_qdc[k]
-                else:
-                    dx, dy, dz, dt, dqdc = 0, 0, 0, 0, 0
-
-                ary_edge_attributes[edge_id, :] = [dx, dy, dz, dt, dqdc]
                 edge_id += 1
 
-            ary_graph_indicator[node_id] = i
+            ary_graph_indicator[node_id] = graph_id
             ary_node_attributes[node_id, :] = [event.SiPM_position.x[j],
                                                event.SiPM_position.y[j],
                                                event.SiPM_position.z[j],
@@ -98,24 +96,24 @@ def load(RootParser,
         distcompton_tag = event.get_distcompton_tag()
         target_energy_e, target_energy_p = event.get_target_energy()
         target_position_e, target_position_p = event.get_target_position()
-        ary_graph_labels[i] = distcompton_tag
-        ary_graph_attributes[i, :] = [target_energy_e,
-                                      target_energy_p,
-                                      target_position_e.x,
-                                      target_position_e.y,
-                                      target_position_e.z,
-                                      target_position_p.x,
-                                      target_position_p.y,
-                                      target_position_p.z]
+        ary_graph_labels[graph_id] = distcompton_tag
+        ary_graph_attributes[graph_id, :] = [target_energy_e,
+                                             target_energy_p,
+                                             target_position_e.x,
+                                             target_position_e.y,
+                                             target_position_e.z,
+                                             target_position_p.x,
+                                             target_position_p.y,
+                                             target_position_p.z]
 
-        ary_pe[i] = event.MCEnergy_Primary
-        ary_sp[i] = event.MCPosition_source.z
+        ary_pe[graph_id] = event.MCEnergy_Primary
+        ary_sp[graph_id] = event.MCPosition_source.z
+        graph_id += 1
 
     np.save(path + "/" + dataset_name + "_A.npy", ary_A)
     np.save(path + "/" + dataset_name + "_graph_indicator.npy", ary_graph_indicator)
     np.save(path + "/" + dataset_name + "_graph_labels.npy", ary_graph_labels)
     np.save(path + "/" + dataset_name + "_node_attributes.npy", ary_node_attributes)
     np.save(path + "/" + dataset_name + "_graph_attributes.npy", ary_graph_attributes)
-    np.save(path + "/" + dataset_name + "_edge_attributes.npy", ary_edge_attributes)
     np.save(path + "/" + dataset_name + "_graph_pe.npy", ary_pe)
     np.save(path + "/" + dataset_name + "_graph_sp.npy", ary_sp)

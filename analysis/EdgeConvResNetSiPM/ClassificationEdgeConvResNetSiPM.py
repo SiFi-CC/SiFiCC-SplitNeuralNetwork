@@ -4,7 +4,7 @@ import pickle as pkl
 import json
 import tensorflow as tf
 
-import dataset
+from analysis.EdgeConvResNetSiPM import dataset
 
 from tensorflow.keras.models import Model
 from tensorflow.keras.layers import Dense, Dropout, Concatenate, Input
@@ -26,7 +26,6 @@ from SiFiCCNN.utils.plotter import plot_history_classifier, \
 
 
 def setupModel(F=5,
-               S=5,
                nFilter=32,
                activation="relu",
                n_out=1,
@@ -34,7 +33,6 @@ def setupModel(F=5,
                dropout=0.0):
     X_in = Input(shape=(F,))
     A_in = Input(shape=(None,), sparse=True)
-    E_in = Input(shape=(S,))
     I_in = Input(shape=(), dtype=tf.int64)
 
     x = EdgeConv(channels=nFilter)([X_in, A_in])
@@ -45,7 +43,7 @@ def setupModel(F=5,
     x3 = EdgeConvResNetBlock(*[x2, A_in], nFilter)
     x_concat = Concatenate()([x1, x2, x3])
 
-    x = GlobalMaxPool()([x_concat, I_in])
+    x = GlobalMaxPool()([x_concat, I_in]) 
 
     if dropout > 0:
         x = Dropout(dropout)(x)
@@ -54,7 +52,7 @@ def setupModel(F=5,
 
     out = Dense(n_out, activation=activation_out)(x)
 
-    model = Model(inputs=[X_in, A_in, E_in, I_in], outputs=out)
+    model = Model(inputs=[X_in, A_in, I_in], outputs=out)
 
     optimizer = tf.keras.optimizers.Adam(learning_rate=1e-3)
     if n_out == 1:
@@ -80,14 +78,14 @@ def lr_scheduler(epoch):
 
 def main():
     # defining hyper parameters
-    nFilter = 16
+    nFilter = 64
     activation = "relu"
     n_out = 1
     activation_out = "sigmoid"
-    dropout = 0.0
+    dropout = 0.1
 
-    batch_size = 8
-    nEpochs = 10
+    batch_size = 64
+    nEpochs = 100
 
     trainsplit = 0.6
     valsplit = 0.2
@@ -139,7 +137,7 @@ def main():
                  modelParameter=modelParameter)
 
     if do_evaluate:
-        for file in [DATASET_0MM]:
+        for file in [DATASET_0MM, DATASET_5MM, DATASET_m5MM, DATASET_10MM]:
             evaluate(dataset_name=file,
                      RUN_NAME=RUN_NAME,
                      path=path_results)
@@ -158,7 +156,7 @@ def training(dataset_name,
 
     # build tensorflow model
     tf_model = setupModel(**modelParameter)
-    print(tf_model.summary())
+    # print(tf_model.summary())
 
     # callbacks
     l_callbacks = [tf.keras.callbacks.LearningRateScheduler(lr_scheduler)]
@@ -195,7 +193,6 @@ def training(dataset_name,
         pkl.dump(history.history, f_hist)
     # save norm
     np.save(RUN_NAME + "_classifier" + "_norm_x", data.norm_x)
-    np.save(RUN_NAME + "_classifier" + "_norm_e", data.norm_e)
     # save model parameter as json
     with open(RUN_NAME + "_classifier_parameter.json", "w") as json_file:
         json.dump(modelParameter, json_file)
@@ -220,7 +217,6 @@ def evaluate(dataset_name,
                                                           "ReZero": ReZero})
 
     norm_x = np.load(RUN_NAME + "_classifier_norm_x.npy")
-    norm_e = np.load(RUN_NAME + "_classifier_norm_e.npy")
 
     optimizer = tf.keras.optimizers.Adam(learning_rate=1e-3)
     loss = "binary_crossentropy"
@@ -236,8 +232,7 @@ def evaluate(dataset_name,
     data = dataset.GraphSiPM(name=dataset_name,
                                 edge_atr=True,
                                 adj_arg="binary",
-                                norm_x=norm_x,
-                                norm_e=norm_e)
+                                norm_x=norm_x)
 
     loader_test = DisjointLoader(data,
                                  batch_size=64,

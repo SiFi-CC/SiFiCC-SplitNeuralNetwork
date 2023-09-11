@@ -17,7 +17,6 @@ class GraphSiPM(Dataset):
                  name,
                  adj_arg="Binary",
                  norm_x=None,
-                 norm_e=None,
                  p_only=False,
                  reg_type=None,
                  **kwargs):
@@ -28,7 +27,6 @@ class GraphSiPM(Dataset):
         self.reg_type = reg_type
 
         self.norm_x = norm_x
-        self.norm_e = norm_e
 
         super().__init__(**kwargs)
 
@@ -66,8 +64,8 @@ class GraphSiPM(Dataset):
 
         # get node attributes (x_list)
         x_list = self._get_x_list(n_nodes_cum=n_nodes_cum)
-        # get edge attributes (e_list)
-        e_list = self._get_e_list(n_edges_cum=n_edges_cum)
+        # get edge attributes (e_list), in this case edge features are disabled
+        e_list = [None] * len(n_nodes)
 
         # Create sparse adjacency matrices and re-sort edge attributes in lexicographic order
         a_e_list = [sparse.edge_index_to_matrix(edge_index=el,
@@ -76,7 +74,7 @@ class GraphSiPM(Dataset):
                                                 shape=(n, n), )
                     for el, e, n in zip(el_list, e_list, n_nodes)
                     ]
-        a_list, e_list = list(zip(*a_e_list))
+        a_list = a_e_list
 
         # set dataset target (classification / regression)
         y_list = self._get_y_list()
@@ -87,15 +85,15 @@ class GraphSiPM(Dataset):
             # Convert to Graph
             print("Successfully loaded {}.".format(self.name))
             return [
-                Graph(x=x, a=a, e=e, y=y)
-                for x, a, e, y, label in zip(x_list, a_list, e_list, y_list, labels) if label
+                Graph(x=x, a=a, y=y)
+                for x, a, y, label in zip(x_list, a_list, y_list, labels) if label
             ]
 
         # Convert to Graph
         print("Successfully loaded {}.".format(self.name))
         return [
-            Graph(x=x, a=a, e=e, y=y)
-            for x, a, e, y in zip(x_list, a_list, e_list, labels)
+            Graph(x=x, a=a, y=y)
+            for x, a, y in zip(x_list, a_list, labels)
         ]
 
     def _get_x_list(self, n_nodes_cum):
@@ -108,6 +106,7 @@ class GraphSiPM(Dataset):
 
         return x_list
 
+    """
     def _get_e_list(self, n_edges_cum):
         e_attr = np.load(self.path + "/" + self.name + "_edge_attributes.npy")  # ["arr_0"]
         if self.norm_e is None:
@@ -115,6 +114,7 @@ class GraphSiPM(Dataset):
         self._standardize(e_attr, self.norm_e)
         e_list = np.split(e_attr, n_edges_cum)
         return e_list
+    """
 
     def _get_y_list(self):
         if self.reg_type is not None:
