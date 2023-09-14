@@ -49,7 +49,7 @@ def load(RootParser,
         if len(idx_scatterer) >= 1 and len(idx_absorber) >= 1:
             k_graphs += 1
             n_nodes += len(event.SiPM_id)
-            m_edges += len(event.SiPM_id) * len(event.SiPM_id)
+            m_edges += (len(event.SiPM_id) * len(event.SiPM_id))
     print("Number of Graphs to be created: ", k_graphs)
     print("Total number of nodes to be created: ", n_nodes)
 
@@ -71,7 +71,7 @@ def load(RootParser,
         # get number of sipm's per module
         idx_scatterer, idx_absorber = event.sort_sipm_by_module()
         # exception
-        if len(idx_scatterer) < 1 and len(idx_absorber) < 1:
+        if not (len(idx_scatterer) >= 1 and len(idx_absorber) >= 1):
             continue
 
         n_sipm = len(event.SiPM_id)
