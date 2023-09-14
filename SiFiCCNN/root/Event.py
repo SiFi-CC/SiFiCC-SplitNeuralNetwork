@@ -982,3 +982,24 @@ class EventSiPM(Event):
                     self.SiPM_position[j].y,
                     self.SiPM_position[j].z,
                     self.SiPM_triggertime[j]))
+
+    def sort_sipm_by_module(self):
+        """
+        sort sipms by corresponding module only
+        creates list of array idx's.
+
+        return:
+            sorted array idx scatterer, absorber
+
+        """
+        idx_scatterer = []
+        idx_absorber = []
+
+        for i in range(len(self.SiPM_id)):
+            if 140.0 < self.SiPM_position[i].x < 160.0:
+                idx_scatterer.append(i)
+                continue
+            if 250.0 < self.SiPM_position[i].x < 300.0:
+                idx_absorber.append(i)
+                continue
+

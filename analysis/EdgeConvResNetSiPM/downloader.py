@@ -27,9 +27,6 @@ def load(RootParser,
     dataset_name = "GraphSiPM"
     dataset_name += "_" + RootParser.file_name
 
-    # the minimum amount of sipm that need to be triggered per event
-    min_n_sipm = 2
-
     # grab correct filepath, generate dataset in target directory.
     if path == "":
         path = "/net/scratch_g4rt1/fenger/datasets/"
@@ -44,15 +41,15 @@ def load(RootParser,
     if n is None:
         n = RootParser.events_entries
 
-    k_graphs = n
+    k_graphs = 0
     n_nodes = 0
     m_edges = 0
     for i, event in enumerate(RootParser.iterate_events(n=n)):
-        if len(event.SiPM_id) < min_n_sipm:
-            k_graphs -= 1
-            continue
-        n_nodes += len(event.SiPM_id)
-        m_edges += len(event.SiPM_id) * len(event.SiPM_id)
+        idx_scatterer, idx_absorber = event.sort_sipm_by_module()
+        if len(idx_scatterer) >= 1 and len(idx_absorber) >= 1:
+            k_graphs += 1
+            n_nodes += len(event.SiPM_id)
+            m_edges += len(event.SiPM_id) * len(event.SiPM_id)
     print("Number of Graphs to be created: ", k_graphs)
     print("Total number of nodes to be created: ", n_nodes)
 
@@ -71,13 +68,13 @@ def load(RootParser,
     node_id = 0
     edge_id = 0
     for i, event in enumerate(RootParser.iterate_events(n=n)):
-        # get number of cluster
-        n_sipm = int(len(event.SiPM_id))
-
+        # get number of sipm's per module
+        idx_scatterer, idx_absorber = event.sort_sipm_by_module()
         # exception
-        if n_sipm < min_n_sipm:
+        if len(idx_scatterer) < 1 and len(idx_absorber) < 1:
             continue
 
+        n_sipm = len(event.SiPM_id)
         for j in range(n_sipm):
             for k in range(n_sipm):
                 ary_A[edge_id, :] = [node_id, node_id - j + k]
