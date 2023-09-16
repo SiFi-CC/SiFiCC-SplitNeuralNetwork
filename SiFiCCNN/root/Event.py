@@ -1002,4 +1002,5 @@ class EventSiPM(Event):
             if 250.0 < self.SiPM_position[i].x < 300.0:
                 idx_absorber.append(i)
                 continue
+        return idx_scatterer, idx_absorber
 

@@ -608,24 +608,22 @@ def plot_history_classifier(history, figure_name):
     pur = history["precision"]
     val_pur = history["precision"]
 
-    fig = plt.figure(figsize=(10, 5))
-    ax1 = fig.add_subplot(211)
-    ax2 = fig.add_subplot(221)
+    fig, axs = plt.subplots(1, 2, figsize=(14, 5))
 
-    ax1.plot(loss, label="Loss", linestyle='-', color="blue")
-    ax1.plot(val_loss, label="Validation", linestyle='--', color="blue")
-    ax1.set_xlabel("epoch")
-    ax1.set_ylabel("loss")
-    ax1.legend(loc="upper right")
-    ax1.grid(which="both")
+    axs[0].plot(loss, label="Loss", linestyle='-', color="blue")
+    axs[0].plot(val_loss, label="Validation", linestyle='--', color="blue")
+    axs[0].set_xlabel("epoch")
+    axs[0].set_ylabel("loss")
+    axs[0].legend(loc="upper right")
+    axs[0].grid(which="both")
 
-    ax2.plot(eff, label="Efficiency", linestyle='-', color="red")
-    ax2.plot(val_eff, label="Validation", linestyle='--', color="red")
-    ax2.plot(pur, label="Purity", linestyle="-", color="green")
-    ax2.plot(val_pur, label="Validation", linestyle="--", color="green")
-    ax2.set_ylabel("%")
-    ax2.legend(loc="lower right")
-    ax2.grid(which="both")
+    axs[1].plot(eff, label="Efficiency", linestyle='-', color="red")
+    axs[1].plot(val_eff, label="Validation", linestyle='--', color="red")
+    axs[1].plot(pur, label="Purity", linestyle="-", color="green")
+    axs[1].plot(val_pur, label="Validation", linestyle="--", color="green")
+    axs[1].set_ylabel("%")
+    axs[1].legend(loc="lower right")
+    axs[1].grid(which="both")
 
     plt.tight_layout()
     plt.savefig(figure_name + ".png")
