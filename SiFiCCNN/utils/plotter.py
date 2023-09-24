@@ -22,16 +22,16 @@ def plot_score_distribution(y_scores, y_true, figure_name):
     ary_scores_neg = [float(y_scores[i]) for i in range(len(y_scores)) if
                       y_true[i] == 0]
 
-    plt.figure(figsize=(8, 6))
+    plt.figure(figsize=(7, 6))
     plt.ticklabel_format(axis="y", style="sci", scilimits=(0, 0))
     plt.xlabel("Signal score")
     plt.ylabel("counts")
-    plt.hist(np.array(ary_scores_pos), bins=bins, color="orange",
+    plt.hist(np.array(ary_scores_pos), bins=bins, color="deeppink",
              label="True positives", alpha=0.25)
     plt.hist(np.array(ary_scores_neg), bins=bins, color="blue",
              label="True negatives", alpha=0.25)
     h0, _, _ = plt.hist(np.array(ary_scores_pos), bins=bins, histtype=u"step",
-                        color="orange")
+                        color="deeppink")
     h1, _, _ = plt.hist(np.array(ary_scores_neg), bins=bins, histtype=u"step",
                         color="blue")
     plt.vlines(x=0.5, ymin=0.0, ymax=max([max(h0), max(h1)]), color="red",
@@ -262,11 +262,13 @@ def plot_energy_error(y_pred, y_true, figure_name):
     plt.ylabel("counts")
     plt.hist((y_pred[:, 0] - y_true[:, 0]) / y_true[:, 0], bins=bins_err,
              histtype=u"step", color="blue")
-    plt.plot(ary_x, gaussian(ary_x, *popt0), color="orange",
-             label=r"$\mu$ = {:.2f}""\n"r"$\sigma$ = {:.2f}".format(popt0[0],
-                                                                    popt0[1]))
+    plt.plot(ary_x, gaussian(ary_x, *popt0), color="deeppink",
+             label=r"$\mu$ = {:.2f} $\pm$ {:.2f}""\n"r"$\sigma$ = {:.2f} $\pm$ {:.2f} ".format(
+                 popt0[0], np.sqrt(pcov0[0, 0]), popt0[1], np.sqrt(pcov0[1, 1])))
     plt.legend()
-    plt.grid()
+    plt.grid(which='major', color='#CCCCCC', linewidth=0.8)
+    plt.grid(which='minor', color='#DDDDDD', linestyle=':', linewidth=0.8)
+    plt.minorticks_on()
     plt.tight_layout()
     plt.savefig(figure_name + "_electron.png")
     plt.close()
@@ -279,10 +281,12 @@ def plot_energy_error(y_pred, y_true, figure_name):
     plt.hist((y_pred[:, 1] - y_true[:, 1]) / y_true[:, 1], bins=bins_err,
              histtype=u"step", color="blue")
     plt.plot(ary_x, lorentzian(ary_x, *popt1), color="green",
-             label=r"$\mu$ = {:.2f}""\n"r"$FWHM$ = {:.2f}".format(popt1[0],
-                                                                  popt1[1] / 2))
+             label=r"$\mu$ = {:.2f} $\pm$ {:.2f}""\n"r"$FWHM$ = {:.2f} $\pm$ {:.2f}".format(
+                 popt1[0], np.sqrt(pcov1[0, 0]), popt1[1] / 2, np.sqrt(pcov1[1, 1]) / 2))
     plt.legend()
-    plt.grid()
+    plt.grid(which='major', color='#CCCCCC', linewidth=0.8)
+    plt.grid(which='minor', color='#DDDDDD', linestyle=':', linewidth=0.8)
+    plt.minorticks_on()
     plt.tight_layout()
     plt.savefig(figure_name + "_photon.png")
     plt.close()
@@ -296,6 +300,9 @@ def plot_energy_error(y_pred, y_true, figure_name):
                norm=LogNorm())
     plt.colorbar()
     plt.tight_layout()
+    plt.grid(which='major', color='#DDDDDD', linewidth=0.8)
+    plt.grid(which='minor', color='#EEEEEE', linestyle=':', linewidth=0.5)
+    plt.minorticks_on()
     plt.savefig(figure_name + "_electron_relative.png")
     plt.close()
 
@@ -308,28 +315,11 @@ def plot_energy_error(y_pred, y_true, figure_name):
                norm=LogNorm())
     plt.colorbar()
     plt.tight_layout()
+    plt.grid(which='major', color='#DDDDDD', linewidth=0.8)
+    plt.grid(which='minor', color='#EEEEEE', linestyle=':', linewidth=0.5)
+    plt.minorticks_on()
     plt.savefig(figure_name + "_photon_relative.png")
     plt.close()
-
-    # added new combined plot for better visibility
-    plt.figure(figsize=(8, 5))
-    plt.xlabel(r"$\frac{E_{Pred} - E_{True}}{E_{True}}$")
-    plt.ylabel("counts")
-    plt.xlim(-2, 2)
-    plt.hist((y_pred[:, 0] - y_true[:, 0]) / y_true[:, 0], bins=bins_err,
-             histtype=u"step", color="blue", label=r"$e^{-}$")
-    plt.plot(ary_x, gaussian(ary_x, *popt0), color="blue", linestyle="--",
-             label=r"$\mu$ = {:.2f}""\n"r"$\sigma$ = {:.2f}".format(popt0[0],
-                                                                    popt0[1]))
-    plt.hist((y_pred[:, 1] - y_true[:, 1]) / y_true[:, 0], bins=bins_err,
-             histtype=u"step", color="green", label=r"$\gamma$")
-    plt.plot(ary_x, gaussian(ary_x, *popt1), color="green", linestyle="--",
-             label=r"$\mu$ = {:.2f}""\n"r"$FWHM$ = {:.2f}".format(popt1[0],
-                                                                  popt1[1] / 2))
-    plt.legend()
-    plt.grid()
-    plt.tight_layout()
-    plt.savefig(figure_name + ".png")
 
 
 def plot_position_error(y_pred, y_true, figure_name):
@@ -376,11 +366,13 @@ def plot_position_error(y_pred, y_true, figure_name):
     plt.ylabel("counts")
     plt.hist(y_pred[:, 0] - y_true[:, 0], bins=bins_err_x, histtype=u"step",
              color="blue")
-    plt.plot(ary_x, gaussian(ary_x, *popt0), color="orange",
-             label=r"$\mu$ = {:.2f}""\n"r"$\sigma$ = {:.2f}".format(popt0[0],
-                                                                    popt0[1]))
+    plt.plot(ary_x, gaussian(ary_x, *popt0), color="deeppink",
+             label=r"$\mu$ = {:.2f} $\pm$ {:.2f}""\n"r"$\sigma$ = {:.2f} $\pm$ {:.2f}".format(
+                 popt0[0], np.sqrt(pcov0[0, 0]), popt0[1], np.sqrt(pcov0[1, 1])))
     plt.legend()
-    plt.grid()
+    plt.grid(which='major', color='#CCCCCC', linewidth=0.8)
+    plt.grid(which='minor', color='#DDDDDD', linestyle=':', linewidth=0.8)
+    plt.minorticks_on()
     plt.tight_layout()
     plt.savefig(figure_name + "_electron_x.png")
     plt.close()
@@ -395,6 +387,9 @@ def plot_position_error(y_pred, y_true, figure_name):
     plt.hlines(xmin=150.0 - 20.8 / 2.0, xmax=150.0 + 20.8 / 2.0, y=0,
                color="red", linestyles="--")
     plt.colorbar()
+    plt.grid(which='major', color='#DDDDDD', linewidth=0.8)
+    plt.grid(which='minor', color='#EEEEEE', linestyle=':', linewidth=0.5)
+    plt.minorticks_on()
     plt.tight_layout()
     plt.savefig(figure_name + "_electron_x_relative.png")
     plt.close()
@@ -406,11 +401,13 @@ def plot_position_error(y_pred, y_true, figure_name):
     plt.ylabel("counts")
     plt.hist(y_pred[:, 1] - y_true[:, 1], bins=bins_err_y, histtype=u"step",
              color="blue")
-    plt.plot(ary_y, gaussian(ary_y, *popt1), color="orange",
-             label=r"$\mu$ = {:.2f}""\n"r"$\sigma$ = {:.2f}".format(popt1[0],
-                                                                    popt1[1]))
+    plt.plot(ary_y, gaussian(ary_y, *popt1), color="deeppink",
+             label=r"$\mu$ = {:.2f} $\pm$ {:.2f}""\n"r"$\sigma$ = {:.2f} $\pm$ {:.2f}".format(
+                 popt1[0], np.sqrt(pcov1[0, 0]), popt1[1], np.sqrt(pcov1[1, 1])))
     plt.legend()
-    plt.grid()
+    plt.grid(which='major', color='#CCCCCC', linewidth=0.8)
+    plt.grid(which='minor', color='#DDDDDD', linestyle=':', linewidth=0.8)
+    plt.minorticks_on()
     plt.tight_layout()
     plt.savefig(figure_name + "_electron_y.png")
     plt.close()
@@ -424,6 +421,9 @@ def plot_position_error(y_pred, y_true, figure_name):
     plt.hlines(xmin=min(bins_y), xmax=max(bins_y), y=0, color="red",
                linestyles="--")
     plt.colorbar()
+    plt.grid(which='major', color='#DDDDDD', linewidth=0.8)
+    plt.grid(which='minor', color='#EEEEEE', linestyle=':', linewidth=0.5)
+    plt.minorticks_on()
     plt.tight_layout()
     plt.savefig(figure_name + "_electron_y_relative.png")
     plt.close()
@@ -435,11 +435,13 @@ def plot_position_error(y_pred, y_true, figure_name):
     plt.ylabel("counts")
     plt.hist(y_pred[:, 2] - y_true[:, 2], bins=bins_err_z, histtype=u"step",
              color="blue")
-    plt.plot(ary_z, gaussian(ary_z, *popt2), color="orange",
-             label=r"$\mu$ = {:.2f}""\n"r"$\sigma$ = {:.2f}".format(popt2[0],
-                                                                    popt2[1]))
+    plt.plot(ary_z, gaussian(ary_z, *popt2), color="deeppink",
+             label=r"$\mu$ = {:.2f} $\pm$ {:.2f}""\n"r"$\sigma$ = {:.2f} $\pm$ {:.2f}".format(
+                 popt2[0], np.sqrt(pcov2[0, 0]), popt2[1], np.sqrt(pcov2[1, 1])))
     plt.legend()
-    plt.grid()
+    plt.grid(which='major', color='#CCCCCC', linewidth=0.8)
+    plt.grid(which='minor', color='#DDDDDD', linestyle=':', linewidth=0.8)
+    plt.minorticks_on()
     plt.tight_layout()
     plt.savefig(figure_name + "_electron_z.png")
     plt.close()
@@ -453,6 +455,9 @@ def plot_position_error(y_pred, y_true, figure_name):
     plt.hlines(xmin=min(bins_z), xmax=max(bins_z), y=0, color="red",
                linestyles="--")
     plt.colorbar()
+    plt.grid(which='major', color='#DDDDDD', linewidth=0.8)
+    plt.grid(which='minor', color='#EEEEEE', linestyle=':', linewidth=0.5)
+    plt.minorticks_on()
     plt.tight_layout()
     plt.savefig(figure_name + "_electron_z_relative.png")
     plt.close()
@@ -466,11 +471,13 @@ def plot_position_error(y_pred, y_true, figure_name):
     plt.ylabel("counts")
     plt.hist(y_pred[:, 3] - y_true[:, 3], bins=bins_err_x, histtype=u"step",
              color="blue")
-    plt.plot(ary_x, gaussian(ary_x, *popt3), color="orange",
-             label=r"$\mu$ = {:.2f}""\n"r"$\sigma$ = {:.2f}".format(popt3[0],
-                                                                    popt3[1]))
+    plt.plot(ary_x, gaussian(ary_x, *popt3), color="deeppink",
+             label=r"$\mu$ = {:.2f} $\pm$ {:.2f}""\n"r"$\sigma$ = {:.2f} $\pm$ {:.2f}".format(
+                 popt3[0], np.sqrt(pcov3[0, 0]), popt3[1], np.sqrt(pcov3[1, 1])))
     plt.legend()
-    plt.grid()
+    plt.grid(which='major', color='#CCCCCC', linewidth=0.8)
+    plt.grid(which='minor', color='#DDDDDD', linestyle=':', linewidth=0.8)
+    plt.minorticks_on()
     plt.tight_layout()
     plt.savefig(figure_name + "_photon_x.png")
     plt.close()
@@ -485,6 +492,9 @@ def plot_position_error(y_pred, y_true, figure_name):
     plt.hlines(xmin=270.0 - 46.8 / 2.0, xmax=270.0 + 46.8 / 2.0, y=0,
                color="red", linestyles="--")
     plt.colorbar()
+    plt.grid(which='major', color='#DDDDDD', linewidth=0.8)
+    plt.grid(which='minor', color='#EEEEEE', linestyle=':', linewidth=0.5)
+    plt.minorticks_on()
     plt.tight_layout()
     plt.savefig(figure_name + "_photon_x_relative.png")
     plt.close()
@@ -496,11 +506,13 @@ def plot_position_error(y_pred, y_true, figure_name):
     plt.ylabel("counts")
     plt.hist(y_pred[:, 4] - y_true[:, 4], bins=bins_err_y, histtype=u"step",
              color="blue")
-    plt.plot(ary_y, gaussian(ary_y, *popt4), color="orange",
-             label=r"$\mu$ = {:.2f}""\n"r"$\sigma$ = {:.2f}".format(popt4[0],
-                                                                    popt4[1]))
+    plt.plot(ary_y, gaussian(ary_y, *popt4), color="deeppink",
+             label=r"$\mu$ = {:.2f} $\pm$ {:.2f}""\n"r"$\sigma$ = {:.2f} $\pm$ {:.2f}".format(
+                 popt4[0], np.sqrt(pcov4[0, 0]), popt4[1], np.sqrt(pcov4[1, 1])))
     plt.legend()
-    plt.grid()
+    plt.grid(which='major', color='#CCCCCC', linewidth=0.8)
+    plt.grid(which='minor', color='#DDDDDD', linestyle=':', linewidth=0.8)
+    plt.minorticks_on()
     plt.tight_layout()
     plt.savefig(figure_name + "_photon_y.png")
     plt.close()
@@ -514,6 +526,9 @@ def plot_position_error(y_pred, y_true, figure_name):
     plt.hlines(xmin=min(bins_y), xmax=max(bins_y), y=0, color="red",
                linestyles="--")
     plt.colorbar()
+    plt.grid(which='major', color='#DDDDDD', linewidth=0.8)
+    plt.grid(which='minor', color='#EEEEEE', linestyle=':', linewidth=0.5)
+    plt.minorticks_on()
     plt.tight_layout()
     plt.savefig(figure_name + "_photon_y_relative.png")
     plt.close()
@@ -525,11 +540,13 @@ def plot_position_error(y_pred, y_true, figure_name):
     plt.ylabel("counts")
     plt.hist(y_pred[:, 5] - y_true[:, 5], bins=bins_err_z, histtype=u"step",
              color="blue")
-    plt.plot(ary_z, gaussian(ary_z, *popt5), color="orange",
-             label=r"$\mu$ = {:.2f}""\n"r"$\sigma$ = {:.2f}".format(popt5[0],
-                                                                    popt5[1]))
+    plt.plot(ary_z, gaussian(ary_z, *popt5), color="deeppink",
+             label=r"$\mu$ = {:.2f} $\pm$ {:.2f}""\n"r"$\sigma$ = {:.2f} $\pm$ {:.2f}".format(
+                 popt5[0], np.sqrt(pcov5[0, 0]), popt5[1], np.sqrt(pcov5[1, 1])))
     plt.legend()
-    plt.grid()
+    plt.grid(which='major', color='#CCCCCC', linewidth=0.8)
+    plt.grid(which='minor', color='#DDDDDD', linestyle=':', linewidth=0.8)
+    plt.minorticks_on()
     plt.tight_layout()
     plt.savefig(figure_name + "_photon_z.png")
     plt.close()
@@ -543,6 +560,9 @@ def plot_position_error(y_pred, y_true, figure_name):
     plt.hlines(xmin=min(bins_z), xmax=max(bins_z), y=0, color="red",
                linestyles="--")
     plt.colorbar()
+    plt.grid(which='major', color='#DDDDDD', linewidth=0.8)
+    plt.grid(which='minor', color='#EEEEEE', linestyle=':', linewidth=0.5)
+    plt.minorticks_on()
     plt.tight_layout()
     plt.savefig(figure_name + "_photon_z_relative.png")
     plt.close()
@@ -608,23 +628,23 @@ def plot_history_classifier(history, figure_name):
     pur = history["precision"]
     val_pur = history["precision"]
 
-    fig, axs = plt.subplots(1, 2, figsize=(14, 5))
+    fig, ax1 = plt.subplots(figsize=(14, 6))
 
-    axs[0].plot(loss, label="Loss", linestyle='-', color="blue")
-    axs[0].plot(val_loss, label="Validation", linestyle='--', color="blue")
-    axs[0].set_xlabel("epoch")
-    axs[0].set_ylabel("loss")
-    axs[0].legend(loc="upper right")
-    axs[0].grid(which="both")
-
-    axs[1].plot(eff, label="Efficiency", linestyle='-', color="red")
-    axs[1].plot(val_eff, label="Validation", linestyle='--', color="red")
-    axs[1].plot(pur, label="Purity", linestyle="-", color="green")
-    axs[1].plot(val_pur, label="Validation", linestyle="--", color="green")
-    axs[1].set_ylabel("%")
-    axs[1].legend(loc="lower right")
-    axs[1].grid(which="both")
-
+    ax1.plot(loss, label="Loss", linestyle='-', color="blue")
+    ax1.plot(val_loss, label="Validation", linestyle='--', color="blue")
+    ax1.set_xlabel("epoch")
+    ax1.set_ylabel("loss")
+    ax1.legend(loc="upper center")
+    ax1.grid(which='major', color='#CCCCCC', linewidth=0.8)
+    ax1.grid(which='minor', color='#DDDDDD', linestyle=':', linewidth=0.8)
+    ax1.minorticks_on()
+    ax2 = ax1.twinx()
+    ax2.plot(eff, label="Efficiency", linestyle='-.', color="deeppink")
+    ax2.plot(val_eff, label="Validation", linestyle='--', color="deeppink")
+    ax2.plot(pur, label="Purity", linestyle=":", color="green")
+    ax2.plot(val_pur, label="Validation", linestyle="--", color="green")
+    ax2.set_ylabel("%")
+    ax2.legend(loc="lower center")
     plt.tight_layout()
     plt.savefig(figure_name + ".png")
     plt.close()
@@ -638,16 +658,17 @@ def plot_history_regression(history, figure_name):
     mse = history["mean_absolute_error"]
     val_mse = history["val_mean_absolute_error"]
 
-    plt.figure(figsize=(8, 5))
+    plt.figure(figsize=(7, 6))
     plt.plot(loss, label="Loss", linestyle='-', color="blue")
     plt.plot(val_loss, label="Validation", linestyle='--', color="blue")
     # plt.plot(mse, label="MAE", linestyle='-', color="red")
     # plt.plot(val_mse, linestyle='--', color="red")
     plt.xlabel("epoch")
     plt.ylabel("loss")
-    plt.xlim(-5, 100)
     plt.legend()
-    plt.grid()
+    plt.grid(which='major', color='#CCCCCC', linewidth=0.8)
+    plt.grid(which='minor', color='#DDDDDD', linestyle=':', linewidth=0.8)
+    plt.minorticks_on()
     plt.tight_layout()
     plt.savefig(figure_name + ".png")
     plt.close()
@@ -659,26 +680,19 @@ def plot_history_regression(history, figure_name):
 
 
 def plot_2dhist_sp_score(sp, y_score, y_true, figure_name):
-    plot_bragg = True
-
     plt.rcParams.update({'font.size': 16})
-    bin_score = np.arange(0.0, 1.0, 0.01)
-    bin_sp = np.arange(int(min(sp)), int(max(sp)), 1.0)
+    bin_score = np.arange(0.0, 1.0, 0.05)
+    bin_sp = np.arange(int(min(sp)), 50, 1.0)
 
-    plt.figure(figsize=(8, 6))
+    plt.figure(figsize=(7, 6))
     plt.xlabel("True source position z-axis [mm]")
     plt.ylabel("Signal score")
     h0 = plt.hist2d(sp[y_true == 1], y_score[y_true == 1], bins=[bin_sp, bin_score])
-    if plot_bragg:
-        x = np.linspace(-80.0, 5.0, 1000)
-        mu = -2.5
-        sigma = 1.5
-        A = 0.8
-        B = 0.2
-        plt.plot(x, max_super_function(x), color="red", linestyle="--")
-
     plt.colorbar(h0[3])
     plt.tight_layout()
+    plt.grid(which='major', color='#CCCCCC', linewidth=0.5, alpha=0.5)
+    plt.grid(which='minor', color='#DDDDDD', linestyle=":", linewidth=0.5, alpha=0.5)
+    plt.minorticks_on()
     plt.savefig(figure_name + ".png")
     plt.close()
 
@@ -692,6 +706,63 @@ def plot_2dhist_ep_score(pe, y_score, y_true, figure_name):
     plt.ylabel("Score")
     h0 = plt.hist2d(pe[y_true == 1], y_score[y_true == 1], bins=[bin_pe, bin_score], norm=LogNorm())
     plt.colorbar(h0[3])
+    plt.grid(which='major', color='#DDDDDD', linewidth=0.5, alpha=0.5)
+    plt.grid(which='minor', color='#EEEEEE', linestyle=":", linewidth=0.5, alpha=0.5)
+    plt.minorticks_on()
     plt.tight_layout()
     plt.savefig(figure_name + ".png")
     plt.close()
+
+
+def plot_energy_resolution(y_pred, y_true, figure_name):
+    plt.rcParams.update({'font.size': 16})
+    width = 0.2
+    bins_err = np.arange(-10.0, 10.0, width)
+    bins_energy = np.arange(0.0, 10.0, width)
+    bins_energy_center = bins_energy[:-1] + (width / 2)
+    bins_err_center = bins_err[:-1] + (width / 2)
+
+    # electron energy iteration
+    # iterate over every energy bin, collect histogram entries, fit gaussian curve and collect
+    # sigma + uncertainty from fit
+    ary_FWHM_e = np.zeros(shape=(len(bins_energy_center),))
+    ary_FWHM_e_err = np.zeros(shape=(len(bins_energy_center),))
+    ee_err = y_pred[:, 0] - y_true[:, 0]
+    for i in range(len(bins_energy) - 1):
+        ary_tmp = np.where((bins_energy[0] < y_true[:, 0]) & (bins_energy[1] > y_true[:, 0]),
+                           y_true[:, 0], y_true[:, 0] * 0)
+        hist, _ = np.histogram(ee_err[ary_tmp != 0], bins_err)
+
+        # fit gaussian to historgram
+        popt, pcov = curve_fit(gaussian, bins_err_center, hist,
+                               p0=[0.0, 1.0, np.sum(hist) * width])
+        ary_FWHM_e[i] = popt[1]
+
+    # photon interaction
+    ary_FWHM_p = np.zeros(shape=(len(bins_energy_center),))
+    ary_FWHM_p_err = np.zeros(shape=(len(bins_energy_center),))
+    ee_err = y_pred[:, 1] - y_true[:, 1]
+    for i in range(len(bins_energy) - 1):
+        ary_tmp = np.where((bins_energy[0] < y_true[:, 1]) & (bins_energy[1] > y_true[:, 1]),
+                           y_true[:, 1], y_true[:, 1] * 0)
+        hist, _ = np.histogram(ee_err[ary_tmp != 0], bins_err)
+
+        # fit gaussian to historgram
+        popt, pcov = curve_fit(gaussian, bins_err_center, hist,
+                               p0=[0.0, 1.0, np.sum(hist) * width])
+        ary_FWHM_p[i] = popt[1]
+
+    plt.figure(figsize=(12, 6))
+    plt.xlabel("Energy [MeV]")
+    plt.ylabel("Energy Resolution [%]")
+    plt.ylim(0, 15)
+    plt.plot(bins_energy_center, ary_FWHM_e / bins_energy_center * 100, color="deeppink",
+             linestyle="-", label=r"$E_e$")
+    plt.plot(bins_energy_center, ary_FWHM_p / bins_energy_center * 100, color="blue",
+             linestyle="-.", label=r"$E_{\gamma}}$")
+    plt.legend(loc="upper right")
+    plt.grid(which='major', color='#CCCCCC', linewidth=0.8)
+    plt.grid(which='minor', color='#DDDDDD', linestyle=':', linewidth=0.8)
+    plt.minorticks_on()
+    plt.tight_layout()
+    plt.savefig(figure_name)
