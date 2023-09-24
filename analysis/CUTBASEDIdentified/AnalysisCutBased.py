@@ -3,12 +3,12 @@ import os
 
 from SiFiCCNN.root import RootParser, RootFiles
 from SiFiCCNN.analysis.metrics import get_classifier_metrics
-from SiFiCCNN.utils.plotter import plot_energy_error, plot_position_error
+from SiFiCCNN.utils.plotter import plot_energy_error, plot_position_error, plot_energy_resolution
 
 
 def main():
-    n = 10000
-    ROOTFILE = RootFiles.onetoone_BP0mm_taggingv2
+    n = None
+    ROOTFILE = RootFiles.fourtoone_CONT_simv4
     RUN_NAME = "CutBasedIdentified"
 
     # go backwards in directory tree until the main repo directory is matched
@@ -85,6 +85,9 @@ def main():
     plot_position_error(ary_cbreco[tp_mask == 1, 3:],
                         ary_mctrue[tp_mask == 1, 3:],
                         "error_regression_position")
+    plot_energy_resolution(ary_cbreco[tp_mask == 1, 1:3],
+                           ary_mctrue[tp_mask == 1, 1:3],
+                           "resolution_regression_energy")
 
 
 if __name__ == "__main__":
