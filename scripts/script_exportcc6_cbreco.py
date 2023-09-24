@@ -13,7 +13,7 @@ import os
 import sys
 import argparse
 
-from SiFiCCNN.root import RootParser
+from SiFiCCNN.root import RootParser, RootFiles
 from SiFiCCNN.ImageReconstruction import IRExport
 
 
@@ -38,12 +38,15 @@ def main(root_file, tagging):
     ary_reco = np.zeros(shape=(root_parser.events_entries, 9), dtype=np.float32)
     for i, event in enumerate(root_parser.iterate_events(n=None)):
         target_tag = 0
-        if tagging == "identified":
+        if tagging == "IDENTIFIED":
             target_tag = 1 if event.Identified != 0 else 0
-        if tagging == "distcompton":
+        if tagging == "IDENTIFIED_NODISTCOMPTONLEGACY":
+            target_tag = 1 if (
+                        event.Identified != 0 and not event.get_distcompton_tag_legacy()) else 0
+        if tagging == "DISTCOMPTON":
             target_tag = event.get_distcompton_tag() * 1
-        if tagging == "distcompton_awal":
-            target_tag = event.get_distcompton_tag_awal() * 1
+        if tagging == "DISTCOMPTONLEGACY":
+            target_tag = event.get_distcompton_tag_legacy() * 1
 
         target_energy_e, target_energy_p = event.get_reco_energy()
         target_position_e, target_position_p = event.get_reco_position()
@@ -66,12 +69,14 @@ def main(root_file, tagging):
 
     # generate filename
     file_name = "CC6IR_CBRECO_"
-    if tagging == "identified":
+    if tagging == "IDENTIFIED":
         file_name += "IDENTIFIED_"
-    if tagging == "distcompton":
+    if tagging == "DISTCOMPTON":
         file_name += "DISTCOMPTON_"
-    if tagging == "distcompton_awal":
-        file_name += "DISTCOMPTONAWAL_"
+    if tagging == "DISTCOMPTONLEGACY":
+        file_name += "DISTCOMPTONLEGACY_"
+    if tagging == "IDENTIFIED_NODISTCOMPTONLEGACY":
+        file_name += "IDENTIFIED_NODISTCOMPTONLEGACY_"
     file_name += root_parser.file_name
 
     # generate CC6 export
@@ -90,6 +95,7 @@ def main(root_file, tagging):
 
 
 if __name__ == "__main__":
+    """    
     # configure argument parser
     parser = argparse.ArgumentParser(description='Optional app description')
     parser.add_argument("--rf", type=str, help="Target root file")
@@ -104,8 +110,8 @@ if __name__ == "__main__":
         print("Invalid --tag argument given!")
         print("Possible choices: 'identified', 'distcompton', 'distcompton_awal'")
         sys.exit()
-
-    # ROOTFILE = "OptimisedGeometry_BP0mm_2e10protons_taggingv3.root"
-    # main(ROOTFILE, tagging=args.tag)
-
-    main(args.rf, tagging=args.tag)
+    """
+    ROOTFILE1 = RootFiles.onetoone_BP0mm_taggingv1
+    ROOTFILE2 = RootFiles.onetoone_BP5mm_taggingv1
+    main(ROOTFILE1, tagging="IDENTIFIED_NODISTCOMPTONLEGACY")
+    main(ROOTFILE2, tagging="IDENTIFIED_NODISTCOMPTONLEGACY")
