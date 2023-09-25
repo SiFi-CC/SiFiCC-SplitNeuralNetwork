@@ -717,10 +717,11 @@ def plot_2dhist_ep_score(pe, y_score, y_true, figure_name):
 def plot_energy_resolution(y_pred, y_true, figure_name):
     plt.rcParams.update({'font.size': 16})
     width = 0.2
-    bins_err = np.arange(-10.0, 10.0, width)
-    bins_energy = np.arange(0.0, 10.0, width)
+    bins_err = np.arange(-8.0, 8.0, width)
+    bins_energy = np.arange(0.0, 8.0, width)
     bins_energy_center = bins_energy[:-1] + (width / 2)
     bins_err_center = bins_err[:-1] + (width / 2)
+    x = np.linspace(-8.0, 8.0, 1000)
 
     # electron energy iteration
     # iterate over every energy bin, collect histogram entries, fit gaussian curve and collect
@@ -729,7 +730,8 @@ def plot_energy_resolution(y_pred, y_true, figure_name):
     ary_FWHM_e_err = np.zeros(shape=(len(bins_energy_center),))
     ee_err = y_pred[:, 0] - y_true[:, 0]
     for i in range(len(bins_energy) - 1):
-        ary_tmp = np.where((bins_energy[0] < y_true[:, 0]) & (bins_energy[1] > y_true[:, 0]),
+        print("scanning: [{:.2f}, {:.2f}] MeV".format(bins_energy[i], bins_energy[i + 1]))
+        ary_tmp = np.where((bins_energy[i] < y_true[:, 0]) & (bins_energy[i + 1] > y_true[:, 0]),
                            y_true[:, 0], y_true[:, 0] * 0)
         hist, _ = np.histogram(ee_err[ary_tmp != 0], bins_err)
 
@@ -738,24 +740,53 @@ def plot_energy_resolution(y_pred, y_true, figure_name):
                                p0=[0.0, 1.0, np.sum(hist) * width])
         ary_FWHM_e[i] = popt[1]
 
+        plt.figure()
+        plt.xlabel("Energy [MeV]")
+        plt.ylabel("Counts")
+        plt.grid(which='major', color='#CCCCCC', linewidth=0.8)
+        plt.grid(which='minor', color='#DDDDDD', linestyle=':', linewidth=0.8)
+        plt.minorticks_on()
+        plt.hist(ee_err[ary_tmp != 0], bins=bins_err, histtype=u"step", color="blue")
+        plt.plot(x, gaussian(x, *popt), color="deeppink",
+                 label=r"$\mu$ = {:.2f} $\pm$ {:.2f}""\n"r"$\sigma$ = {:.2f} $\pm$ {:.2f}".format(
+                     popt[0], np.sqrt(pcov[0, 0]), popt[1], np.sqrt(pcov[1, 1])))
+        plt.legend(loc="upper left")
+        plt.tight_layout()
+        plt.savefig(figure_name + "ee_{}".format(i))
+        plt.close()
+
     # photon interaction
     ary_FWHM_p = np.zeros(shape=(len(bins_energy_center),))
     ary_FWHM_p_err = np.zeros(shape=(len(bins_energy_center),))
     ee_err = y_pred[:, 1] - y_true[:, 1]
     for i in range(len(bins_energy) - 1):
-        ary_tmp = np.where((bins_energy[0] < y_true[:, 1]) & (bins_energy[1] > y_true[:, 1]),
+        ary_tmp = np.where((bins_energy[i] < y_true[:, 1]) & (bins_energy[i + 1] > y_true[:, 1]),
                            y_true[:, 1], y_true[:, 1] * 0)
         hist, _ = np.histogram(ee_err[ary_tmp != 0], bins_err)
-
         # fit gaussian to historgram
         popt, pcov = curve_fit(gaussian, bins_err_center, hist,
                                p0=[0.0, 1.0, np.sum(hist) * width])
         ary_FWHM_p[i] = popt[1]
 
+        plt.figure()
+        plt.xlabel("Energy [MeV]")
+        plt.ylabel("Counts")
+        plt.grid(which='major', color='#CCCCCC', linewidth=0.8)
+        plt.grid(which='minor', color='#DDDDDD', linestyle=':', linewidth=0.8)
+        plt.minorticks_on()
+        plt.hist(ee_err[ary_tmp != 0], bins=bins_err, histtype=u"step", color="blue")
+        plt.plot(x, gaussian(x, *popt), color="deeppink",
+                 label=r"$\mu$ = {:.2f} $\pm$ {:.2f}""\n"r"$\sigma$ = {:.2f} $\pm$ {:.2f}".format(
+                     popt[0], np.sqrt(pcov[0, 0]), popt[1], np.sqrt(pcov[1, 1])))
+        plt.tight_layout()
+        plt.legend(loc="upper left")
+        plt.savefig(figure_name + "_ep_{}".format(i))
+        plt.close()
+
     plt.figure(figsize=(12, 6))
     plt.xlabel("Energy [MeV]")
     plt.ylabel("Energy Resolution [%]")
-    plt.ylim(0, 15)
+    # plt.ylim(0, 50)
     plt.plot(bins_energy_center, ary_FWHM_e / bins_energy_center * 100, color="deeppink",
              linestyle="-", label=r"$E_e$")
     plt.plot(bins_energy_center, ary_FWHM_p / bins_energy_center * 100, color="blue",
