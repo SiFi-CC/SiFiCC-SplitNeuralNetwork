@@ -38,78 +38,6 @@ class RootParser:
         self.events_entries = self.events.numentries
         self.events_keys = self.events.keys()
 
-        # List of root leaves expected for all possible root file structures
-        # Note: b in front of the string account for
-        # byte stare of strings in root
-        self.leaves_global = [b"EventNumber",
-                              b'MCSimulatedEventType',
-                              b'MCEnergy_Primary',
-                              b'MCEnergy_e',
-                              b'MCEnergy_p',
-                              b'MCPosition_source',
-                              b'MCDirection_source',
-                              b'MCComptonPosition',
-                              b'MCDirection_scatter',
-                              b'MCPosition_e',
-                              b'MCInteractions_e',
-                              b'MCPosition_p',
-                              b'MCInteractions_p']
-        self.leaves_cluster = [b'RecoClusterPositions.position',
-                               b'RecoClusterPositions.uncertainty',
-                               b'RecoClusterEnergies.value',
-                               b'RecoClusterEnergies.uncertainty',
-                               b'RecoClusterEntries',
-                               b"RecoClusterTimestamps"]
-        self.leaves_sipm = [b"SiPMData.fSiPMTriggerTime",
-                            b"SiPMData.fSiPMQDC",
-                            b"SiPMData.fSiPMPosition",
-                            b"SiPMData.fSiPMId",
-                            b"FibreData.fFibreTime",
-                            b"FibreData.fFibreEnergy",
-                            b"FibreData.fFibrePosition",
-                            b"FibreData.fFibreId"]
-        self.leaves_cluster_keys = [b'RecoClusterPositions',
-                                    b'RecoClusterEnergies',
-                                    b'RecoClusterEntries',
-                                    b"RecoClusterTimestamps"]
-        self.leaves_sipm_keys = [b"SiPMData",
-                                 b"FibreData"]
-        self.leaves_reco = [b'Identified']
-
-        # define information level in root-file:
-        self.ifglobal = False
-        self.ifcluster = False
-        self.ifreco = False
-        self.ifsipm = False
-        self.ifenergydepo = False
-        self.list_leaves_final = []
-        if set(self.leaves_global).issubset(self.events_keys):
-            self.ifglobal = True
-            self.list_leaves_final += self.leaves_global
-        # try to catch exception
-        if not self.ifglobal:
-            self.leaves_global[2] = b"MCEnergyPrimary"
-            if set(self.leaves_global).issubset(self.events_keys):
-                self.ifglobal = True
-                self.list_leaves_final += self.leaves_global
-
-        if set(self.leaves_reco).issubset(self.events_keys):
-            self.ifreco = True
-            self.list_leaves_final += self.leaves_reco
-        if set(self.leaves_cluster_keys).issubset(self.events_keys):
-            self.ifcluster = True
-            self.list_leaves_final += self.leaves_cluster
-        if set(self.leaves_sipm_keys).issubset(self.events_keys):
-            self.ifsipm = True
-            self.list_leaves_final += self.leaves_sipm
-
-        # check if MCEnergyDeps_e and MCEnergyDeps_p are stored in the root file
-        # These are leaves added later in the analysis, therefore older datasets won't contain them.
-        # To further support older datasets these root leaves need an exception
-        if {b'MCEnergyDeps_e', b'MCEnergyDeps_p'}.issubset(self.events_keys):
-            self.list_leaves_final += [b'MCEnergyDeps_e', b'MCEnergyDeps_p']
-            self.ifenergydepo = True
-
         # create SIFICC-Module objects for scatterer and absorber
         self.scatterer = Detector(self.setup["ScattererPosition"].array()[0],
                                   self.setup["ScattererThickness_x"].array()[0],
@@ -119,6 +47,114 @@ class RootParser:
                                  self.setup["AbsorberThickness_x"].array()[0],
                                  self.setup["AbsorberThickness_y"].array()[0],
                                  self.setup["AbsorberThickness_z"].array()[0])
+
+    def type_str(self):
+        """
+        Defines which type of event structure is in the ROOT-file. Possible types right now are:
+        - BASE:     Contains only global event information
+        - CLUSTER:  Contains reconstructed clusters from low level reconstruction. Currently under
+                    consideration that 1-to-1 coupling is the detector setup
+        - SIPM:     Contains SiPM and fibre data. No clustering is available. Currently under
+                    consideration that 4-to-1 coupling is the detector setup
+
+        return:
+            type_str (str): string defining the type of the ROOT-file
+
+        NOTE: This is pretty much hard coded according to what is available from the simulation. If
+              later on a low level reconstruction in the 4-to-1 coupling is possible, a new type
+              and event subclass should be created.
+        """
+
+        # set initialization
+        type_str = "BASE"
+
+        # scan ROOT file information by checking which leave keys are in the tree
+        keys_cluster = [b'RecoClusterPositions',
+                        b'RecoClusterEnergies',
+                        b'RecoClusterEntries',
+                        b"RecoClusterTimestamps"]
+        if set(keys_cluster).issubset(self.events_keys):
+            type_str = "CLUSTER"
+
+        keys_sipm = [b"SiPMData",
+                     b"FibreData"]
+        if set(keys_sipm).issubset(self.events_keys):
+            type_str = "SIPM"
+
+        return type_str
+
+    def tree_leaves(self):
+        """
+        Generates a list of all leaves to be read out from the ROOT-file tree.
+        Checks for all exceptions regarding legacy versions of simulation files.
+
+        :return:
+            list_leaves (list): list containing all leave names in binary strings
+
+        NOTE: Strings are in binary because uproot
+        """
+
+        # initialize
+        list_leaves = []
+
+        # pre defined leaves
+        leaves_global = [b"EventNumber",
+                         b'MCSimulatedEventType',
+                         b'MCEnergy_Primary',
+                         b'MCEnergy_e',
+                         b'MCEnergy_p',
+                         b'MCPosition_source',
+                         b'MCDirection_source',
+                         b'MCComptonPosition',
+                         b'MCDirection_scatter',
+                         b'MCPosition_e',
+                         b'MCInteractions_e',
+                         b'MCPosition_p',
+                         b'MCInteractions_p']
+        leaves_cluster = [b'RecoClusterPositions.position',
+                          b'RecoClusterPositions.uncertainty',
+                          b'RecoClusterEnergies.value',
+                          b'RecoClusterEnergies.uncertainty',
+                          b'RecoClusterEntries',
+                          b"RecoClusterTimestamps",
+                          b"Identified"]
+        leaves_sipm = [b"SiPMData.fSiPMTimestamp",
+                       b"SiPMData.fSiPMPhotonCount",
+                       b"SiPMData.fSiPMPosition",
+                       b"SiPMData.fSiPMId",
+                       b"FibreData.fFibreTime",
+                       b"FibreData.fFibreEnergy",
+                       b"FibreData.fFibrePosition",
+                       b"FibreData.fFibreId"]
+
+        # Exception "photonCount - timestamp"
+        # Later simulation updates changed the naming convention for SiPM attributes from:
+        # fSiPMTriggerTime -> fSiPMTimestamp
+        # fSiPMQDC -> fSiPMPhotonCount
+        if {b"SiPMData.fSiPMTriggerTime"}.issubset(self.events_keys):
+            leaves_sipm[0] = b"SiPMData.fSiPMTriggerTime"
+            leaves_sipm[1] = b"SiPMData.fSiPMQDC"
+
+        # Exception "MCEnergyPrimary"
+        # Older 1-to-1 coupling files names the primary energy "MCEnergy_Primary" while 4-to-1
+        # coupling files name it "MCEnergyPrimary
+        if {b"MCEnergyPrimary"}.issubset(self.events_keys):
+            leaves_global[2] = b"MCEnergyPrimary"
+
+        # Exception: "MCEnergyDEps"
+        # Check if MCEnergyDeps_e and MCEnergyDeps_p are stored in the root file
+        # These are leaves added later in the analysis, therefore older datasets won't contain them.
+        if {b'MCEnergyDeps_e', b'MCEnergyDeps_p'}.issubset(self.events_keys):
+            leaves_global += [b'MCEnergyDeps_e', b'MCEnergyDeps_p']
+
+        # finalize leave list based on type string
+        list_leaves += leaves_global
+        if self.type_str() == "CLUSTER":
+            list_leaves += leaves_cluster
+        if self.type_str() == "SIPM":
+            list_leaves += leaves_sipm
+
+        return list_leaves
 
     def iterate_events(self, n=None):
         """
@@ -143,7 +179,7 @@ class RootParser:
         progbar_step = 0
         progbar_update_size = 1000
 
-        for start, end, basket in self.events.iterate(self.list_leaves_final,
+        for start, end, basket in self.events.iterate(self.tree_leaves(),
                                                       entrysteps=100000,
                                                       reportentries=True,
                                                       namedecode='utf-8',
@@ -174,7 +210,10 @@ class RootParser:
 
         """
 
-        if self.ifcluster:
+        type_str = self.type_str()
+        list_leaves = self.tree_leaves()
+
+        if type_str == "CLUSTER":
             event = EventCluster(EventNumber=basket["EventNumber"][idx],
                                  MCSimulatedEventType=basket['MCSimulatedEventType'][idx],
                                  MCEnergy_Primary=basket['MCEnergy_Primary'][idx],
@@ -185,9 +224,9 @@ class RootParser:
                                  MCPosition_p=basket['MCPosition_p'][idx],
                                  MCInteractions_p=basket['MCInteractions_p'][idx],
                                  MCEnergyDeps_e=basket["MCEnergyDeps_e"][
-                                     idx] if self.ifenergydepo else None,
+                                     idx] if b"MCEnergyDeps_e" in list_leaves else None,
                                  MCEnergyDeps_p=basket["MCEnergyDeps_p"][
-                                     idx] if self.ifenergydepo else None,
+                                     idx] if b"MCEnergyDeps_p" in list_leaves else None,
                                  MCPosition_source=basket['MCPosition_source'][idx],
                                  MCDirection_source=basket['MCDirection_source'][idx],
                                  MCComptonPosition=basket['MCComptonPosition'][idx],
@@ -205,7 +244,7 @@ class RootParser:
                                  module_scatterer=self.scatterer,
                                  module_absorber=self.absorber)
 
-        elif self.ifsipm:
+        elif type_str == "SIPM":
             event = EventSiPM(EventNumber=basket["EventNumber"][idx],
                               MCSimulatedEventType=basket['MCSimulatedEventType'][idx],
                               MCEnergy_Primary=basket['MCEnergyPrimary'][idx],
@@ -216,15 +255,17 @@ class RootParser:
                               MCPosition_p=basket['MCPosition_p'][idx],
                               MCInteractions_p=basket['MCInteractions_p'][idx],
                               MCEnergyDeps_e=basket["MCEnergyDeps_e"][
-                                  idx] if self.ifenergydepo else None,
+                                  idx] if b"MCEnergyDeps_e" in list_leaves else None,
                               MCEnergyDeps_p=basket["MCEnergyDeps_p"][
-                                  idx] if self.ifenergydepo else None,
+                                  idx] if b"MCEnergyDeps_p" in list_leaves else None,
                               MCPosition_source=basket['MCPosition_source'][idx],
                               MCDirection_source=basket['MCDirection_source'][idx],
                               MCComptonPosition=basket['MCComptonPosition'][idx],
                               MCDirection_scatter=basket['MCDirection_scatter'][idx],
-                              SiPM_triggertime=basket["SiPMData.fSiPMTriggerTime"][idx],
-                              SiPM_qdc=basket["SiPMData.fSiPMQDC"][idx],
+                              SiPM_triggertime=basket[
+                                  "SiPMData.fSiPMTimestamp" if b"SiPMData.fSiPMTimestamp" in list_leaves else "SiPMData.fSiPMTriggerTime"][
+                                  idx],
+                              SiPM_qdc=basket["SiPMData.fSiPMPhotonCount" if b"SiPMData.fSiPMPhotonCount" in list_leaves else "SiPMData.fSiPMQDC"][idx],
                               SiPM_position=basket["SiPMData.fSiPMPosition"][idx],
                               SiPM_id=basket["SiPMData.fSiPMId"][idx],
                               fibre_time=basket["FibreData.fFibreTime"][idx],
@@ -245,9 +286,9 @@ class RootParser:
                           MCPosition_p=basket['MCPosition_p'][idx],
                           MCInteractions_p=basket['MCInteractions_p'][idx],
                           MCEnergyDeps_e=basket["MCEnergyDeps_e"][
-                              idx] if self.ifenergydepo else None,
+                              idx] if b"MCEnergyDeps_e" in list_leaves else None,
                           MCEnergyDeps_p=basket["MCEnergyDeps_p"][
-                              idx] if self.ifenergydepo else None,
+                              idx] if b"MCEnergyDeps_p" in list_leaves else None,
                           MCPosition_source=basket['MCPosition_source'][idx],
                           MCDirection_source=basket['MCDirection_source'][idx],
                           MCComptonPosition=basket['MCComptonPosition'][idx],
@@ -261,107 +302,8 @@ class RootParser:
         """
         Return event for a given position in the root file
         """
-        for basket in self.events.iterate(self.list_leaves_final,
+        for basket in self.events.iterate(self.tree_leaves(),
                                           entrystart=position,
                                           entrystop=position + 1,
                                           namedecode='utf-8'):
             return self.__event_at_basket(basket, 0)
-
-    '''
-    # CURRENTLY DISABLED
-    def export_npz_lookup(self, n=None, is_s1ax=False):
-        """
-        generates compressed npz file containing MC-Truth data and Cut-based
-        reco data.
-
-        Args:
-            n (int or none):    number of events parsed from root tree,
-                                None if all events are iterated
-            is_s1ax (bool):     If true, skip events with more
-                                than 1 scatterer cluster
-
-        """
-
-        # create empty arrays for full export to compressed .npz format
-        # root data will be split into:
-        # - Meta data: (EventNumber,
-        #               MCSimulatedEventType,
-        #               IdealCompton event tag,
-        #               CB-identified)
-        # - MonteCarlo-data: Monte-Carlo Event data
-        # - CutBased-data: Cut-based reconstruction data
-
-        ary_meta = np.zeros(shape=(self.events_entries, 4))
-        ary_mc = np.zeros(shape=(self.events_entries, 10))
-        ary_cb = np.zeros(shape=(self.events_entries, 10))
-        ary_tags = np.zeros(shape=(self.events_entries, 5))
-
-        # Fill Meta-data, Monte-Carlo data and Cluster data into empty arrays
-        # Cut-based reco data is not iterable since uproot can't handle
-        # the reco data stored in branches
-        counter = 0
-        for i, event in enumerate(self.iterate_events(n=n)):
-            if is_s1ax:
-                idx_scatterer, idx_absorber = event.sort_clusters_by_module(
-                    use_energy=True)
-                if not len(idx_scatterer) == 1:
-                    continue
-
-                if not len(idx_absorber) > 0:
-                    continue
-
-            ary_meta[counter, :] = [event.EventNumber,
-                                    event.MCSimulatedEventType,
-                                    event.is_ideal_compton * 1,
-                                    event.Identified]
-
-            ary_mc[counter, :] = [event.compton_tag * 1,
-                                  event.target_energy_e,
-                                  event.target_energy_p,
-                                  event.target_position_e.x,
-                                  event.target_position_e.y,
-                                  event.target_position_e.z,
-                                  event.target_position_p.x,
-                                  event.target_position_p.y,
-                                  event.target_position_p.z,
-                                  event.target_angle_theta]
-
-            e1, _ = event.get_electron_energy()
-            e2, _ = event.get_photon_energy()
-            p1, _ = event.get_electron_position()
-            p2, _ = event.get_photon_position()
-            ary_cb[counter, :] = [event.Identified,
-                                  e1,
-                                  e2,
-                                  p1.x,
-                                  p1.y,
-                                  p1.z,
-                                  p2.x,
-                                  p2.y,
-                                  p2.z,
-                                  event.calculate_theta(e1, e2)]
-
-            ary_tags[counter, :] = [event.is_real_coincidence * 1,
-                                    event.is_compton * 1,
-                                    event.is_compton_pseudo_complete * 1,
-                                    event.is_compton_pseudo_distributed * 1,
-                                    event.is_compton_distributed * 1]
-
-            counter += 1
-
-        # resize arrays
-        ary_meta = ary_meta[:counter, :]
-        ary_mc = ary_mc[:counter, :]
-        ary_cb = ary_cb[:counter, :]
-        ary_tags = ary_tags[:counter, :]
-
-        # export dataframe to compressed .npz
-        with open(self.file_name + "_lookup.npz", 'wb') as file:
-            np.savez_compressed(file,
-                                META=ary_meta,
-                                MC_TRUTH=ary_mc,
-                                CB_RECO=ary_cb,
-                                TAGS=ary_tags)
-
-        print("file saved: ", self.file_name + "_lookup.npz")
-    '''
