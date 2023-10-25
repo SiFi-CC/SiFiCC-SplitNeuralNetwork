@@ -28,6 +28,8 @@ fourtoone_BP5mm_simv4 = "OptimisedGeometry_4to1_BP5mm_4e9protons_simv4.root"
 fourtoone_BPm5mm_simv4 = "OptimisedGeometry_4to1_BPm5mm_4e9protons_simv4.root"
 fourtoone_BP10mm_simv4 = "OptimisedGeometry_4to1_BP10mm_4e9protons_simv4.root"
 
+fourtoone_BP0mm_test = "OptimisedGeometry_4to1_0mm_small_file_for_cracow_simv4.root"
+
 """
 # files available on the cluster
 OptimisedGeometry_BP0mm_2e10protons_withTimestamps_server = "/net/data_g4rt/projects/SiFiCC/InputforNN/ClusterNNOptimisedGeometry/OptimisedGeometry_BP0mm_2e10protons_withTimestamps.root"
