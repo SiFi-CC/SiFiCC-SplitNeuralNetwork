@@ -118,7 +118,7 @@ class RootParser:
                           b'RecoClusterEntries',
                           b"RecoClusterTimestamps",
                           b"Identified"]
-        leaves_sipm = [b"SiPMData.fSiPMTimestamp",
+        leaves_sipm = [b"SiPMData.fSiPMTimeStamp",
                        b"SiPMData.fSiPMPhotonCount",
                        b"SiPMData.fSiPMPosition",
                        b"SiPMData.fSiPMId",
@@ -131,7 +131,7 @@ class RootParser:
         # Later simulation updates changed the naming convention for SiPM attributes from:
         # fSiPMTriggerTime -> fSiPMTimestamp
         # fSiPMQDC -> fSiPMPhotonCount
-        if {b"SiPMData.fSiPMTriggerTime"}.issubset(self.events_keys):
+        if {b"SiPMData.fSiPMTriggerTime"}.issubset(self.events[b"SiPMData"].keys()):
             leaves_sipm[0] = b"SiPMData.fSiPMTriggerTime"
             leaves_sipm[1] = b"SiPMData.fSiPMQDC"
 
@@ -149,6 +149,7 @@ class RootParser:
 
         # finalize leave list based on type string
         list_leaves += leaves_global
+
         if self.type_str() == "CLUSTER":
             list_leaves += leaves_cluster
         if self.type_str() == "SIPM":
@@ -262,10 +263,12 @@ class RootParser:
                               MCDirection_source=basket['MCDirection_source'][idx],
                               MCComptonPosition=basket['MCComptonPosition'][idx],
                               MCDirection_scatter=basket['MCDirection_scatter'][idx],
-                              SiPM_triggertime=basket[
-                                  "SiPMData.fSiPMTimestamp" if b"SiPMData.fSiPMTimestamp" in list_leaves else "SiPMData.fSiPMTriggerTime"][
+                              SiPM_timestamp=basket[
+                                  "SiPMData.fSiPMTimeStamp" if b"SiPMData.fSiPMTimeStamp" in list_leaves else "SiPMData.fSiPMTriggerTime"][
                                   idx],
-                              SiPM_qdc=basket["SiPMData.fSiPMPhotonCount" if b"SiPMData.fSiPMPhotonCount" in list_leaves else "SiPMData.fSiPMQDC"][idx],
+                              SiPM_photoncount=basket[
+                                  "SiPMData.fSiPMPhotonCount" if b"SiPMData.fSiPMPhotonCount" in list_leaves else "SiPMData.fSiPMQDC"][
+                                  idx],
                               SiPM_position=basket["SiPMData.fSiPMPosition"][idx],
                               SiPM_id=basket["SiPMData.fSiPMId"][idx],
                               fibre_time=basket["FibreData.fFibreTime"][idx],
