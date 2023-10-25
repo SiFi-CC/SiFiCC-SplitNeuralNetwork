@@ -7,7 +7,7 @@
 # Further subclasses are build inheriting the parent class based on the additional information
 # inside the root file
 #
-# TODO:
+# NOTE:
 # The subclasses are made to not fully load everything everytime since most used datasets are
 # quite limited in their content available. If for example an SiPM dataset with a clustering
 # algorithm exists, the existing subclasses should be extended.
@@ -26,21 +26,23 @@ class Event:
 
     Attributes:
 
-        EventNumber (int)
-        MCEnergy_Primary (double)
-        MCEnergy_e (double)
-        MCEnergy_p (double)
-        MCPosition_source (TVector3)
-        MCSimulatedEventType (int)
-        MCDirection_source (TVector3)
-        MCComptonPosition (TVector3)
-        MCDirection_scatter (TVector3)
-        MCPosition_e (vector<TVector3>)
-        MCInteractions_e (vector<int>)
-        MCPosition_p (vector<TVector3>)
-        MCInteractions_p (vector<int>)
-        module_scatterer (obj:SiFiCC_module)
-        module_absorber (obj:SiFiCC_module)
+        EventNumber (int):                      Unique event id given by simulation
+        MCEnergy_Primary (double):              Primary energy of prompt gamma
+        MCEnergy_e (double):                    Energy of scattered electron
+        MCEnergy_p (double):                    Energy of prompt gamma after scattering
+        MCPosition_source (TVector3):           Prompt gamma origin position
+        MCSimulatedEventType (int):             Simulated event type (2,3,5,6)
+        MCDirection_source (TVector3):          Direction of prompt gamma after creation
+        MCComptonPosition (TVector3):           First Compton scattering interaction position
+        MCDirection_scatter (TVector3):         Direction of prompt gamma after Compton scattering
+        MCPosition_e (vector<TVector3>):        List of electron interactions
+        MCInteractions_e (vector<int>):         List of electron interaction positions
+        MCPosition_p (vector<TVector3>):        List of prompt gamma interactions
+        MCInteractions_p (vector<int>):         List of prompt gamma interaction positions
+        module_scatterer (obj:SiFiCC_module):   Object containing scatterer module dimensions
+        module_absorber (obj:SiFiCC_module):    Object containing absorber module dimensions
+        MCEnergyDeps_e (vector<float>):         List of electron interaction energies (or None)
+        MCEnergyDeps_p (vector<float>):         List of prompt gamma interaction energies (or None)
 
     """
 
@@ -77,7 +79,7 @@ class Event:
         self.MCInteractions_e = MCInteractions_e
         self.MCPosition_p = MCPosition_p
         self.MCInteractions_p = MCInteractions_p
-        # additional attributes, may not be present in every file
+        # additional attributes, may not be present in every file, if so filled with None
         self.MCEnergyDeps_e = MCEnergyDeps_e
         self.MCEnergyDeps_p = MCEnergyDeps_p
 
@@ -89,27 +91,21 @@ class Event:
         # During the development of this code the template for interaction id encoding changed
         # significantly. Therefor to allow usage of older datasets containing legacy variant of
         # interaction list, the definition is uniformed at this point and translated from legacy
-        # variants. Uniformed variant is defined in a (nx2) array where the columns describe:
+        # variants. Uniformed variant is defined in a (nx3) array where the columns describe:
         #   - type: describes the interaction type of particle interaction
         #   - level: describes the secondary level of the interacting particle
+        #   - energy: boolean encoding if the interaction deposited energy
         self.MCInteractions_e_uni = np.zeros(shape=(len(self.MCInteractions_e), 4))
         self.MCInteractions_p_uni = np.zeros(shape=(len(self.MCInteractions_p), 4))
         self.set_interaction_list()
 
-        # create mask to mask of zero energy deposition interactions if available
-        if self.MCEnergyDeps_p is not None:
-            self.mask_interactions_p = (self.MCEnergyDeps_p > 0.0) * 1
-        else:
-            self.mask_interactions_p = np.ones(shape=(len(self.MCInteractions_p),))
-
         # Control labels (might be disabled later, are mostly for analysis/debugging)
-        self.b_phantom_hit = False
+        self.tag_phantom_hit = False
 
     def set_interaction_list(self):
         """
-        Setter method for MCInteraction_e_uni and MCInteraction_p_uni. If MCEnergyDeps_x entries
-        exist, these will be used as a mask. Update on this needed. Legacy variants of
-        interactions lists include:
+        Setter method for MCInteraction_e_uni and MCInteraction_p_uni.
+        Legacy variants of interactions lists include:
             - 2 length or lower:    First legacy variant. Used in all old root files. Interactions
                                     encoded in two digits numbers. First describing the secondary
                                     level, the second the interaction type.
@@ -120,6 +116,10 @@ class Event:
                                 VX: Interaction type (Two digits now for more encoding space)
                                 Y:  Secondary level
                                 Z:  Particle type (0: blank, 1: Photon, 2: electron, 3: positron)
+
+        Goal is to define a uniform and usable interaction list compatible with all legacy versions.
+        The final interaction list has the form of:
+            - (Interaction type, Secondary level, Particle Type, Energy deposition (boolean))
 
         return:
             None
@@ -132,18 +132,22 @@ class Event:
                 for i, interact in enumerate(self.MCInteractions_e):
                     self.MCInteractions_e_uni[i, :2] = [interact // 10 ** 0 % 10,
                                                         interact // 10 ** 1 % 10]
+                    self.MCInteractions_e_uni[i, 3] = 1
                 for i, interact in enumerate(self.MCInteractions_p):
                     self.MCInteractions_p_uni[i, :2] = [interact // 10 ** 0 % 10,
                                                         interact // 10 ** 1 % 10]
+                    self.MCInteractions_p_uni[i, 3] = 1
             elif len(str(self.MCInteractions_e[0])) == 3:
                 for i, interact in enumerate(self.MCInteractions_e):
                     self.MCInteractions_e_uni[i, :3] = [interact // 10 ** 0 % 10,
                                                         interact // 10 ** 1 % 10,
                                                         interact // 10 ** 2 % 10]
+                    self.MCInteractions_e_uni[i, 3] = 1
                 for i, interact in enumerate(self.MCInteractions_p):
                     self.MCInteractions_p_uni[i, :3] = [interact // 10 ** 0 % 10,
                                                         interact // 10 ** 1 % 10,
                                                         interact // 10 ** 2 % 10]
+                    self.MCInteractions_p_uni[i, 3] = 1
             elif len(str(self.MCInteractions_e[0])) == 5:
                 for i, interact in enumerate(self.MCInteractions_e):
                     self.MCInteractions_e_uni[i, :3] = [
@@ -151,11 +155,10 @@ class Event:
                         interact // 10 ** 1 % 10,
                         interact // 10 ** 0 % 10]
 
-                # This exception is only present in the 5 digit decoded interaction list as it is
-                # a new feature only present in root-files upwards generation 4
-                if self.MCEnergyDeps_e is not None:
-                    int_mask_e = self.MCEnergyDeps_e > 0.0
-                    self.MCInteractions_e_uni = self.MCInteractions_e_uni[int_mask_e, :]
+                    if self.MCEnergyDeps_e is not None:
+                        self.MCInteractions_e_uni[i, 3] = (self.MCEnergyDeps_e[i] > 0.0) * 1
+                    else:
+                        self.MCInteractions_e_uni[i, 3] = 1
 
                 for i, interact in enumerate(self.MCInteractions_p):
                     self.MCInteractions_p_uni[i, :3] = [
@@ -163,15 +166,13 @@ class Event:
                         interact // 10 ** 1 % 10,
                         interact // 10 ** 0 % 10]
 
-                # This exception is only present in the 5 digit decoded interaction list as it is
-                # a new feature only present in root-files upwards generation 4
-                if self.MCEnergyDeps_p is not None:
-                    int_mask_p = self.MCEnergyDeps_p > 0.0
-                    self.MCInteractions_p_uni = self.MCInteractions_p_uni[int_mask_p, :]
-
+                    if self.MCEnergyDeps_p is not None:
+                        self.MCInteractions_p_uni[i, 3] = (self.MCEnergyDeps_p[i] > 0.0) * 1
+                    else:
+                        self.MCInteractions_p_uni[i, 3] = 1
 
     # neural network target getter methods
-    def get_target_position(self, acceptance=1e-1):
+    def get_target_position(self, ph_method="TRUE", ph_acceptance=1e-1):
         """
         Get Monte-Carlo Truth position for scatterer and absorber Compton interactions.
         The scatterer interaction is defined by the Compton scattering position of the initial
@@ -185,50 +186,83 @@ class Event:
             target_position_P (TVector3) : target photon (absorber) interaction
         """
 
+        # initialization
         target_position_e = self.MCComptonPosition
         target_position_p = TVector3(0, 0, 0)
 
-        # exceptions
+        # exceptions for interaction list that are too short due to missing interactions
+        # Note: This is mostly if the scattering is only happening in the scatterer
         if len(self.MCPosition_p) <= 1:
             return target_position_e, target_position_p
 
         # check if the first interaction is compton scattering in the scatterer
-        if self.MCInteractions_p_uni[0, 0] == 1 and self.MCPosition_p[0].x < 200.0:
+        if (self.MCInteractions_p_uni[0, 0] == 1 and
+                self.scatterer.is_vec_in_module(self.MCPosition_p[0])):
+
+            # scan for the next interaction of the primary prompt gamma
+            # Its position interactions auto determines if the event is a dist. Compton
+            for i in range(1, len(self.MCInteractions_p_uni)):
+                if self.MCInteractions_p_uni[i, 1] == 0 and self.MCInteractions_p_uni[i, 3] == 1:
+                    target_position_p = self.MCPosition_p[i]
+                    return target_position_e, target_position_p
+
+            """
+            NOTE: Previous exceptions used below, needs to be investigated if they are now redundant
+            
             # check if the next interaction is not additional scattering in the scatterer
             # by checking the interaction type of the next interaction and its x-position
             # if true, break as compton cone is not reproducible
-            if self.MCInteractions_p_uni[1, 0] == 1 and self.MCPosition_p[1].x < 200.0:
+            if (self.MCInteractions_p_uni[1, 0] == 1 and
+                    self.scatterer.is_vec_in_module(self.MCPosition_p[1])):
                 return target_position_e, target_position_p
-            else:
-                # check if the next interaction is energy deposition in the absorber
-                if (self.MCInteractions_p_uni[1, 1] == 0 and
-                        self.absorber.is_vec_in_module(self.MCPosition_p[1]) and
-                        self.mask_interactions_p[1] == 1):
-                    # set correct targets
-                    target_position_p = self.MCPosition_p[1]
-                    return target_position_e, target_position_p
-                else:
-                    # check if a secondary interaction can substitute a missing primary interaction
-                    # zero energy deposition interactions are excluded from that
-                    for i in range(1, len(self.MCInteractions_p_uni)):
-                        # skip zero energy deposition interactions
-                        if self.mask_interactions_p[i] == 0:
-                            continue
-                        if (self.MCInteractions_p_uni[i, 1] <= 2 and
-                                self.absorber.is_vec_in_module(self.MCPosition_p[i])):
-                            # check additionally if the interaction is in the scattering direction
-                            tmp_angle = vector_angle(self.MCPosition_p[i] - self.MCComptonPosition,
-                                                     self.MCDirection_scatter)
-                            r = (self.MCPosition_p[i] - self.MCComptonPosition).mag
-                            tmp_dist = np.sin(tmp_angle) * r
-                            if tmp_dist < acceptance:
-                                self.b_phantom_hit = True
-                                target_position_p = self.MCPosition_p[i]
-                                return target_position_e, target_position_p
-                    return target_position_e, target_position_p
 
-        else:
-            return target_position_e, target_position_p
+            # check if the next interaction is energy deposition in the absorber
+            if (self.MCInteractions_p_uni[1, 1] == 0 and
+                    self.absorber.is_vec_in_module(self.MCPosition_p[1]) and
+                    self.MCInteractions_p_uni[1, 3] == 1):
+                # set correct targets
+                target_position_p = self.MCPosition_p[1]
+                return target_position_e, target_position_p
+            """
+
+            # Phantom hit exception:
+            # check if a secondary interaction can substitute a missing primary interaction
+            # depending on the pre-defined phantom hit definition
+            # exception if phantom hits are disabled
+            if ph_method == "NONE":
+                return target_position_e, target_position_p
+
+            # True method: uses pair-production tag in interaction list
+            if ph_method == "TRUE":
+                for i in range(1, len(self.MCInteractions_p_uni)):
+                    if self.MCInteractions_p_uni[i, 0] == 3:
+                        target_position_p = self.MCPosition_p[i + 1]
+                        self.tag_phantom_hit = True
+                        return target_position_e, target_position_p
+
+            # Fake method:
+            # Uses distance of interaction to expected prompt gamma track, allowed maximum
+            # distance is limited by ph_acceptance parameter
+            if ph_method == "FAKE":
+                for i in range(1, len(self.MCInteractions_p_uni)):
+                    # skip zero energy deposition interactions
+                    if self.MCInteractions_p_uni[i, 3] == 0:
+                        continue
+                    if (self.MCInteractions_p_uni[i, 1] <= 2 and
+                            self.absorber.is_vec_in_module(self.MCPosition_p[i])):
+                        # check additionally if the interaction is in the scattering
+                        # direction
+                        tmp_angle = vector_angle(
+                            self.MCPosition_p[i] - self.MCComptonPosition,
+                            self.MCDirection_scatter)
+                        r = (self.MCPosition_p[i] - self.MCComptonPosition).mag
+                        tmp_dist = np.sin(tmp_angle) * r
+                        if tmp_dist < ph_acceptance:
+                            self.tag_phantom_hit = True
+                            target_position_p = self.MCPosition_p[i]
+                            return target_position_e, target_position_p
+
+        return target_position_e, target_position_p
 
     def get_target_energy(self):
         """
@@ -247,7 +281,7 @@ class Event:
 
         return target_energy_e, target_energy_p
 
-    def get_distcompton_tag(self):
+    def get_distcompton_tag(self, ph_method="TRUE", ph_acceptance=1e-1):
         """
         Used Monte-Carlo information to define if the given event is a distributed Compton event.
         Distributed Compton events are used to classify which events are good for image
@@ -260,15 +294,23 @@ class Event:
             - Simulated event type is left open and can be any
             - Back-scattering is not included in this definition
 
+        Args:
+            ph_method (str): Defines the type of phantom hit structure used:
+                            "TRUE": Scan for pair-production tag, only works if available
+                            "FAKE": Scan for interactions close to prompt gamma track
+                            "NONE": Phantom hits will be skipped
+
         return:
             True, if distributed compton tag conditions are met
         """
-        target_position_e, target_position_p = self.get_target_position()
+        target_position_e, target_position_p = self.get_target_position(ph_method=ph_method,
+                                                                        ph_acceptance=ph_acceptance)
 
         # check for electron energy (compton event took place)
         if self.MCEnergy_e > 0.0:
             # check if primary gamma interacted at least 2 times
             if len(self.MCPosition_p) >= 2:
+                # check if interaction positions are in the correct module
                 if (self.scatterer.is_vec_in_module(target_position_e)
                         and self.absorber.is_vec_in_module(target_position_p)):
                     return True
@@ -359,19 +401,20 @@ class Event:
             return True
         return False
 
-    def get_phantomhit_tag(self, acceptance=1e-3):
+    def get_phantomhit_tag(self, ph_method="FAKE", ph_acceptance=1e-1):
         """
-        Checks if the event is a phantom hit. This part is left as a stand-alone method for furhter
+        Checks if the event is a phantom hit. This part is left as a stand-alone method for further
         usage in the future.
 
         Args:
-            acceptance: accepted difference in angle
+            ph_acceptance: accepted difference in angle
 
         Returns:
             Boolean, true if event is a phantom hit
         """
-        self.b_phantom_hit = False
-        target_position_e, target_position_p = self.get_target_position(acceptance=acceptance)
+        self.tag_phantom_hit = False
+        target_position_e, target_position_p = self.get_target_position(ph_method=ph_method,
+                                                                        ph_acceptance=ph_acceptance)
 
         # check for electron energy (compton event took place)
         if self.MCEnergy_e > 0.0:
@@ -379,7 +422,7 @@ class Event:
             if len(self.MCPosition_p) >= 2:
                 if (self.scatterer.is_vec_in_module(target_position_e)
                         and self.absorber.is_vec_in_module(target_position_p)):
-                    if self.b_phantom_hit:
+                    if self.tag_phantom_hit:
                         return True
                     else:
                         return False
@@ -476,9 +519,13 @@ class Event:
         print("Target Energy Photon: {:.3f} [MeV]".format(target_energy_p))
         print("Target Position Photon: ({:7.3f}, {:7.3f}, {:7.3f}) [mm]".format(
             target_position_p.x, target_position_p.y, target_position_p.z))
-        print("Distributed Compton          : {}".format(self.get_distcompton_tag()))
-        print("Distributed Compton (legacy) : {}".format(self.get_distcompton_tag_legacy()))
-        print("Phantom hit                  : {}".format(self.b_phantom_hit))
+        print(
+            "Distributed Compton (PH NONE) : {}".format(self.get_distcompton_tag(ph_method="NONE")))
+        print(
+            "Distributed Compton (PH TRUE) : {}".format(self.get_distcompton_tag(ph_method="TRUE")))
+        print(
+            "Distributed Compton (PH FAKE) : {}".format(self.get_distcompton_tag(ph_method="FAKE")))
+        print("Distributed Compton (legacy)  : {}".format(self.get_distcompton_tag_legacy()))
 
         # primary gamma track information
         print("\n### Primary Gamma track: ###")
@@ -889,8 +936,8 @@ class EventSiPM(Event):
     """
 
     def __init__(self,
-                 SiPM_triggertime,
-                 SiPM_qdc,
+                 SiPM_timestamp,
+                 SiPM_photoncount,
                  SiPM_position,
                  SiPM_id,
                  fibre_time,
@@ -900,11 +947,11 @@ class EventSiPM(Event):
                  **kwargs):
 
         # SiPM and Fibre information
-        self.SiPM_triggertime = SiPM_triggertime
+        self.SiPM_timestamp = SiPM_timestamp
         # convert absolute time to relative time of event start
-        if len(self.SiPM_triggertime) > 0:
-            self.SiPM_triggertime -= min(SiPM_triggertime)
-        self.SiPM_qdc = SiPM_qdc
+        if len(self.SiPM_timestamp) > 0:
+            self.SiPM_timestamp -= min(SiPM_timestamp)
+        self.SiPM_photoncount = SiPM_photoncount
         self.SiPM_position = SiPM_position
         self.SiPM_id = SiPM_id
         self.fibre_time = fibre_time
@@ -949,8 +996,8 @@ class EventSiPM(Event):
             y_final = y + padding
             z_final = z + padding
 
-            ary_feature[x_final, y_final, z_final, 0] = self.SiPM_qdc[i]
-            ary_feature[x_final, y_final, z_final, 1] = self.SiPM_triggertime[i]
+            ary_feature[x_final, y_final, z_final, 0] = self.SiPM_photoncount[i]
+            ary_feature[x_final, y_final, z_final, 1] = self.SiPM_timestamp[i]
 
         return ary_feature
 
@@ -977,11 +1024,11 @@ class EventSiPM(Event):
             print(
                 "{:3.3f} | {:5.3f} | ({:7.3f}, {:7.3f}, {:7.3f}) | {:7.5}".format(
                     self.SiPM_id[j],
-                    self.SiPM_qdc[j],
+                    self.SiPM_photoncount[j],
                     self.SiPM_position[j].x,
                     self.SiPM_position[j].y,
                     self.SiPM_position[j].z,
-                    self.SiPM_triggertime[j]))
+                    self.SiPM_timestamp[j]))
 
     def sort_sipm_by_module(self):
         """
@@ -1003,4 +1050,3 @@ class EventSiPM(Event):
                 idx_absorber.append(i)
                 continue
         return idx_scatterer, idx_absorber
-
