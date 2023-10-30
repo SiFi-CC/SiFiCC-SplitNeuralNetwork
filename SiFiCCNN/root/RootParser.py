@@ -23,8 +23,7 @@ class RootParser:
 
     """
 
-    def __init__(self,
-                 rootfile_path):
+    def __init__(self, rootfile_path):
 
         # Base attributes of a root file
         self.file_base = os.path.basename(rootfile_path)
