@@ -163,10 +163,10 @@ def get_compton_cone_aachen(vec_apex, vec_axis, vec_origin, theta, sr=8):
 
     # Rotate reference vector around scattering angle theta
     ref_vec = np.array([0, 0, 1])
-    rotation_y = R.from_rotvec((vec_axis.theta - np.pi / 2 - theta) * np.array([0, 1, 0]))
-    rotation_x = R.from_rotvec(vec_axis.phi * np.array([1, 0, 0]))
+    rotation_y = R.from_rotvec((np.pi - vec_axis.theta - theta) * np.array([0, 1, 0]))
+    rotation_z = R.from_rotvec((vec_axis.phi + np.pi) * np.array([0, 0, 1]))
     ref_vec = rotation_y.apply(ref_vec)
-    ref_vec = rotation_x.apply(ref_vec)
+    ref_vec = rotation_z.apply(ref_vec)
 
     # Rotate reference vector around axis vector to sample cone edges
     list_cone_vec = []
@@ -183,7 +183,7 @@ def get_compton_cone_aachen(vec_apex, vec_axis, vec_origin, theta, sr=8):
     # scale each cone vector to hit the final canvas
     # shift them to correct final position
     for i in range(len(list_cone_vec)):
-        a = -(vec_apex.z - vec_origin.z) / list_cone_vec[i][0]
+        a = -(vec_apex.z - vec_origin.z) / list_cone_vec[i][2]
         list_cone_vec[i] *= a
         list_cone_vec[i] = np.array([list_cone_vec[i][0] + vec_apex.x,
                                      list_cone_vec[i][1] + vec_apex.y,
