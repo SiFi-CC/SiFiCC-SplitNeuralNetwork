@@ -1043,10 +1043,10 @@ class EventSiPM(Event):
         idx_absorber = []
 
         for i in range(len(self.SiPM_id)):
-            if 140.0 < self.SiPM_position[i].x < 160.0:
+            if self.scatterer.is_vec_in_module(self.SiPM_position[i]):
                 idx_scatterer.append(i)
                 continue
-            if 250.0 < self.SiPM_position[i].x < 300.0:
+            if self.absorber.is_vec_in_module(self.SiPM_position[i]):
                 idx_absorber.append(i)
                 continue
         return idx_scatterer, idx_absorber
