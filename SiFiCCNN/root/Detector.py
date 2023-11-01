@@ -24,7 +24,7 @@ class Detector:
         # position is defined by the Detector-Module middle
         self.pos = pos
 
-    def is_vec_in_module(self, input_vec):
+    def is_vec_in_module(self, input_vec, a=0.001):
         """
         Checks if a vector points inside the module.
 
@@ -32,6 +32,9 @@ class Detector:
             input_vec (TVector3) or (list<TVector3>): If a list type of vectors is given, True will
                                                       be returned. If at least one of the vectors is
                                                       inside the detector.
+            a (float):                                some events are right on the border of the
+                                                      detector. The factor "a" adds a small buffer
+                                                      to compensate for float uncertainties
 
         Return:
             True if vector points inside module, False otherwise
@@ -39,10 +42,6 @@ class Detector:
         """
         # check type of parameter vec
         # TODO: do proper type check
-
-        # some events are right on the border of the detector
-        # the factor "a" adds a small buffer to compensate for float uncertainties
-        a = 0.001
 
         try:
             for vec in input_vec:
