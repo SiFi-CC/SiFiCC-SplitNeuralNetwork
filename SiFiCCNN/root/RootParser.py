@@ -19,19 +19,21 @@ from SiFiCCNN.root.Detector import Detector
 
 class RootParser:
     """
-    loading and preprocessing of root data for events and setup tree.
+    Loading and pre-processing of root data for events and setup tree. Main tasks include defining
+    the amount of information inside the root tree, correctly setting up the necessary tree leaves,
+    providing the methods needed for iteration over root files.
 
     """
 
-    def __init__(self, rootfile_path):
+    def __init__(self, path):
 
         # Base attributes of a root file
-        self.file_base = os.path.basename(rootfile_path)
+        self.file_base = os.path.basename(path)
         self.file_name = os.path.splitext(self.file_base)[0]
 
         # open root file with uproot
-        rootfile = uproot.open(rootfile_path)
-        self.rootfile_path = rootfile_path
+        rootfile = uproot.open(path)
+        self.path = path
         self.events = rootfile[b"Events"]
         self.setup = rootfile[b"Setup"]
         self.events_entries = self.events.numentries
@@ -47,40 +49,38 @@ class RootParser:
                                  self.setup["AbsorberThickness_y"].array()[0],
                                  self.setup["AbsorberThickness_z"].array()[0])
 
-    def type_str(self):
+        # boolean values for information content of root file
+        # This needed for the RootParser to define which type of event class is generated
+        self.hasGlobal = False  # Event contains global prompt gamma track information
+        self.hasCluster = False  # Event contains low level reconstruction clusters
+        self.hasSiPM = False  # event contains SiPM (and fibre) response of detector
+        self.set_information_content()
+
+    def set_information_content(self):
         """
         Defines which type of event structure is in the ROOT-file. Possible types right now are:
-        - BASE:     Contains only global event information
-        - CLUSTER:  Contains reconstructed clusters from low level reconstruction. Currently under
-                    consideration that 1-to-1 coupling is the detector setup
-        - SIPM:     Contains SiPM and fibre data. No clustering is available. Currently under
-                    consideration that 4-to-1 coupling is the detector setup
 
-        return:
-            type_str (str): string defining the type of the ROOT-file
-
-        NOTE: This is pretty much hard coded according to what is available from the simulation. If
-              later on a low level reconstruction in the 4-to-1 coupling is possible, a new type
-              and event subclass should be created.
+        NOTE:   This is pretty much hard coded according to what is available from the simulation.
+                If later on a low level reconstruction in the 4-to-1 coupling is possible, a new
+                type and event subclass should be created.
         """
 
-        # set initialization
-        type_str = "BASE"
-
         # scan ROOT file information by checking which leave keys are in the tree
+        # These are example keys, not all of them
+        keys_global = [b"EventNumber", b'MCSimulatedEventType']
         keys_cluster = [b'RecoClusterPositions',
                         b'RecoClusterEnergies',
                         b'RecoClusterEntries',
                         b"RecoClusterTimestamps"]
-        if set(keys_cluster).issubset(self.events_keys):
-            type_str = "CLUSTER"
-
         keys_sipm = [b"SiPMData",
                      b"FibreData"]
-        if set(keys_sipm).issubset(self.events_keys):
-            type_str = "SIPM"
 
-        return type_str
+        if set(keys_global).issubset(self.events_keys):
+            self.hasGlobal = True
+        if set(keys_cluster).issubset(self.events_keys):
+            self.hasCluster = True
+        if set(keys_sipm).issubset(self.events_keys):
+            self.hasSiPM = True
 
     def tree_leaves(self):
         """
@@ -140,18 +140,18 @@ class RootParser:
         if {b"MCEnergyPrimary"}.issubset(self.events_keys):
             leaves_global[2] = b"MCEnergyPrimary"
 
-        # Exception: "MCEnergyDEps"
+        # Exception: "MCEnergyDeps"
         # Check if MCEnergyDeps_e and MCEnergyDeps_p are stored in the root file
         # These are leaves added later in the analysis, therefore older datasets won't contain them.
         if {b'MCEnergyDeps_e', b'MCEnergyDeps_p'}.issubset(self.events_keys):
             leaves_global += [b'MCEnergyDeps_e', b'MCEnergyDeps_p']
 
         # finalize leave list based on type string
-        list_leaves += leaves_global
-
-        if self.type_str() == "CLUSTER":
+        if self.hasGlobal:
+            list_leaves += leaves_global
+        if self.hasCluster:
             list_leaves += leaves_cluster
-        if self.type_str() == "SIPM":
+        if self.hasSiPM:
             list_leaves += leaves_sipm
 
         return list_leaves
@@ -209,11 +209,10 @@ class RootParser:
             event (obj: Event)
 
         """
+        # TODO: This needs to be cleaner
 
-        type_str = self.type_str()
         list_leaves = self.tree_leaves()
-
-        if type_str == "CLUSTER":
+        if self.hasCluster:
             event = EventCluster(EventNumber=basket["EventNumber"][idx],
                                  MCSimulatedEventType=basket['MCSimulatedEventType'][idx],
                                  MCEnergy_Primary=basket['MCEnergy_Primary'][idx],
@@ -244,7 +243,7 @@ class RootParser:
                                  module_scatterer=self.scatterer,
                                  module_absorber=self.absorber)
 
-        elif type_str == "SIPM":
+        elif self.hasSiPM:
             event = EventSiPM(EventNumber=basket["EventNumber"][idx],
                               MCSimulatedEventType=basket['MCSimulatedEventType'][idx],
                               MCEnergy_Primary=basket['MCEnergyPrimary'][idx],
