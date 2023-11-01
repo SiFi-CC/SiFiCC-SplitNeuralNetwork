@@ -12,17 +12,18 @@ from spektral.data.loaders import DisjointLoader
 from analysis.EdgeConvResNetSiPM.ClassificationEdgeConvResNetSiPM import setupModel
 from SiFiCCNN.utils.layers import EdgeConvResNetBlock, ReZero
 
-from SiFiCCNN.utils.plotter import plot_history_regression, plot_energy_error
+from SiFiCCNN.utils.plotter import plot_history_regression, plot_energy_error,\
+    plot_energy_resolution
 
 
 def lr_scheduler(epoch):
-    if epoch < 20:
+    if epoch < 50:
         return 1e-3
-    if epoch < 30:
+    if epoch < 60:
         return 5e-4
-    if epoch < 40:
+    if epoch < 70:
         return 1e-4
-    return 1e-5
+    return 1e-3
 
 
 def main():
@@ -40,7 +41,7 @@ def main():
     valsplit = 0.2
 
     RUN_NAME = "EdgeConvResNetSiPM"
-    do_training = True
+    do_training = False
     do_evaluate = True
 
     # create dictionary for model and training parameter
@@ -54,10 +55,10 @@ def main():
     # Training file used for classification and regression training
     # Generated via an input generator, contain one Bragg-peak position
     DATASET_CONT = "GraphSiPM_OptimisedGeometry_4to1_Continuous_2e10protons_simv4"
-    DATASET_0MM = "GraphSiPM_OptimisedGeometry_4to1_BP0mm_4e9protons_simv4"
-    DATASET_5MM = "GraphSiPM_OptimisedGeometry_4to1_BP5mm_4e9protons_simv4"
-    DATASET_m5MM = "GraphSiPM_OptimisedGeometry_4to1_BPm5mm_4e9protons_simv4"
-    DATASET_10MM = "GraphSiPM_OptimisedGeometry_4to1_BP10mm_4e9protons_simv4"
+    DATASET_0MM = "GraphSiPM_OptimisedGeometry_4to1_0mm_4e9protons_simv4"
+    DATASET_5MM = "GraphSiPM_OptimisedGeometry_4to1_5mm_4e9protons_simv4"
+    DATASET_m5MM = "GraphSiPM_OptimisedGeometry_4to1_minus5mm_4e9protons_simv4"
+    DATASET_10MM = "GraphSiPM_OptimisedGeometry_4to1_10mm_4e9protons_simv4"
 
     # go backwards in directory tree until the main repo directory is matched
     path = os.getcwd()
@@ -105,6 +106,7 @@ def training(dataset_name,
                              adj_arg="binary",
                              p_only=True,
                              reg_type="Energy")
+    print("DATASET LENGTH: ", len(data))
 
     # build tensorflow model
     tf_model = setupModel(**modelParameter)
@@ -177,6 +179,11 @@ def evaluate(dataset_name,
                      loss=loss,
                      metrics=list_metrics)
 
+    # load model history and plot
+    with open(RUN_NAME + "_regressionEnergy_history" + ".hst", 'rb') as f_hist:
+        history = pkl.load(f_hist)
+    plot_history_regression(history, RUN_NAME + "_history_regressionEnergy")
+
     # predict test dataset
     os.chdir(path + dataset_name + "/")
 
@@ -207,6 +214,10 @@ def evaluate(dataset_name,
 
     # evaluate model:
     plot_energy_error(y_pred, y_true, "error_regression_energy")
+    plot_energy_resolution(y_pred, y_true, "resolution_regression_energy")
+
+    np.save("energy_pred", y_pred)
+    np.save("energy_true", y_true)
 
 
 if __name__ == "__main__":

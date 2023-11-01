@@ -40,7 +40,7 @@ def main():
     valsplit = 0.2
 
     RUN_NAME = "EdgeConvResNetSiPM"
-    do_training = True
+    do_training = False
     do_evaluate = True
 
     # create dictionary for model and training parameter
@@ -54,10 +54,10 @@ def main():
     # Training file used for classification and regression training
     # Generated via an input generator, contain one Bragg-peak position
     DATASET_CONT = "GraphSiPM_OptimisedGeometry_4to1_Continuous_2e10protons_simv4"
-    DATASET_0MM = "GraphSiPM_OptimisedGeometry_4to1_BP0mm_4e9protons_simv4"
-    DATASET_5MM = "GraphSiPM_OptimisedGeometry_4to1_BP5mm_4e9protons_simv4"
-    DATASET_m5MM = "GraphSiPM_OptimisedGeometry_4to1_BPm5mm_4e9protons_simv4"
-    DATASET_10MM = "GraphSiPM_OptimisedGeometry_4to1_BP10mm_4e9protons_simv4"
+    DATASET_0MM = "GraphSiPM_OptimisedGeometry_4to1_0mm_4e9protons_simv4"
+    DATASET_5MM = "GraphSiPM_OptimisedGeometry_4to1_5mm_4e9protons_simv4"
+    DATASET_m5MM = "GraphSiPM_OptimisedGeometry_4to1_minus5mm_4e9protons_simv4"
+    DATASET_10MM = "GraphSiPM_OptimisedGeometry_4to1_10mm_4e9protons_simv4"
 
     # go backwards in directory tree until the main repo directory is matched
     path = os.getcwd()
@@ -176,6 +176,11 @@ def evaluate(dataset_name,
     tf_model.compile(optimizer=optimizer,
                      loss=loss,
                      metrics=list_metrics)
+
+    # load model history and plot
+    with open(RUN_NAME + "_regressionPosition_history" + ".hst", 'rb') as f_hist:
+        history = pkl.load(f_hist)
+    plot_history_regression(history, RUN_NAME + "_history_regressionPosition")
 
     # predict test dataset
     os.chdir(path + dataset_name + "/")
