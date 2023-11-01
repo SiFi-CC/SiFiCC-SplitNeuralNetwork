@@ -1,21 +1,31 @@
+####################################################################################################
+# ### ClassificationEdgeConvResNetSiPM.py
+#
+# Example script for classifier training on the SiFi-CC data in graph configuration
+#
+####################################################################################################
+
 import numpy as np
 import os
 import pickle as pkl
 import json
 import tensorflow as tf
+import sys
+import argparse
 
 from analysis.EdgeConvResNetSiPM import dataset
 
 from tensorflow.keras.models import Model
 from tensorflow.keras.layers import Dense, Dropout, Concatenate, Input
 
-from spektral.layers import EdgeConv, GlobalMaxPool
+from spektral.layers import EdgeConv, GlobalMaxPool, GeneralConv
 from spektral.data.loaders import DisjointLoader
 
 from SiFiCCNN.utils.layers import EdgeConvResNetBlock, ReZero
 
 from SiFiCCNN.analysis import fastROCAUC, metrics
 from SiFiCCNN.utils.plotter import plot_history_classifier, \
+    plot_history_classifier_fancy, \
     plot_score_distribution, \
     plot_roc_curve, \
     plot_efficiencymap, \
@@ -31,24 +41,40 @@ def setupModel(F=5,
                n_out=1,
                activation_out="sigmoid",
                dropout=0.0):
+    """
+
+    Args:
+        F (int):                Number of node attributes
+        nFilter (int):          Number of filters in the starting layer
+        activation (str):       Activation function used
+        n_out (int):            Number of output nodes
+        activation_out (str):   Output activation function
+        dropout (float):        Dropout percentage
+
+    Returns:
+        Keras model
+    """
+
     X_in = Input(shape=(F,))
     A_in = Input(shape=(None,), sparse=True)
     I_in = Input(shape=(), dtype=tf.int64)
 
-    x = EdgeConv(channels=nFilter)([X_in, A_in])
+    x = EdgeConv(channels=nFilter, kernel_initializer="glorot_uniform")([X_in, A_in])
 
     # additional layer with skip connections
     x1 = EdgeConvResNetBlock(*[x, A_in], nFilter)
-    x2 = EdgeConvResNetBlock(*[x1, A_in], nFilter)
-    x3 = EdgeConvResNetBlock(*[x2, A_in], nFilter)
-    x_concat = Concatenate()([x1, x2, x3])
+    x2 = GeneralConv(channels=nFilter * 2)([x1, A_in])
+    x3 = EdgeConvResNetBlock(*[x2, A_in], nFilter * 2)
+    x4 = GeneralConv(channels=nFilter * 4)([x3, A_in])
+    x5 = EdgeConvResNetBlock(*[x4, A_in], nFilter * 4)
+    x_concat = Concatenate()([x1, x3, x5])
 
-    x = GlobalMaxPool()([x_concat, I_in]) 
+    x = GlobalMaxPool()([x_concat, I_in])
 
     if dropout > 0:
         x = Dropout(dropout)(x)
 
-    x = Dense(nFilter * 8, activation=activation)(x)
+    x = Dense(nFilter * 4, activation=activation)(x)
 
     out = Dense(n_out, activation=activation_out)(x)
 
@@ -67,6 +93,9 @@ def setupModel(F=5,
 
 
 def lr_scheduler(epoch):
+    """
+    Learning rate scheduler for better training. Manually defined
+    """
     if epoch < 70:
         return 1e-3
     if epoch < 80:
@@ -77,22 +106,33 @@ def lr_scheduler(epoch):
 
 
 def main():
-    # defining hyper parameters
-    nFilter = 64
+    # Define main hyperparameters for network training
+    # Network configuration
+    nFilter = 32
     activation = "relu"
     n_out = 1
     activation_out = "sigmoid"
     dropout = 0.0
-
+    # Training configuration
     batch_size = 64
-    nEpochs = 10
-
+    nEpochs = 30
+    do_training = True
+    do_evaluate = True
+    # Train-Test-Split configuration
     trainsplit = 0.6
     valsplit = 0.2
 
-    RUN_NAME = "EdgeConvResNetSiPM"
-    do_training = True
-    do_evaluate = True
+    # Name of the run. This defines the name of the output directory
+    RUN_NAME = "EdgeConvResNetSiPM_TESTING"
+
+    # Datasets used
+    # Training file used for classification and regression training
+    # Generated via an input generator, contain one Bragg-peak position
+    DATASET_CONT = "GraphSiPM_OptimisedGeometry_4to1_Continuous_2e10protons_simv4"
+    DATASET_0MM = "GraphSiPM_OptimisedGeometry_4to1_0mm_4e9protons_simv4"
+    DATASET_5MM = "GraphSiPM_OptimisedGeometry_4to1_5mm_4e9protons_simv4"
+    DATASET_m5MM = "GraphSiPM_OptimisedGeometry_4to1_minus5mm_4e9protons_simv4"
+    DATASET_10MM = "GraphSiPM_OptimisedGeometry_4to1_10mm_4e9protons_simv4"
 
     # create dictionary for model and training parameter
     modelParameter = {"nFilter": nFilter,
@@ -100,15 +140,6 @@ def main():
                       "n_out": n_out,
                       "activation_out": activation_out,
                       "dropout": dropout}
-
-    # Datasets used
-    # Training file used for classification and regression training
-    # Generated via an input generator, contain one Bragg-peak position
-    DATASET_CONT = "GraphSiPM_OptimisedGeometry_4to1_Continuous_2e10protons_simv4"
-    DATASET_0MM = "GraphSiPM_OptimisedGeometry_4to1_BP0mm_4e9protons_simv4"
-    DATASET_5MM = "GraphSiPM_OptimisedGeometry_4to1_BP5mm_4e9protons_simv4"
-    DATASET_m5MM = "GraphSiPM_OptimisedGeometry_4to1_BPm5mm_4e9protons_simv4"
-    DATASET_10MM = "GraphSiPM_OptimisedGeometry_4to1_BP10mm_4e9protons_simv4"
 
     # go backwards in directory tree until the main repo directory is matched
     path = os.getcwd()
@@ -137,7 +168,7 @@ def main():
                  modelParameter=modelParameter)
 
     if do_evaluate:
-        for file in [DATASET_CONT, DATASET_0MM, DATASET_5MM, DATASET_m5MM, DATASET_10MM]:
+        for file in [DATASET_CONT]:
             evaluate(dataset_name=file,
                      RUN_NAME=RUN_NAME,
                      path=path_results)
@@ -156,7 +187,7 @@ def training(dataset_name,
 
     # build tensorflow model
     tf_model = setupModel(**modelParameter)
-    # print(tf_model.summary())
+    print(tf_model.summary())
 
     # callbacks
     l_callbacks = [tf.keras.callbacks.LearningRateScheduler(lr_scheduler)]
@@ -175,6 +206,7 @@ def training(dataset_name,
     loader_valid = DisjointLoader(dataset_va,
                                   batch_size=batch_size)
 
+    # Train model
     history = tf_model.fit(loader_train,
                            epochs=nEpochs,
                            steps_per_epoch=loader_train.steps_per_epoch,
@@ -184,6 +216,7 @@ def training(dataset_name,
                            verbose=1,
                            callbacks=[l_callbacks])
 
+    # Save everything after training process
     os.chdir(path)
     # save model
     print("Saving model at: ", RUN_NAME + "_classifier.tf")
@@ -213,11 +246,14 @@ def evaluate(dataset_name,
     # Custom layers have to be stated to load accordingly
     tf_model = tf.keras.models.load_model(RUN_NAME + "_classifier.tf",
                                           custom_objects={"EdgeConv": EdgeConv,
+                                                          "GeneralConv": GeneralConv,
                                                           "GlobalMaxPool": GlobalMaxPool,
                                                           "ReZero": ReZero})
 
+    # Load norm used during the training process
     norm_x = np.load(RUN_NAME + "_classifier_norm_x.npy")
 
+    # Re-compile model after loading
     optimizer = tf.keras.optimizers.Adam(learning_rate=1e-3)
     loss = "binary_crossentropy"
     list_metrics = ["Precision", "Recall"]
@@ -225,20 +261,27 @@ def evaluate(dataset_name,
                      loss=loss,
                      metrics=list_metrics)
 
+    # load model history and plot
+    with open(RUN_NAME + "_classifier_history" + ".hst", 'rb') as f_hist:
+        history = pkl.load(f_hist)
+    plot_history_classifier(history, RUN_NAME + "_history_classifier")
+    plot_history_classifier_fancy(history, RUN_NAME + "_history_classifier_fancy")
+
     # predict test dataset
     os.chdir(path + dataset_name + "/")
 
-    # load dataset
+    # load dataset and generate disjoint loader
     data = dataset.GraphSiPM(name=dataset_name,
-                                edge_atr=True,
-                                adj_arg="binary",
-                                norm_x=norm_x)
-
+                             edge_atr=True,
+                             adj_arg="binary",
+                             norm_x=norm_x)
     loader_test = DisjointLoader(data,
                                  batch_size=64,
                                  epochs=1,
                                  shuffle=False)
 
+    # Evaluate test dataset on model
+    # Yes this part is written terrible but there is no better solution really
     y_true = []
     y_scores = []
     for batch in loader_test:
