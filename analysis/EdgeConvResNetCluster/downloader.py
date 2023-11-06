@@ -132,7 +132,7 @@ def load(RootParser,
             node_id += 1
 
         # grab target labels and attributes
-        distcompton_tag = event.get_distcompton_tag()
+        distcompton_tag = event.get_distcompton_tag(ph_method="FAKE")
         target_energy_e, target_energy_p = event.get_target_energy()
         target_position_e, target_position_p = event.get_target_position()
         ary_graph_labels[i] = distcompton_tag * 1
