@@ -130,9 +130,10 @@ class RootParser:
         # Later simulation updates changed the naming convention for SiPM attributes from:
         # fSiPMTriggerTime -> fSiPMTimestamp
         # fSiPMQDC -> fSiPMPhotonCount
-        if {b"SiPMData.fSiPMTriggerTime"}.issubset(self.events[b"SiPMData"].keys()):
-            leaves_sipm[0] = b"SiPMData.fSiPMTriggerTime"
-            leaves_sipm[1] = b"SiPMData.fSiPMQDC"
+        if self.hasSiPM:
+            if {b"SiPMData.fSiPMTriggerTime"}.issubset(self.events[b"SiPMData"].keys()):
+                leaves_sipm[0] = b"SiPMData.fSiPMTriggerTime"
+                leaves_sipm[1] = b"SiPMData.fSiPMQDC"
 
         # Exception "MCEnergyPrimary"
         # Older 1-to-1 coupling files names the primary energy "MCEnergy_Primary" while 4-to-1
