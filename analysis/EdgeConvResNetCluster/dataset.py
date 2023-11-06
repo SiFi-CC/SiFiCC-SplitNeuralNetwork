@@ -66,8 +66,8 @@ class GraphCluster(Dataset):
 
         # get node attributes (x_list)
         x_list = self._get_x_list(n_nodes_cum=n_nodes_cum)
-        # get edge attributes (e_list)
-        e_list = self._get_e_list(n_edges_cum=n_edges_cum)
+        # get edge attributes (e_list), in this case edge features are disabled
+        e_list = [None] * len(n_nodes)
 
         # Create sparse adjacency matrices and re-sort edge attributes in lexicographic order
         a_e_list = [sparse.edge_index_to_matrix(edge_index=el,
@@ -76,7 +76,8 @@ class GraphCluster(Dataset):
                                                 shape=(n, n), )
                     for el, e, n in zip(el_list, e_list, n_nodes)
                     ]
-        a_list, e_list = list(zip(*a_e_list))
+        a_list = a_e_list
+        # if edge features, use this: a_list, e_list = list(zip(*a_e_list))
 
         # set dataset target (classification / regression)
         y_list = self._get_y_list()
@@ -87,15 +88,15 @@ class GraphCluster(Dataset):
             # Convert to Graph
             print("Successfully loaded {}.".format(self.name))
             return [
-                Graph(x=x, a=a, e=e, y=y)
-                for x, a, e, y, label in zip(x_list, a_list, e_list, y_list, labels) if label
+                Graph(x=x, a=a, y=y)
+                for x, a, y, label in zip(x_list, a_list, y_list, labels) if label
             ]
 
         # Convert to Graph
         print("Successfully loaded {}.".format(self.name))
         return [
-            Graph(x=x, a=a, e=e, y=y)
-            for x, a, e, y in zip(x_list, a_list, e_list, labels)
+            Graph(x=x, a=a, y=y)
+            for x, a, y in zip(x_list, a_list, labels)
         ]
 
     def _get_x_list(self, n_nodes_cum):
