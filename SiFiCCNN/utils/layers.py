@@ -1,7 +1,9 @@
 import tensorflow as tf
 import spektral as sp
+import numpy as np
 
 from sklearn.neighbors import kneighbors_graph
+from SiFiCCNN.utils.tf_utils import split_disjoint
 
 
 class ReZero(tf.keras.layers.Layer):
@@ -75,37 +77,30 @@ def adjustChannelSize(xInput, fxInput):
 
     # 1 X 1 conv if shape is different. Else identity.
     if not equalChannels:
-        x = tf.keras.layers.Conv1D(convBlockShape[-1],
-                                   kernel_size=1,
-                                   strides=1,
-                                   padding="same",
-                                   use_bias=False)(xInput)
+        x = tf.keras.layers.Dense(convBlockShape[-1],
+                                  activation="relu")(xInput)
         return x
     else:
         return xInput
 
 
 class DynamicGraphUpdate(tf.keras.layers.Layer):
-    def __init__(self, k=3, mode="connectivity", metric="minkowski", **kwargs):
-        self.k = k
-        self.mode = mode
-        self.metric = metric
+    def __init__(self, **kwargs):
         super(DynamicGraphUpdate, self).__init__(**kwargs)
 
     def call(self, inputs):
         assert isinstance(inputs, list)
-        X, A = inputs
-        return kneighbors_graph(X=X,
-                                n_neighbors=self.k,
-                                mode=self.mode,
-                                metric=self.metric)
+        X, A, I = inputs
 
-    def get_config(self):
-        base_config = super().get_config()
-        return {**base_config,
-                "k": self.k,
-                "mode": self.mode,
-                "metric": self.metric}
+        # grab indices from I
+        I = tf.cast(I, tf.dtypes.int32)
+        i_n = tf.math.bincount(I)
+        i_n_cum = tf.concat([tf.math.cumsum(i_n)], 0)
+
+        sub_Xs = tf.split(X, i_n_cum, axis=0)
+        print(sub_Xs)
+
+        return A
 
 
 def GCNConvResNetBlock(x,
