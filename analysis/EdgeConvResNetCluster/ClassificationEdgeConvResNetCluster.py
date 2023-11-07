@@ -1,3 +1,10 @@
+####################################################################################################
+# ### ClassificationEdgeConvResNetCluster.py
+#
+# Example script for classifier training on the SiFi-CC data in graph configuration
+#
+####################################################################################################
+
 import numpy as np
 import os
 import pickle as pkl
@@ -26,23 +33,35 @@ from SiFiCCNN.utils.plotter import plot_history_classifier, \
 
 
 def setupModel(F=10,
-               S=6,
                nFilter=32,
                activation="relu",
                n_out=1,
                activation_out="sigmoid",
                dropout=0.0):
+    """
+
+    Args:
+        F (int):                Number of node attributes
+        nFilter (int):          Number of filters in the starting layer
+        activation (str):       Activation function used
+        n_out (int):            Number of output nodes
+        activation_out (str):   Output activation function
+        dropout (float):        Dropout percentage
+
+    Returns:
+        Keras model
+    """
+
     X_in = Input(shape=(F,))
     A_in = Input(shape=(None,), sparse=True)
-    E_in = Input(shape=(S,))
     I_in = Input(shape=(), dtype=tf.int64)
 
     x = EdgeConv(channels=nFilter)([X_in, A_in])
 
     # additional layer with skip connections
     x1 = EdgeConvResNetBlock(*[x, A_in], nFilter)
-    x2 = EdgeConvResNetBlock(*[x1, A_in], nFilter)
-    x3 = EdgeConvResNetBlock(*[x2, A_in], nFilter)
+    x2 = EdgeConvResNetBlock(*[x1, A_in], nFilter * 2)
+    x3 = EdgeConvResNetBlock(*[x2, A_in], nFilter * 4)
     x_concat = Concatenate()([x1, x2, x3])
 
     x = GlobalMaxPool()([x_concat, I_in])
@@ -50,11 +69,11 @@ def setupModel(F=10,
     if dropout > 0:
         x = Dropout(dropout)(x)
 
-    x = Dense(nFilter * 8, activation=activation)(x)
+    x = Dense(nFilter * 4, activation=activation)(x)
 
     out = Dense(n_out, activation=activation_out)(x)
 
-    model = Model(inputs=[X_in, A_in, E_in, I_in], outputs=out)
+    model = Model(inputs=[X_in, A_in, I_in], outputs=out)
 
     optimizer = tf.keras.optimizers.Adam(learning_rate=1e-3)
     if n_out == 1:
@@ -79,22 +98,24 @@ def lr_scheduler(epoch):
 
 
 def main():
-    # defining hyper parameters
+    # Define main hyperparameters for network training
+    # Network configuration
     nFilter = 32
     activation = "relu"
     n_out = 1
     activation_out = "sigmoid"
     dropout = 0.0
-
+    # Training configuration
     batch_size = 64
-    nEpochs = 50
-
+    nEpochs = 30
+    do_training = True
+    do_evaluate = True
+    # Train-Test-Split configuration
     trainsplit = 0.6
     valsplit = 0.2
 
-    RUN_NAME = "EdgeConvResNetCluster"
-    do_training = True
-    do_evaluate = True
+    # Name of the run. This defines the name of the output directory
+    RUN_NAME = "EdgeConvResNetCluster_TESTING"
 
     # create dictionary for model and training parameter
     modelParameter = {"nFilter": nFilter,
@@ -109,6 +130,7 @@ def main():
     DATASET_CONT = "GraphCluster_OptimisedGeometry_Continuous_2e10protons_taggingv3"
     DATASET_0MM = "GraphCluster_OptimisedGeometry_BP0mm_2e10protons_taggingv3"
     DATASET_5MM = "GraphCluster_OptimisedGeometry_BP5mm_4e9protons_taggingv3"
+    DATASET_m5MM = "GraphCluster_OptimisedGeometry_BPminus5mm_4e9_protons_taggingv3"
 
     # go backwards in directory tree until the main repo directory is matched
     path = os.getcwd()
@@ -137,7 +159,7 @@ def main():
                  modelParameter=modelParameter)
 
     if do_evaluate:
-        for file in [DATASET_CONT, DATASET_0MM, DATASET_5MM]:
+        for file in [DATASET_CONT]:
             evaluate(dataset_name=file,
                      RUN_NAME=RUN_NAME,
                      path=path_results)
@@ -175,6 +197,7 @@ def training(dataset_name,
     loader_valid = DisjointLoader(dataset_va,
                                   batch_size=batch_size)
 
+    # Train model
     history = tf_model.fit(loader_train,
                            epochs=nEpochs,
                            steps_per_epoch=loader_train.steps_per_epoch,
@@ -184,6 +207,7 @@ def training(dataset_name,
                            verbose=1,
                            callbacks=[l_callbacks])
 
+    # Save everything after training process
     os.chdir(path)
     # save model
     print("Saving model at: ", RUN_NAME + "_classifier.tf")
@@ -193,7 +217,6 @@ def training(dataset_name,
         pkl.dump(history.history, f_hist)
     # save norm
     np.save(RUN_NAME + "_classifier" + "_norm_x", data.norm_x)
-    np.save(RUN_NAME + "_classifier" + "_norm_e", data.norm_e)
     # save model parameter as json
     with open(RUN_NAME + "_classifier_parameter.json", "w") as json_file:
         json.dump(modelParameter, json_file)
@@ -228,7 +251,7 @@ def evaluate(dataset_name,
                      metrics=list_metrics)
 
     # load model history and plot
-    with open(RUN_NAME + "_classifier_history" + ".hst", 'wb') as f_hist:
+    with open(RUN_NAME + "_classifier_history" + ".hst", 'rb') as f_hist:
         history = pkl.load(f_hist)
     plot_history_classifier(history, RUN_NAME + "_history_classifier")
 
@@ -239,8 +262,7 @@ def evaluate(dataset_name,
     data = dataset.GraphCluster(name=dataset_name,
                                 edge_atr=True,
                                 adj_arg="binary",
-                                norm_x=norm_x,
-                                norm_e=norm_e)
+                                norm_x=norm_x)
 
     loader_test = DisjointLoader(data,
                                  batch_size=64,
