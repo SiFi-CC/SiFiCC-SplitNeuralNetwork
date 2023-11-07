@@ -6,6 +6,7 @@ example_code.py
 # ignore folder to temporarely store files not needing to be pushed
 ignore/
 test/
+scripts/
 
 # ignore .png, .root and .npz in results subdirectory
 # files are too large and too many to properly comit
