@@ -1,22 +1,24 @@
 # dev related (pycharm specific gitignore)
 .idea
 *.pyc
-example_code.py
+
+# example scripts in the parent directory, mainly used for testing code
+example.py
 
 # ignore folder to temporarely store files not needing to be pushed
 ignore/
 test/
 scripts/
 
-# ignore .png, .root and .npz in results subdirectory
+# ignore .png, .root, .npz and .npy in results subdirectory
 # files are too large and too many to properly comit
 results/**/*.png
 results/**/*.root
 results/**/*.npz
+results/**/*.npy
 
 # data storage directories, as files are too large
 /root_files/*.root
-/npz_files/*.npz
 /datasets/*
 
 # ignore the toy subdirectoy (temporary)

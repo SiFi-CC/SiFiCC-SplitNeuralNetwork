@@ -1,0 +1,18 @@
+### AnalysisMetric results:
+
+Baseline accuracy: 0.762
+Metrics base threshold:
+Threshold: 0.500
+Accuracy: 78.4%
+Accuracy (weighted)%: 66.9
+Efficiency: 83.1%
+Purity: 52.9%
+TP: 88009 | FP: 78280 | TN: 260723 | FN: 17889
+Metrics base threshold
+AUC Score: 0.875
+Threshold: 0.759
+Accuracy: 83.0%
+Accuracy (weighted): 77.7%
+Efficiency: 58.2%
+Purity: 66.2%
+TP: 61604 | FP: 31466 | TN: 307537 | FN: 44294
