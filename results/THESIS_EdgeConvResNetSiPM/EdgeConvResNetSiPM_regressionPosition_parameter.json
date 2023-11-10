@@ -1,0 +1,1 @@
+{"nFilter": 32, "activation": "relu", "n_out": 6, "activation_out": "linear", "dropout": 0.0}
