@@ -5,8 +5,22 @@ from SiFiCCNN.root import RootParser
 from SiFiCCNN.ImageReconstruction import IRExport
 
 
-def export_cc6_cutbasedreco(RootParser,
-                            energy_cut=None):
+def export_cc6_cutbased(RootParser,
+                        energy_cut=None):
+    """
+    Method to export the CutBased reconstruction to a readable CC6 format. Exporting the CutBased
+    reconstruction this way will use the NNInputReader for the CC6 image reconstruction.
+    The output is converted to Aachen coordinate system under the assumption that the underlying
+    coordinate system of the RootFile is the cracow coordinate system.
+
+    Args:
+        RootParser: (RootParser):   Container for the root file.
+        energy_cut: (float):        Applied energy cut, has to be bigger than 0.0, None is no cut
+                                    should be applied.
+
+    Returns:
+        None
+    """
     # go backwards in directory tree until the main repo directory is matched
     path = os.getcwd()
     while True:
@@ -14,7 +28,6 @@ def export_cc6_cutbasedreco(RootParser,
         if os.path.basename(path) == "SiFiCC-SplitNeuralNetwork":
             break
     path_main = path
-
     path_root = path_main + "/root_files/"
 
     # generate target arrays
@@ -22,12 +35,12 @@ def export_cc6_cutbasedreco(RootParser,
     cb_reco[:, 0] = RootParser.events["Identified"].array()
     cb_reco[:, 1] = RootParser.events["RecoEnergy_e"]["value"].array()
     cb_reco[:, 2] = RootParser.events["RecoEnergy_p"]["value"].array()
-    cb_reco[:, 3] = RootParser.events["RecoPosition_e"]["position"].array().x
-    cb_reco[:, 4] = RootParser.events["RecoPosition_e"]["position"].array().y
-    cb_reco[:, 5] = RootParser.events["RecoPosition_e"]["position"].array().z
-    cb_reco[:, 6] = RootParser.events["RecoPosition_p"]["position"].array().x
-    cb_reco[:, 7] = RootParser.events["RecoPosition_p"]["position"].array().y
-    cb_reco[:, 8] = RootParser.events["RecoPosition_p"]["position"].array().z
+    cb_reco[:, 3] = RootParser.events["RecoPosition_e"]["position"].array().z
+    cb_reco[:, 4] = RootParser.events["RecoPosition_e"]["position"].array().y * (-1)
+    cb_reco[:, 5] = RootParser.events["RecoPosition_e"]["position"].array().x
+    cb_reco[:, 6] = RootParser.events["RecoPosition_p"]["position"].array().z
+    cb_reco[:, 7] = RootParser.events["RecoPosition_p"]["position"].array().y * (-1)
+    cb_reco[:, 8] = RootParser.events["RecoPosition_p"]["position"].array().x
 
     # filter for identified events
     print("Apply Cut-Based Reco identification")
