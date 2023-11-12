@@ -107,8 +107,8 @@ def main():
     dropout = 0.0
     # Training configuration
     batch_size = 64
-    nEpochs = 30
-    do_training = True
+    nEpochs = 20
+    do_training = False
     do_evaluate = True
     # Train-Test-Split configuration
     trainsplit = 0.6
@@ -144,7 +144,7 @@ def main():
     # create subdirectory for run output
     if not os.path.isdir(path_results):
         os.mkdir(path_results)
-    for file in [DATASET_CONT, DATASET_0MM, DATASET_5MM]:
+    for file in [DATASET_CONT, DATASET_0MM, DATASET_5MM, DATASET_m5MM]:
         if not os.path.isdir(path_results + "/" + file + "/"):
             os.mkdir(path_results + "/" + file + "/")
 
@@ -159,7 +159,7 @@ def main():
                  modelParameter=modelParameter)
 
     if do_evaluate:
-        for file in [DATASET_CONT]:
+        for file in [DATASET_0MM]:
             evaluate(dataset_name=file,
                      RUN_NAME=RUN_NAME,
                      path=path_results)
@@ -239,9 +239,7 @@ def evaluate(dataset_name,
                                           custom_objects={"EdgeConv": EdgeConv,
                                                           "GlobalMaxPool": GlobalMaxPool,
                                                           "ReZero": ReZero})
-
     norm_x = np.load(RUN_NAME + "_classifier_norm_x.npy")
-    norm_e = np.load(RUN_NAME + "_classifier_norm_e.npy")
 
     optimizer = tf.keras.optimizers.Adam(learning_rate=1e-3)
     loss = "binary_crossentropy"

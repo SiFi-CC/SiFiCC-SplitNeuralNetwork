@@ -26,8 +26,8 @@ def load(RootParser,
 
     # define dataset name, constructed from the given input and the final data structure
     # grab correct filepath, generate dataset in target directory
-    base = "GraphSiPM"
-    tag = "TEST"
+    base = "GraphCluster"
+    tag = ""
     name_set = "{}_{}".format(base, RootParser.file_name)
     if tag != "":
         name_set += "_{}".format(tag)
@@ -145,7 +145,7 @@ def load(RootParser,
                                           target_position_p.z,
                                           -target_position_p.y,
                                           target_position_p.x]
-            ary_sp[i] = event.MCPosition_source.x
+            ary_sp[i] = event.MCPosition_source.z
         if coordinate_system == "AACHEN":
             ary_graph_attributes[i, :] = [target_energy_e,
                                           target_energy_p,
@@ -155,7 +155,7 @@ def load(RootParser,
                                           target_position_p.x,
                                           target_position_p.y,
                                           target_position_p.z]
-            ary_sp[i] = event.MCPosition_source.z
+            ary_sp[i] = event.MCPosition_source.x
 
         ary_pe[i] = event.MCEnergy_Primary
 

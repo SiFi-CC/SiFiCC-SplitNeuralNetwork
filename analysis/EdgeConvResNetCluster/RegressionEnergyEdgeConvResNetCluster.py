@@ -6,16 +6,14 @@ import tensorflow as tf
 
 import dataset
 
-from tensorflow.keras.models import Model
-from tensorflow.keras.layers import Dense, Dropout, Concatenate, Input
-
 from spektral.layers import EdgeConv, GlobalMaxPool
 from spektral.data.loaders import DisjointLoader
 
 from analysis.EdgeConvResNetCluster.ClassificationEdgeConvResNetCluster import setupModel
 from SiFiCCNN.utils.layers import EdgeConvResNetBlock, ReZero
 
-from SiFiCCNN.utils.plotter import plot_history_regression, plot_energy_error
+from SiFiCCNN.utils.plotter import plot_history_regression, plot_energy_error, \
+    plot_energy_resolution
 
 
 def lr_scheduler(epoch):
@@ -29,22 +27,24 @@ def lr_scheduler(epoch):
 
 
 def main():
-    # defining hyper parameters
+    # Define main hyperparameters for network training
+    # Network configuration
     nFilter = 32
     activation = "relu"
     n_out = 2
     activation_out = "relu"
     dropout = 0.0
-
+    # Training configuration
     batch_size = 64
-    nEpochs = 50
-
+    nEpochs = 20
+    do_training = True
+    do_evaluate = True
+    # Train-Test-Split configuration
     trainsplit = 0.6
     valsplit = 0.2
 
-    RUN_NAME = "EdgeConvResNetCluster"
-    do_training = True
-    do_evaluate = True
+    # Name of the run. This defines the name of the output directory
+    RUN_NAME = "EdgeConvResNetCluster_TESTING"
 
     # create dictionary for model and training parameter
     modelParameter = {"nFilter": nFilter,
@@ -147,7 +147,6 @@ def training(dataset_name,
         pkl.dump(history.history, f_hist)
     # save norm
     np.save(RUN_NAME + "_regressionEnergy" + "_norm_x", data.norm_x)
-    np.save(RUN_NAME + "_regressionEnergy" + "_norm_e", data.norm_e)
     # save model parameter as json
     with open(RUN_NAME + "_regressionEnergy_parameter.json", "w") as json_file:
         json.dump(modelParameter, json_file)
@@ -170,9 +169,7 @@ def evaluate(dataset_name,
                                           custom_objects={"EdgeConv": EdgeConv,
                                                           "GlobalMaxPool": GlobalMaxPool,
                                                           "ReZero": ReZero})
-
     norm_x = np.load(RUN_NAME + "_regressionEnergy_norm_x.npy")
-    norm_e = np.load(RUN_NAME + "_regressionEnergy_norm_e.npy")
 
     optimizer = tf.keras.optimizers.Adam(learning_rate=1e-3)
     loss = "mean_absolute_error"
@@ -180,6 +177,11 @@ def evaluate(dataset_name,
     tf_model.compile(optimizer=optimizer,
                      loss=loss,
                      metrics=list_metrics)
+
+    # load model history and plot
+    with open(RUN_NAME + "_regressionEnergy_history" + ".hst", 'rb') as f_hist:
+        history = pkl.load(f_hist)
+    plot_history_regression(history, RUN_NAME + "_history_regressionEnergy")
 
     # predict test dataset
     os.chdir(path + dataset_name + "/")
@@ -189,10 +191,8 @@ def evaluate(dataset_name,
                                 edge_atr=True,
                                 adj_arg="binary",
                                 norm_x=norm_x,
-                                norm_e=norm_e,
                                 p_only=True,
                                 reg_type="Energy")
-
     loader_test = DisjointLoader(data,
                                  batch_size=64,
                                  epochs=1,
@@ -212,6 +212,10 @@ def evaluate(dataset_name,
 
     # evaluate model:
     plot_energy_error(y_pred, y_true, "error_regression_energy")
+    # plot_energy_resolution(y_pred, y_true, "resolution_regression_energy")
+
+    np.save("energy_pred", y_pred)
+    np.save("energy_true", y_true)
 
 
 if __name__ == "__main__":

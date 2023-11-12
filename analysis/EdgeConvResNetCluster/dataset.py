@@ -8,10 +8,6 @@ from spektral.utils import io, sparse
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
 
 
-################################################################################
-#
-################################################################################
-
 class GraphCluster(Dataset):
     def __init__(self,
                  name,
@@ -45,9 +41,22 @@ class GraphCluster(Dataset):
         return path
 
     def download(self):
-        print("Dunno some download function")
+        """
+        Download method is needed if Dataset class from Spektral library is inherited. It is
+        practically not needed.
+
+        Returns:
+            None
+        """
+        print("Missing download method!")
 
     def read(self):
+        """
+        Loading dataset from files and generates graph objects.
+
+        Returns:
+
+        """
 
         # Batch index
         node_batch_index = np.load(self.path + "/" + self.name + "_graph_indicator.npy")

@@ -6,9 +6,6 @@ import tensorflow as tf
 
 import dataset
 
-from tensorflow.keras.models import Model
-from tensorflow.keras.layers import Dense, Dropout, Concatenate, Input
-
 from spektral.layers import EdgeConv, GlobalMaxPool
 from spektral.data.loaders import DisjointLoader
 
@@ -29,22 +26,24 @@ def lr_scheduler(epoch):
 
 
 def main():
-    # defining hyper parameters
+    # Define main hyperparameters for network training
+    # Network configuration
     nFilter = 32
     activation = "relu"
     n_out = 6
     activation_out = "linear"
     dropout = 0.0
-
+    # Training configuration
     batch_size = 64
-    nEpochs = 50
-
+    nEpochs = 20
+    do_training = False
+    do_evaluate = True
+    # Train-Test-Split configuration
     trainsplit = 0.6
     valsplit = 0.2
 
-    RUN_NAME = "EdgeConvResNetCluster"
-    do_training = True
-    do_evaluate = True
+    # Name of the run. This defines the name of the output directory
+    RUN_NAME = "EdgeConvResNetCluster_TESTING"
 
     # create dictionary for model and training parameter
     modelParameter = {"nFilter": nFilter,
@@ -147,7 +146,6 @@ def training(dataset_name,
         pkl.dump(history.history, f_hist)
     # save norm
     np.save(RUN_NAME + "_regressionPosition" + "_norm_x", data.norm_x)
-    np.save(RUN_NAME + "_regressionPosition" + "_norm_e", data.norm_e)
     # save model parameter as json
     with open(RUN_NAME + "_regressionPosition_parameter.json", "w") as json_file:
         json.dump(modelParameter, json_file)
@@ -170,9 +168,7 @@ def evaluate(dataset_name,
                                           custom_objects={"EdgeConv": EdgeConv,
                                                           "GlobalMaxPool": GlobalMaxPool,
                                                           "ReZero": ReZero})
-
     norm_x = np.load(RUN_NAME + "_regressionPosition_norm_x.npy")
-    norm_e = np.load(RUN_NAME + "_regressionPosition_norm_e.npy")
 
     optimizer = tf.keras.optimizers.Adam(learning_rate=1e-3)
     loss = "mean_absolute_error"
@@ -180,6 +176,11 @@ def evaluate(dataset_name,
     tf_model.compile(optimizer=optimizer,
                      loss=loss,
                      metrics=list_metrics)
+
+    # load model history and plot
+    with open(RUN_NAME + "_regressionPosition_history" + ".hst", 'rb') as f_hist:
+        history = pkl.load(f_hist)
+    plot_history_regression(history, RUN_NAME + "_history_regressionPosition")
 
     # predict test dataset
     os.chdir(path + dataset_name + "/")
@@ -189,7 +190,6 @@ def evaluate(dataset_name,
                                 edge_atr=True,
                                 adj_arg="binary",
                                 norm_x=norm_x,
-                                norm_e=norm_e,
                                 p_only=True,
                                 reg_type="Position")
 
