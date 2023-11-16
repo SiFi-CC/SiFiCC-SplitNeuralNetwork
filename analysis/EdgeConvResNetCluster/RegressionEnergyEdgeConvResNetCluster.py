@@ -17,13 +17,13 @@ from SiFiCCNN.utils.plotter import plot_history_regression, plot_energy_error, \
 
 
 def lr_scheduler(epoch):
-    if epoch < 20:
+    if epoch < 120:
         return 1e-3
-    if epoch < 30:
+    if epoch < 130:
         return 5e-4
-    if epoch < 40:
+    if epoch < 140:
         return 1e-4
-    return 1e-5
+    return 1e-3
 
 
 def main():
@@ -40,11 +40,11 @@ def main():
     do_training = True
     do_evaluate = True
     # Train-Test-Split configuration
-    trainsplit = 0.6
+    trainsplit = 0.8
     valsplit = 0.2
 
     # Name of the run. This defines the name of the output directory
-    RUN_NAME = "EdgeConvResNetCluster_TESTING"
+    RUN_NAME = "EdgeConvResNetCluster_Base"
 
     # create dictionary for model and training parameter
     modelParameter = {"nFilter": nFilter,
@@ -56,10 +56,10 @@ def main():
     # Datasets used
     # Training file used for classification and regression training
     # Generated via an input generator, contain one Bragg-peak position
-    DATASET_CONT = "GraphCluster_OptimisedGeometry_Continuous_2e10protons_taggingv3"
-    DATASET_0MM = "GraphCluster_OptimisedGeometry_BP0mm_2e10protons_taggingv3"
-    DATASET_5MM = "GraphCluster_OptimisedGeometry_BP5mm_4e9protons_taggingv3"
-    DATASET_m5MM = "GraphCluster_OptimisedGeometry_BPminus5mm_4e9_protons_taggingv3"
+    DATASET_CONT = "1to1_Cluster_CONT_2e10protons_simV3"
+    DATASET_0MM = "1to1_Cluster_BP0mm_2e10protons_simV3"
+    DATASET_5MM = "1to1_Cluster_BP5mm_4e9protons_simV3"
+    DATASET_m5MM = "1to1_Cluster_BPm5mm_4e9protons_simV3"
 
     # go backwards in directory tree until the main repo directory is matched
     path = os.getcwd()

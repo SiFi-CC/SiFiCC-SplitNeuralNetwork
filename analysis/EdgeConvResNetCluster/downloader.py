@@ -17,6 +17,7 @@ def load(RootParser,
         path        (str):          destination path, if not given it will default to
                                     scratch_g4rt1
         n           (int or None):  Number of events sampled from root file
+        e_cut       (float):        Energy cut applied
         coordinate_system (str):    Coordinate system of the given root file, everything will be
                                     converted to Aachen coordinate system
 
@@ -27,10 +28,13 @@ def load(RootParser,
     # define dataset name, constructed from the given input and the final data structure
     # grab correct filepath, generate dataset in target directory
     base = "GraphCluster"
-    tag = ""
-    name_set = "{}_{}".format(base, RootParser.file_name)
+    tag = "ECUT30"
+    name_set = RootParser.file_name
     if tag != "":
         name_set += "_{}".format(tag)
+
+    # energy cut if needed
+    e_cut = 3.0
 
     if path == "":
         path = "/net/scratch_g4rt1/fenger/datasets/"
@@ -49,9 +53,13 @@ def load(RootParser,
     n_nodes = 0
     m_edges = 0
     for i, event in enumerate(RootParser.iterate_events(n=n)):
+        if e_cut is not None:
+            if sum(event.RecoClusterEnergies_values) < e_cut:
+                continue
         k_graphs += 1
         n_nodes += len(event.RecoClusterEntries)
         m_edges += len(event.RecoClusterEntries) * len(event.RecoClusterEntries)
+
     print("Number of Graphs to be created: ", k_graphs)
     print("Total number of nodes to be created: ", n_nodes)
     print("Graph features: ", 10)
@@ -70,6 +78,7 @@ def load(RootParser,
     ary_sp = np.zeros(shape=(k_graphs,), dtype=np.float32)
 
     # main iteration over root file, containing beta coincidence check
+    graph_id = 0
     node_id = 0
     edge_id = 0
     for i, event in enumerate(RootParser.iterate_events(n=n)):
@@ -80,6 +89,10 @@ def load(RootParser,
         idx_scat, idx_abs = event.sort_clusters_by_module()
         if not (len(idx_scat) >= 1 and len(idx_abs) >= 1):
             continue
+
+        if e_cut is not None:
+            if sum(event.RecoClusterEnergies_values) < e_cut:
+                continue
 
         for j in range(n_cluster):
             for k in range(n_cluster):
@@ -104,7 +117,7 @@ def load(RootParser,
                 ary_A[edge_id, :] = [node_id, node_id - j + k]
                 edge_id += 1
 
-            ary_graph_indicator[node_id] = i
+            ary_graph_indicator[node_id] = graph_id
 
             # exception for different coordinate systems
             if coordinate_system == "CRACOW":
@@ -135,34 +148,35 @@ def load(RootParser,
         distcompton_tag = event.get_distcompton_tag(ph_method="FAKE")
         target_energy_e, target_energy_p = event.get_target_energy()
         target_position_e, target_position_p = event.get_target_position()
-        ary_graph_labels[i] = distcompton_tag * 1
+        ary_graph_labels[graph_id] = distcompton_tag * 1
         if coordinate_system == "CRACOW":
-            ary_graph_attributes[i, :] = [target_energy_e,
-                                          target_energy_p,
-                                          target_position_e.z,
-                                          -target_position_e.y,
-                                          target_position_e.x,
-                                          target_position_p.z,
-                                          -target_position_p.y,
-                                          target_position_p.x]
-            ary_sp[i] = event.MCPosition_source.z
+            ary_graph_attributes[graph_id, :] = [target_energy_e,
+                                                 target_energy_p,
+                                                 target_position_e.z,
+                                                 -target_position_e.y,
+                                                 target_position_e.x,
+                                                 target_position_p.z,
+                                                 -target_position_p.y,
+                                                 target_position_p.x]
+            ary_sp[graph_id] = event.MCPosition_source.z
         if coordinate_system == "AACHEN":
-            ary_graph_attributes[i, :] = [target_energy_e,
-                                          target_energy_p,
-                                          target_position_e.x,
-                                          target_position_e.y,
-                                          target_position_e.z,
-                                          target_position_p.x,
-                                          target_position_p.y,
-                                          target_position_p.z]
-            ary_sp[i] = event.MCPosition_source.x
+            ary_graph_attributes[graph_id, :] = [target_energy_e,
+                                                 target_energy_p,
+                                                 target_position_e.x,
+                                                 target_position_e.y,
+                                                 target_position_e.z,
+                                                 target_position_p.x,
+                                                 target_position_p.y,
+                                                 target_position_p.z]
+            ary_sp[graph_id] = event.MCPosition_source.x
 
-        ary_pe[i] = event.MCEnergy_Primary
+        ary_pe[graph_id] = event.MCEnergy_Primary
+        graph_id += 1
 
-    np.save(path + "/" + name_set + "_A.npy", ary_A)
-    np.save(path + "/" + name_set + "_graph_indicator.npy", ary_graph_indicator)
-    np.save(path + "/" + name_set + "_graph_labels.npy", ary_graph_labels)
-    np.save(path + "/" + name_set + "_node_attributes.npy", ary_node_attributes)
-    np.save(path + "/" + name_set + "_graph_attributes.npy", ary_graph_attributes)
-    np.save(path + "/" + name_set + "_graph_pe.npy", ary_pe)
-    np.save(path + "/" + name_set + "_graph_sp.npy", ary_sp)
+    np.save(path + "/" + "A.npy", ary_A)
+    np.save(path + "/" + "graph_indicator.npy", ary_graph_indicator)
+    np.save(path + "/" + "graph_labels.npy", ary_graph_labels)
+    np.save(path + "/" + "node_attributes.npy", ary_node_attributes)
+    np.save(path + "/" + "graph_attributes.npy", ary_graph_attributes)
+    np.save(path + "/" + "graph_pe.npy", ary_pe)
+    np.save(path + "/" + "graph_sp.npy", ary_sp)

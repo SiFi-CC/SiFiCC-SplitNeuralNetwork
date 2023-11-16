@@ -143,7 +143,7 @@ def main():
                  modelParameter=modelParameter)
 
     if do_evaluate:
-        for file in [DATASET_CONT, DATASET_0MM, DATASET_5MM]:
+        for file in [DATASET_m5MM]:
             evaluate(dataset_name=file,
                      RUN_NAME=RUN_NAME,
                      path=path_results)

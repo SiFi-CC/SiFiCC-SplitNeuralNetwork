@@ -58,17 +58,29 @@ def setupModel(F=10,
 
     x = EdgeConv(channels=nFilter)([X_in, A_in])
 
+    # THIS CONFIGURATION IS DENOTED AS "BASE"
+    # additional layer with skip connections
+    x1 = EdgeConv(channels=nFilter*2)([x, A_in])
+    x2 = EdgeConv(channels=nFilter*2)([x1, A_in])
+    x3 = EdgeConv(channels=nFilter*4)([x2, A_in])
+    x_concat = Concatenate()([x1, x2, x3])
+
+    """    
     # additional layer with skip connections
     x1 = EdgeConvResNetBlock(*[x, A_in], nFilter)
     x2 = EdgeConvResNetBlock(*[x1, A_in], nFilter * 2)
-    x3 = EdgeConvResNetBlock(*[x2, A_in], nFilter * 4)
-    x_concat = Concatenate()([x1, x2, x3])
+    x3 = EdgeConvResNetBlock(*[x2, A_in], nFilter * 2)
+    x4 = EdgeConvResNetBlock(*[x3, A_in], nFilter * 4)
+    x5 = EdgeConvResNetBlock(*[x4, A_in], nFilter * 4)
+    x_concat = Concatenate()([x1, x3, x5])
+    """
 
     x = GlobalMaxPool()([x_concat, I_in])
 
     if dropout > 0:
         x = Dropout(dropout)(x)
 
+    x = Dense(nFilter * 8, activation=activation)(x)
     x = Dense(nFilter * 4, activation=activation)(x)
 
     out = Dense(n_out, activation=activation_out)(x)
@@ -108,14 +120,14 @@ def main():
     # Training configuration
     batch_size = 64
     nEpochs = 20
-    do_training = False
+    do_training = True
     do_evaluate = True
     # Train-Test-Split configuration
-    trainsplit = 0.6
+    trainsplit = 0.8
     valsplit = 0.2
 
     # Name of the run. This defines the name of the output directory
-    RUN_NAME = "EdgeConvResNetCluster_TESTING"
+    RUN_NAME = "EdgeConvResNetCluster_Base"
 
     # create dictionary for model and training parameter
     modelParameter = {"nFilter": nFilter,
