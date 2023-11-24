@@ -28,7 +28,7 @@ def load(RootParser,
     # define dataset name, constructed from the given input and the final data structure
     # grab correct filepath, generate dataset in target directory
     base = "GraphCluster"
-    tag = "ECUT30"
+    tag = "ECUT3MEV"
     name_set = RootParser.file_name
     if tag != "":
         name_set += "_{}".format(tag)
@@ -63,7 +63,6 @@ def load(RootParser,
     print("Number of Graphs to be created: ", k_graphs)
     print("Total number of nodes to be created: ", n_nodes)
     print("Graph features: ", 10)
-    print("Graph features: ", 3)
 
     # creating final arrays
     # datatypes are chosen for minimal size possible (duh)
@@ -97,7 +96,6 @@ def load(RootParser,
         for j in range(n_cluster):
             for k in range(n_cluster):
                 """
-                # self-loop exception
                 if j in idx_abs and k in idx_scat:
                     continue
                 """
@@ -147,7 +145,7 @@ def load(RootParser,
         # grab target labels and attributes
         distcompton_tag = event.get_distcompton_tag(ph_method="FAKE")
         target_energy_e, target_energy_p = event.get_target_energy()
-        target_position_e, target_position_p = event.get_target_position()
+        target_position_e, target_position_p = event.get_target_position(ph_method="FAKE")
         ary_graph_labels[graph_id] = distcompton_tag * 1
         if coordinate_system == "CRACOW":
             ary_graph_attributes[graph_id, :] = [target_energy_e,
