@@ -17,11 +17,11 @@ from SiFiCCNN.utils.plotter import plot_history_regression, plot_energy_error, \
 
 
 def lr_scheduler(epoch):
-    if epoch < 120:
+    if epoch < 105:
         return 1e-3
-    if epoch < 130:
+    if epoch < 1010:
         return 5e-4
-    if epoch < 140:
+    if epoch < 1015:
         return 1e-4
     return 1e-3
 
@@ -36,7 +36,7 @@ def main():
     dropout = 0.0
     # Training configuration
     batch_size = 64
-    nEpochs = 20
+    nEpochs = 50
     do_training = True
     do_evaluate = True
     # Train-Test-Split configuration
@@ -44,7 +44,7 @@ def main():
     valsplit = 0.2
 
     # Name of the run. This defines the name of the output directory
-    RUN_NAME = "EdgeConvResNetCluster_Base"
+    RUN_NAME = "EdgeConvResNetCluster_Deep"
 
     # create dictionary for model and training parameter
     modelParameter = {"nFilter": nFilter,
@@ -136,7 +136,12 @@ def training(dataset_name,
                            validation_data=loader_valid,
                            validation_steps=loader_valid.steps_per_epoch,
                            verbose=1,
-                           callbacks=[l_callbacks])
+                           callbacks=[tf.keras.callbacks.ReduceLROnPlateau(monitor="val_loss",
+                                                                           factor=1. / 3.,
+                                                                           patience=4,
+                                                                           min_delta=1e-2,
+                                                                           min_lr=1e-6,
+                                                                           verbose=0)])
 
     os.chdir(path)
     # save model

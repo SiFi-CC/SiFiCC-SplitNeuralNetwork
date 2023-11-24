@@ -19,7 +19,7 @@ from tensorflow.keras.layers import Dense, Dropout, Concatenate, Input
 from spektral.layers import EdgeConv, GlobalMaxPool
 from spektral.data.loaders import DisjointLoader
 
-from SiFiCCNN.utils.layers import EdgeConvResNetBlock, ReZero
+from SiFiCCNN.utils.layers import EdgeConvResNetBlock, EdgeConvResNetBlockV2, ReZero
 
 from SiFiCCNN.analysis import fastROCAUC, metrics
 from SiFiCCNN.utils.plotter import plot_history_classifier, \
@@ -56,31 +56,27 @@ def setupModel(F=10,
     A_in = Input(shape=(None,), sparse=True)
     I_in = Input(shape=(), dtype=tf.int64)
 
-    x = EdgeConv(channels=nFilter)([X_in, A_in])
-
+    x = EdgeConv(channels=nFilter, activation="relu")([X_in, A_in])
+    """
     # THIS CONFIGURATION IS DENOTED AS "BASE"
     # additional layer with skip connections
-    x1 = EdgeConv(channels=nFilter*2)([x, A_in])
-    x2 = EdgeConv(channels=nFilter*2)([x1, A_in])
-    x3 = EdgeConv(channels=nFilter*4)([x2, A_in])
+    x1 = EdgeConv(channels=nFilter*2, activation="relu")([x, A_in])
+    x2 = EdgeConv(channels=nFilter*2, activation="relu")([x1, A_in])
+    x3 = EdgeConv(channels=nFilter*4, activation="relu")([x2, A_in])
     x_concat = Concatenate()([x1, x2, x3])
-
-    """    
-    # additional layer with skip connections
-    x1 = EdgeConvResNetBlock(*[x, A_in], nFilter)
-    x2 = EdgeConvResNetBlock(*[x1, A_in], nFilter * 2)
-    x3 = EdgeConvResNetBlock(*[x2, A_in], nFilter * 2)
-    x4 = EdgeConvResNetBlock(*[x3, A_in], nFilter * 4)
-    x5 = EdgeConvResNetBlock(*[x4, A_in], nFilter * 4)
-    x_concat = Concatenate()([x1, x3, x5])
     """
 
-    x = GlobalMaxPool()([x_concat, I_in])
+    # additional layer with skip connections
+    x = EdgeConvResNetBlockV2(*[x, A_in], n_filter=nFilter)
+    x = EdgeConvResNetBlockV2(*[x, A_in], n_filter=nFilter)
+    x = EdgeConvResNetBlockV2(*[x, A_in], n_filter=nFilter)
+    x = EdgeConvResNetBlockV2(*[x, A_in], n_filter=nFilter)
+
+    x = GlobalMaxPool()([x, I_in])
 
     if dropout > 0:
         x = Dropout(dropout)(x)
 
-    x = Dense(nFilter * 8, activation=activation)(x)
     x = Dense(nFilter * 4, activation=activation)(x)
 
     out = Dense(n_out, activation=activation_out)(x)
@@ -100,13 +96,13 @@ def setupModel(F=10,
 
 
 def lr_scheduler(epoch):
-    if epoch < 20:
+    if epoch < 105:
         return 1e-3
-    if epoch < 30:
+    if epoch < 110:
         return 5e-4
-    if epoch < 40:
+    if epoch < 115:
         return 1e-4
-    return 1e-5
+    return 1e-3
 
 
 def main():
@@ -116,10 +112,10 @@ def main():
     activation = "relu"
     n_out = 1
     activation_out = "sigmoid"
-    dropout = 0.0
+    dropout = 0.1
     # Training configuration
     batch_size = 64
-    nEpochs = 20
+    nEpochs = 50
     do_training = True
     do_evaluate = True
     # Train-Test-Split configuration
@@ -127,7 +123,7 @@ def main():
     valsplit = 0.2
 
     # Name of the run. This defines the name of the output directory
-    RUN_NAME = "EdgeConvResNetCluster_Base"
+    RUN_NAME = "EdgeConvResNetCluster_Deep"
 
     # create dictionary for model and training parameter
     modelParameter = {"nFilter": nFilter,
@@ -139,10 +135,10 @@ def main():
     # Datasets used
     # Training file used for classification and regression training
     # Generated via an input generator, contain one Bragg-peak position
-    DATASET_CONT = "GraphCluster_OptimisedGeometry_Continuous_2e10protons_taggingv3"
-    DATASET_0MM = "GraphCluster_OptimisedGeometry_BP0mm_2e10protons_taggingv3"
-    DATASET_5MM = "GraphCluster_OptimisedGeometry_BP5mm_4e9protons_taggingv3"
-    DATASET_m5MM = "GraphCluster_OptimisedGeometry_BPminus5mm_4e9_protons_taggingv3"
+    DATASET_CONT = "1to1_Cluster_CONT_2e10protons_simV3"
+    DATASET_0MM = "1to1_Cluster_BP0mm_2e10protons_simV3"
+    DATASET_5MM = "1to1_Cluster_BP5mm_4e9protons_simV3"
+    DATASET_m5MM = "1to1_Cluster_BPm5mm_4e9protons_simV3"
 
     # go backwards in directory tree until the main repo directory is matched
     path = os.getcwd()
@@ -171,7 +167,7 @@ def main():
                  modelParameter=modelParameter)
 
     if do_evaluate:
-        for file in [DATASET_0MM]:
+        for file in [DATASET_0MM, DATASET_5MM, DATASET_m5MM]:
             evaluate(dataset_name=file,
                      RUN_NAME=RUN_NAME,
                      path=path_results)
